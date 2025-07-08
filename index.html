@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini 套壳</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .chat-container { width: 80%; max-width: 600px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; }
+        .chat-output { flex-grow: 1; padding: 20px; overflow-y: auto; border-bottom: 1px solid #ddd; }
+        .chat-input { display: flex; padding: 10px; }
+        #userInput { flex-grow: 1; border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-size: 16px; }
+        #sendButton { background-color: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; margin-left: 10px; cursor: pointer; }
+        #sendButton:disabled { background-color: #a0cfff; cursor: not-allowed; }
+        .message { margin-bottom: 15px; }
+        .message.user { text-align: right; color: #333; }
+        .message.gemini { background-color: #e9e9eb; padding: 10px; border-radius: 8px; white-space: pre-wrap; /* 保留换行和空格 */ }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-output" id="chatOutput">
+        <div class="message gemini">你好！有什么可以帮你的吗？</div>
+    </div>
+    <div class="chat-input">
+        <input type="text" id="userInput" placeholder="在这里输入你的问题..." autocomplete="off">
+        <button id="sendButton">发送</button>
+    </div>
+</div>
+
+<script>
+    const userInput = document.getElementById('userInput');
+    const sendButton = document.getElementById('sendButton');
+    const chatOutput = document.getElementById('chatOutput');
+    
+    // **重要**: 将下面的 URL 替换成你部署后得到的 Cloud Function URL
+    const CLOUD_FUNCTION_URL = '/api/askGemini';
+
+    async function sendMessage() {
+        const prompt = userInput.value.trim();
+        if (!prompt) return;
+
+        // 在界面上显示用户消息
+        appendMessage('user', prompt);
+        userInput.value = '';
+        sendButton.disabled = true; // 禁用按钮防止重复发送
+        
+        // 显示加载中提示
+        const loadingElement = appendMessage('gemini', '思考中...');
+
+        try {
+            const response = await fetch(CLOUD_FUNCTION_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: prompt }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`服务器错误: ${response.status}`);
+            }
+
+            const data = await response.json();
+            // 更新 "思考中..." 的消息为 Gemini 的真实回复
+            loadingElement.textContent = data.reply;
+
+        } catch (error) {
+            console.error('Error:', error);
+            loadingElement.textContent = '抱歉，出错了。请检查控制台获取更多信息。';
+        } finally {
+            sendButton.disabled = false; // 重新启用按钮
+            chatOutput.scrollTop = chatOutput.scrollHeight; // 滚动到底部
+        }
+    }
+
+    function appendMessage(sender, text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender);
+        messageDiv.textContent = text;
+        chatOutput.appendChild(messageDiv);
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+        return messageDiv; // 返回创建的元素，以便后续更新
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+</script>
+
+</body>
+</html>
