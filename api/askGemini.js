@@ -18,7 +18,7 @@ export default async function handler(req) {
       return new Response('Bad Request: Missing prompt.', { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
     // 发起流式请求
     const result = await model.generateContentStream(prompt);
