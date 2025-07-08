@@ -2,8 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="jiaobiao.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini 对话</title>
+    <title>Gemini跳台</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         /* --- 全局样式和变量 --- */
@@ -221,7 +222,7 @@
         }
         
         #regenerateButton {
-            display: none; /* 默认隐藏 */
+            visibility: hidden; /* 默认隐藏 */
         }
         
     </style>
@@ -232,13 +233,13 @@
     <div class="chat-output" id="chatOutput">
         <div class="message-wrapper gemini">
             <div class="message-icon"><img src="/00.png" alt="Gemini Avatar"></div>
-            <div class="message">你好！有什么可以帮你的吗？</div>
+            <div class="message">欢迎使用反季雪的Gemini跳台。你可以通过本页面与Gemini2.5Pro进行<b>无限制次数的对话</b>，并且无视Google的IP封锁。<b>如果出现任何问题，请联系反季雪</b>。</div>
         </div>
     </div>
     
     <div class="chat-input-area">
         <div class="chat-input">
-            <input type="text" id="userInput" placeholder="在这里输入你的问题..." autocomplete="off">
+            <input type="text" id="userInput" placeholder="输入内容..." autocomplete="off">
             <button id="regenerateButton" class="input-action-button" title="重新生成">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             </button>
@@ -258,19 +259,48 @@
     const API_URL = '/api/askGemini';
     let lastUserPrompt = '';
 
-    marked.setOptions({
-        breaks: true,
-        sanitize: true
-    });
+    marked.setOptions({ breaks: true, sanitize: true });
 
-    async function getApiResponse(prompt) {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: prompt }),
-        });
-        if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
-        return await response.json();
+    // 新的流式处理函数
+    async function streamResponse(prompt, messageWrapperElement) {
+        setLoading(true);
+        const messageElement = messageWrapperElement.querySelector('.message');
+        messageElement.innerHTML = ''; // 清空“思考中...”
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`服务器错误: ${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                fullText += decoder.decode(value, { stream: true });
+                messageElement.innerHTML = marked.parse(fullText + '▋'); // 添加一个闪烁的光标效果
+                chatOutput.scrollTop = chatOutput.scrollHeight;
+            }
+            
+            // 最终渲染，移除光标
+            messageElement.innerHTML = marked.parse(fullText);
+            addCopyButtonsToCodeBlocks(messageElement);
+
+        } catch (error) {
+            console.error('Error:', error);
+            messageElement.textContent = '抱歉，出错了。请检查网络连接或联系反季雪。';
+        } finally {
+            setLoading(false);
+        }
     }
 
     async function handleSend() {
@@ -282,17 +312,9 @@
         
         appendMessage('user', prompt);
         const loadingMsgWrapper = appendMessage('gemini', '思考中...');
-        setLoading(true);
-
-        try {
-            const data = await getApiResponse(prompt);
-            updateMessage(loadingMsgWrapper, data.reply);
-        } catch (error) {
-            console.error('Error:', error);
-            updateMessage(loadingMsgWrapper, '抱歉，出错了。请检查控制台获取更多信息。');
-        } finally {
-            setLoading(false);
-        }
+        
+        // 调用流式处理函数
+        streamResponse(prompt, loadingMsgWrapper);
     }
 
     async function regenerateLastResponse() {
@@ -301,18 +323,8 @@
         const lastGeminiMsgWrapper = chatOutput.querySelector('.message-wrapper.gemini:last-of-type');
         if (!lastGeminiMsgWrapper) return;
         
-        updateMessage(lastGeminiMsgWrapper, '重新生成中...');
-        setLoading(true);
-
-        try {
-            const data = await getApiResponse(lastUserPrompt);
-            updateMessage(lastGeminiMsgWrapper, data.reply);
-        } catch (error) {
-            console.error('Error:', error);
-            updateMessage(lastGeminiMsgWrapper, '抱歉，重新生成时出错了。');
-        } finally {
-            setLoading(false);
-        }
+        // 调用流式处理函数进行重新生成
+        streamResponse(lastUserPrompt, lastGeminiMsgWrapper);
     }
 
     function setLoading(isLoading) {
@@ -329,7 +341,6 @@
     function appendMessage(sender, text) {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message-wrapper ${sender}`;
-        
         let iconHTML = '';
         if (sender === 'user') {
             iconHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
@@ -337,6 +348,7 @@
             iconHTML = '<img src="/00.png" alt="Gemini Avatar">';
         }
         
+        // 对于用户消息和加载提示，我们用 textContent，因为它们不含 Markdown
         messageWrapper.innerHTML = `
             <div class="message-icon">${iconHTML}</div>
             <div class="message">${text}</div>
@@ -345,15 +357,6 @@
         chatOutput.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         return messageWrapper;
-    }
-
-    function updateMessage(messageWrapperElement, newContent) {
-        const messageElement = messageWrapperElement.querySelector('.message');
-        if (messageElement) {
-            messageElement.innerHTML = marked.parse(newContent);
-            addCopyButtonsToCodeBlocks(messageElement);
-        }
-        chatOutput.scrollTop = chatOutput.scrollHeight;
     }
 
     function addCopyButtonsToCodeBlocks(container) {
