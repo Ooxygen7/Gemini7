@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
 
     // 从 Vercel 的环境变量中安全地获取 API Key
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${AIzaSyDZ5u9uKJCsqCOX6yQQiOnbDst8aKvM9Tw}`;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
 
     const geminiResponse = await axios.post(API_URL, {
       contents: [{
