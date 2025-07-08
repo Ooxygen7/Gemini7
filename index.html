@@ -3,29 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini 套壳</title>
+    <title>Gemini 对话</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .chat-container { width: 80%; max-width: 600px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; }
-        .chat-output { flex-grow: 1; padding: 20px; overflow-y: auto; border-bottom: 1px solid #ddd; }
-        .chat-input { display: flex; padding: 10px; }
-        #userInput { flex-grow: 1; border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-size: 16px; }
-        #sendButton { background-color: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; margin-left: 10px; cursor: pointer; }
-        #sendButton:disabled { background-color: #a0cfff; cursor: not-allowed; }
-        .message { margin-bottom: 15px; }
-        .message.user { text-align: right; color: #333; }
-        .message.gemini { background-color: #e9e9eb; padding: 10px; border-radius: 8px; white-space: pre-wrap; /* 保留换行和空格 */ }
+        /* --- 全局样式和变量 --- */
+        :root {
+            --body-bg: #f4f6f8;
+            --chat-bg: #ffffff;
+            --user-msg-bg: #007bff;
+            --gemini-msg-bg: #e9ecef;
+            --text-color: #212529;
+            --light-text-color: #f8f9fa;
+            --border-color: #dee2e6;
+            --accent-color: #007bff;
+            --code-bg: #282c34;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--body-bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        /* --- 聊天容器 --- */
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: var(--chat-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- 聊天输出区域 --- */
+        .chat-output {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* --- 消息通用样式 --- */
+        .message-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            max-width: 90%;
+        }
+        
+        .message-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+
+        .message {
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+
+        /* --- Gemini 消息样式 --- */
+        .gemini .message-icon {
+            background-color: transparent; /* 移除背景色以正确显示图片 */
+        }
+        .gemini .message {
+            background-color: var(--gemini-msg-bg);
+            color: var(--text-color);
+            border-bottom-left-radius: 4px;
+        }
+        .message-icon img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        /* --- 用户消息样式 --- */
+        .user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .user .message {
+            background-color: var(--accent-color);
+            color: var(--light-text-color);
+            border-bottom-right-radius: 4px;
+        }
+        .user .message-icon {
+            background-color: var(--accent-color);
+        }
+
+        /* --- Markdown 内容样式 --- */
+        .message p { margin: 0 0 10px; }
+        .message p:last-child { margin-bottom: 0; }
+        .message ul, .message ol { padding-left: 20px; }
+        .message pre {
+            background-color: var(--code-bg);
+            color: var(--light-text-color);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            position: relative;
+        }
+        .message code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 14px;
+        }
+        .copy-code-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .message pre:hover .copy-code-button { opacity: 1; }
+        .message table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .message th, .message td {
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .message th { background-color: #f2f2f2; }
+
+        /* --- 输入区域 --- */
+        .chat-input-area {
+            border-top: 1px solid var(--border-color);
+            padding: 20px;
+        }
+        .chat-input {
+            display: flex;
+            align-items: center;
+            background-color: var(--gemini-msg-bg);
+            border-radius: 12px;
+            padding: 5px;
+        }
+        #userInput {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 15px;
+            font-size: 16px;
+            outline: none;
+            color: var(--text-color);
+        }
+
+        /* --- 输入框内按钮的通用样式 --- */
+        .input-action-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            background: transparent;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-left: 5px;
+        }
+        .input-action-button svg {
+            width: 20px;
+            height: 20px;
+            stroke: #6c757d;
+            transition: stroke 0.2s ease;
+        }
+        .input-action-button:hover:not(:disabled) {
+            background-color: #dee2e6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .input-action-button:disabled {
+             opacity: 0.4;
+             cursor: not-allowed;
+        }
+        
+        #sendButton {
+            background-color: var(--accent-color);
+        }
+        #sendButton svg {
+            stroke: white;
+        }
+        #sendButton:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        #sendButton:disabled {
+            background-color: #a0cfff;
+            opacity: 1;
+        }
+        
+        #regenerateButton {
+            display: none; /* 默认隐藏 */
+        }
+        
     </style>
 </head>
 <body>
 
 <div class="chat-container">
     <div class="chat-output" id="chatOutput">
-        <div class="message gemini">你好！有什么可以帮你的吗？</div>
+        <div class="message-wrapper gemini">
+            <div class="message-icon"><img src="/00.png" alt="Gemini Avatar"></div>
+            <div class="message">你好！有什么可以帮你的吗？</div>
+        </div>
     </div>
-    <div class="chat-input">
-        <input type="text" id="userInput" placeholder="在这里输入你的问题..." autocomplete="off">
-        <button id="sendButton">发送</button>
+    
+    <div class="chat-input-area">
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="在这里输入你的问题..." autocomplete="off">
+            <button id="regenerateButton" class="input-action-button" title="重新生成">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            </button>
+            <button id="sendButton" class="input-action-button" title="发送">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -33,65 +253,140 @@
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
     const chatOutput = document.getElementById('chatOutput');
+    const regenerateButton = document.getElementById('regenerateButton');
     
-    // **重要**: 将下面的 URL 替换成你部署后得到的 Cloud Function URL
-    const CLOUD_FUNCTION_URL = '/api/askGemini';
+    const API_URL = '/api/askGemini';
+    let lastUserPrompt = '';
 
-    async function sendMessage() {
+    marked.setOptions({
+        breaks: true,
+        sanitize: true
+    });
+
+    async function getApiResponse(prompt) {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompt }),
+        });
+        if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
+        return await response.json();
+    }
+
+    async function handleSend() {
         const prompt = userInput.value.trim();
         if (!prompt) return;
 
-        // 在界面上显示用户消息
-        appendMessage('user', prompt);
+        lastUserPrompt = prompt;
         userInput.value = '';
-        sendButton.disabled = true; // 禁用按钮防止重复发送
         
-        // 显示加载中提示
-        const loadingElement = appendMessage('gemini', '思考中...');
+        appendMessage('user', prompt);
+        const loadingMsgWrapper = appendMessage('gemini', '思考中...');
+        setLoading(true);
 
         try {
-            const response = await fetch(CLOUD_FUNCTION_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ prompt: prompt }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`服务器错误: ${response.status}`);
-            }
-
-            const data = await response.json();
-            // 更新 "思考中..." 的消息为 Gemini 的真实回复
-            loadingElement.textContent = data.reply;
-
+            const data = await getApiResponse(prompt);
+            updateMessage(loadingMsgWrapper, data.reply);
         } catch (error) {
             console.error('Error:', error);
-            loadingElement.textContent = '抱歉，出错了。请检查控制台获取更多信息。';
+            updateMessage(loadingMsgWrapper, '抱歉，出错了。请检查控制台获取更多信息。');
         } finally {
-            sendButton.disabled = false; // 重新启用按钮
-            chatOutput.scrollTop = chatOutput.scrollHeight; // 滚动到底部
+            setLoading(false);
         }
     }
 
-    function appendMessage(sender, text) {
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', sender);
-        messageDiv.textContent = text;
-        chatOutput.appendChild(messageDiv);
-        chatOutput.scrollTop = chatOutput.scrollHeight;
-        return messageDiv; // 返回创建的元素，以便后续更新
+    async function regenerateLastResponse() {
+        if (!lastUserPrompt) return;
+
+        const lastGeminiMsgWrapper = chatOutput.querySelector('.message-wrapper.gemini:last-of-type');
+        if (!lastGeminiMsgWrapper) return;
+        
+        updateMessage(lastGeminiMsgWrapper, '重新生成中...');
+        setLoading(true);
+
+        try {
+            const data = await getApiResponse(lastUserPrompt);
+            updateMessage(lastGeminiMsgWrapper, data.reply);
+        } catch (error) {
+            console.error('Error:', error);
+            updateMessage(lastGeminiMsgWrapper, '抱歉，重新生成时出错了。');
+        } finally {
+            setLoading(false);
+        }
     }
 
-    sendButton.addEventListener('click', sendMessage);
+    function setLoading(isLoading) {
+        sendButton.disabled = isLoading;
+        regenerateButton.disabled = isLoading;
+        userInput.disabled = isLoading;
+        if (isLoading) {
+            regenerateButton.style.display = 'none';
+        } else if (lastUserPrompt) {
+            regenerateButton.style.display = 'flex';
+        }
+    }
+    
+    function appendMessage(sender, text) {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = `message-wrapper ${sender}`;
+        
+        let iconHTML = '';
+        if (sender === 'user') {
+            iconHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+        } else {
+            iconHTML = '<img src="/00.png" alt="Gemini Avatar">';
+        }
+        
+        messageWrapper.innerHTML = `
+            <div class="message-icon">${iconHTML}</div>
+            <div class="message">${text}</div>
+        `;
+        
+        chatOutput.appendChild(messageWrapper);
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+        return messageWrapper;
+    }
+
+    function updateMessage(messageWrapperElement, newContent) {
+        const messageElement = messageWrapperElement.querySelector('.message');
+        if (messageElement) {
+            messageElement.innerHTML = marked.parse(newContent);
+            addCopyButtonsToCodeBlocks(messageElement);
+        }
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+    }
+
+    function addCopyButtonsToCodeBlocks(container) {
+        const codeBlocks = container.querySelectorAll('pre');
+        codeBlocks.forEach(block => {
+            const button = document.createElement('button');
+            button.className = 'copy-code-button';
+            button.textContent = 'Copy';
+            button.onclick = () => {
+                const code = block.querySelector('code').innerText;
+                navigator.clipboard.writeText(code).then(() => {
+                    button.textContent = 'Copied!';
+                    setTimeout(() => { button.textContent = 'Copy'; }, 2000);
+                });
+            };
+            block.appendChild(button);
+        });
+    }
+
+    // --- 事件监听 ---
+    sendButton.addEventListener('click', handleSend);
     userInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            sendMessage();
+        if (event.key === 'Enter' && !sendButton.disabled) {
+            handleSend();
         }
     });
+    userInput.addEventListener('input', () => {
+        if (regenerateButton.style.display !== 'none') {
+            regenerateButton.style.display = 'none';
+        }
+    });
+    regenerateButton.addEventListener('click', regenerateLastResponse);
 
 </script>
-
 </body>
 </html>
