@@ -1,45 +1,49 @@
-// api/askGemini.js
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const axios = require('axios');
+// 从环境变量中初始化
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Vercel 会处理这个函数，并传入请求(req)和响应(res)对象
-module.exports = async (req, res) => {
-  // 设置CORS头，允许所有来源访问（或者指定你的前端域名）
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+export const config = {
+  runtime: 'edge', // Vercel 推荐流式传输使用 Edge Runtime
+};
 
-  // 处理浏览器的CORS预检请求
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  // 确保是POST请求
+export default async function handler(req) {
   if (req.method !== 'POST') {
-    return res.status(405).send('Method Not Allowed');
+    return new Response('Method Not Allowed', { status: 405 });
   }
 
   try {
-    const userPrompt = req.body.prompt;
-    if (!userPrompt) {
-      return res.status(400).json({ error: 'Missing prompt' });
+    const { prompt } = await req.json();
+    if (!prompt) {
+      return new Response('Bad Request: Missing prompt.', { status: 400 });
     }
 
-    // 从 Vercel 的环境变量中安全地获取 API Key
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`;
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
-    const geminiResponse = await axios.post(API_URL, {
-      contents: [{
-        parts: [{ text: userPrompt }],
-      }],
+    // 发起流式请求
+    const result = await model.generateContentStream(prompt);
+
+    // 创建一个可读流来将 Gemini 的输出转发给前端
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of result.stream) {
+          const chunkText = chunk.text();
+          // 将每个文本块编码并推送到流中
+          controller.enqueue(new TextEncoder().encode(chunkText));
+        }
+        controller.close();
+      },
     });
 
-    const responseText = geminiResponse.data.candidates[0].content.parts[0].text;
-    res.status(200).json({ reply: responseText });
+    // 将流作为响应返回
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    });
 
   } catch (error) {
-    console.error('Error:', error.message);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Error in stream generation:', error);
+    return new Response('Internal Server Error', { status: 500 });
   }
-};
+}
