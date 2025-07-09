@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeminiSnow</title>
+    <title>Gemini 对话</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
@@ -41,7 +41,7 @@
             overflow: hidden;
         }
         
-        /* 新增：聊天窗口头部样式 */
+        /* --- 新增：自定义模型选择器样式 --- */
         .chat-header {
             display: flex;
             justify-content: space-between;
@@ -50,30 +50,55 @@
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
         }
-        .chat-header h2 {
-            font-size: 20px;
-            margin: 0;
-            font-weight: 600;
-        }
-        #model-selector {
+        .chat-header h2 { font-size: 20px; margin: 0; font-weight: 600; }
+        .model-selector-wrapper { position: relative; }
+        .selected-model {
             background-color: var(--gemini-msg-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 8px 12px;
             font-size: 14px;
             cursor: pointer;
-            outline: none;
-        }
-
-        .chat-output {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            align-items: center;
+            gap: 8px;
         }
-        .message-wrapper { display: flex; align-items: flex-start; gap: 10px; max-width: 90%; }
+        .selected-model::after {
+            content: '▼';
+            font-size: 10px;
+            transform: scaleY(0.8);
+        }
+        .model-dropdown {
+            display: none;
+            position: absolute;
+            top: 105%;
+            right: 0;
+            background-color: #333;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10;
+            width: 250px;
+        }
+        .model-dropdown.active { display: block; }
+        .model-option {
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .model-option:hover { background-color: #444; }
+        .model-option.selected { background-color: #555; }
+        .model-option-text h4 { margin: 0 0 4px; font-size: 14px; }
+        .model-option-text p { margin: 0; font-size: 12px; color: #ccc; }
+        .model-option .checkmark { font-size: 18px; color: var(--accent-color); visibility: hidden; }
+        .model-option.selected .checkmark { visibility: visible; }
+
+        .chat-output { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .message-wrapper { display: flex; align-items: flex-start; gap: 10px; max-width: 90%; position: relative; }
         .message-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin-top: 5px; }
         .message { padding: 12px 18px; border-radius: 18px; line-height: 1.6; word-wrap: break-word; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -81,6 +106,34 @@
         .gemini .message-icon { background-color: transparent; }
         .gemini .message { background-color: var(--gemini-msg-bg); color: var(--text-color); border-bottom-left-radius: 4px; }
         .message-icon img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        
+        /* 新增：消息复制按钮样式 */
+        .copy-message-button {
+            position: absolute;
+            bottom: 8px;
+            right: -35px; /* 默认在气泡右侧 */
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            transform: scale(0.8);
+        }
+        .user .copy-message-button {
+            left: -35px; /* 用户消息的按钮在左侧 */
+            right: auto;
+        }
+        .message-wrapper:hover .copy-message-button {
+            opacity: 1;
+            transform: scale(1);
+        }
+
         .user { align-self: flex-end; flex-direction: row-reverse; }
         .user .message { background-color: var(--accent-color); color: var(--light-text-color); border-bottom-right-radius: 4px; }
         .user .message-icon { background-color: var(--accent-color); }
@@ -110,18 +163,26 @@
         #sendButton:disabled { background-color: #a0cfff; opacity: 1; }
         #regenerateButton { visibility: hidden; }
         @media (max-width: 480px) { .chat-input-area { padding: 15px 10px; } .chat-output { padding: 15px; gap: 15px; } .message-wrapper { max-width: 95%; } }
+        @media (hover: none) or (pointer: coarse) {
+            .message-wrapper .copy-message-button {
+                /* 在手机等触摸设备上，让复制按钮一直可见，而不是悬浮显示 */
+                opacity: 0.5; /* 使用一个柔和的透明度，不那么突兀 */
+                transform: scale(1); /* 保持正常大小 */
+            }
+        }
     </style>
 </head>
 <body>
 
 <div class="chat-container">
+
     <div class="chat-header">
-        <h2>Gemini Snow</h2>
-        <select id="model-selector">
-            <option value="gemini-2.5-pro" selected>🏆Gemini 2.5 Pro 专业，生成速度慢，负载大</option>
-            <option value="gemini-2.5-flash">💡Gemini 2.5 Flash 平衡之选，生成速度快</option>
-            <option value="gemini-2.0-flash">⚡️Gemini 2.0 Flash 历代模型，生成速度快</option>
-        </select>
+        <h2>Gemini</h2>
+        <div class="model-selector-wrapper">
+            <div class="selected-model" id="selected-model-display">2.5 Flash</div>
+            <div class="model-dropdown" id="model-dropdown-list">
+                </div>
+        </div>
     </div>
 
     <div class="chat-output" id="chatOutput">
@@ -142,34 +203,40 @@
             </button>
         </div>
     </div>
-</div>
 
+</div> 
 <script>
+
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
     const chatOutput = document.getElementById('chatOutput');
     const regenerateButton = document.getElementById('regenerateButton');
-    const modelSelector = document.getElementById('model-selector'); // 新增
+    const selectedModelDisplay = document.getElementById('selected-model-display');
+    const modelDropdownList = document.getElementById('model-dropdown-list');
     
     const API_URL = '/api/askGemini';
     let lastUserPrompt = '';
     let conversationHistory = [];
+    let currentModel = 'gemini-2.5-flash'; // 默认模型
+
+    const models = [
+        { id: 'gemini-2.5-flash', name: '2.5 Flash', description: '快速提供全方位的帮助' },
+        { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码' },
+        { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '最快速度提供帮助' }
+    ];
 
     marked.setOptions({ breaks: true, sanitize: true });
 
-    // 修改：函数现在需要接收 model 参数
     async function getApiResponse(prompt, history, model) {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // 修改：将选中的 model 一同发送到后端
             body: JSON.stringify({ prompt, history, model }),
         });
         if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
         return response;
     }
 
-    // 修改：函数现在需要接收 model 参数
     async function streamResponse(prompt, messageWrapperElement, model, isRegeneration = false) {
         setLoading(true);
         const messageElement = messageWrapperElement.querySelector('.message');
@@ -181,9 +248,7 @@
                 historyForThisRequest = conversationHistory.slice(0, -1);
             }
 
-            // 修改：将 model 传递给 API 请求函数
             const response = await getApiResponse(prompt, historyForThisRequest, model);
-            
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = '';
@@ -205,11 +270,12 @@
 
             messageElement.innerHTML = marked.parse(fullText);
             addCopyButtonsToCodeBlocks(messageElement);
+            addCopyButtonToMessage(messageWrapperElement, fullText); 
             setTimeout(() => { messageWrapperElement.classList.remove('streaming-in'); }, 500);
 
         } catch (error) {
             console.error('Error:', error);
-            updateMessage(messageWrapperElement, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试。<br></b>如果多次等待后仍然无法正常使用，请联系反季雪。');
+            updateMessage(messageWrapperElement, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试或暂时使用其他模型。<br></b>如果仍然无法正常使用，请联系反季雪。');
         } finally {
             setLoading(false);
         }
@@ -221,14 +287,13 @@
 
         lastUserPrompt = prompt;
         userInput.value = '';
-        const selectedModel = modelSelector.value; // 获取当前选中的模型
+        const selectedModel = currentModel;
         
         conversationHistory.push({ role: 'user', parts: [{ text: prompt }] });
         
         appendMessage('user', prompt);
         const loadingMsgWrapper = appendMessage('gemini', 'loading');
         
-        // 将选中的模型传递给流式处理函数
         streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
     }
 
@@ -237,19 +302,17 @@
         const lastGeminiMsgWrapper = chatOutput.querySelector('.message-wrapper.gemini:last-of-type');
         if (!lastGeminiMsgWrapper) return;
         
-        const selectedModel = modelSelector.value; // 获取当前选中的模型
+        const selectedModel = currentModel;
         updateMessage(lastGeminiMsgWrapper, 'loading');
         
-        // 将选中的模型传递给流式处理函数
         streamResponse(lastUserPrompt, lastGeminiMsgWrapper, selectedModel, true);
     }
-
-    // 其他函数（setLoading, appendMessage, updateMessage, addCopyButtonsToCodeBlocks）保持不变
+    
     function setLoading(isLoading) {
         sendButton.disabled = isLoading;
         regenerateButton.disabled = isLoading;
         userInput.disabled = isLoading;
-        modelSelector.disabled = isLoading; // 新增：加载时禁用模型选择
+        selectedModelDisplay.style.pointerEvents = isLoading ? 'none' : 'auto';
         if (isLoading) {
             regenerateButton.style.visibility = 'hidden';
         } else if (lastUserPrompt) {
@@ -263,15 +326,23 @@
         const iconHTML = sender === 'user' 
             ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
             : '<img src="/00.png" alt="Gemini Avatar">';
+        
         const messageContentHTML = text === 'loading'
             ? `<div class="loading-indicator"><div class="spinner"></div><span>思考中...</span></div>`
-            : text;
+            : marked.parse(text);
+
         messageWrapper.innerHTML = `
             <div class="message-icon">${iconHTML}</div>
             <div class="message">${messageContentHTML}</div>
         `;
+        
         chatOutput.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
+
+        if (sender === 'user') {
+            addCopyButtonToMessage(messageWrapper, text);
+        }
+
         return messageWrapper;
     }
 
@@ -293,24 +364,87 @@
         codeBlocks.forEach(block => {
             const button = document.createElement('button');
             button.className = 'copy-code-button';
-            button.textContent = 'Copy';
+            button.textContent = '复制';
             button.onclick = () => {
                 const code = block.querySelector('code').innerText;
                 navigator.clipboard.writeText(code).then(() => {
-                    button.textContent = 'Copied!';
-                    setTimeout(() => { button.textContent = 'Copy'; }, 2000);
+                    button.textContent = '已复制!';
+                    setTimeout(() => { button.textContent = '复制'; }, 2000);
                 });
             };
             block.appendChild(button);
         });
     }
 
+    function addCopyButtonToMessage(messageWrapper, textToCopy) {
+        const existingButton = messageWrapper.querySelector('.copy-message-button');
+        if (existingButton) existingButton.remove();
+
+        const button = document.createElement('button');
+        button.className = 'copy-message-button';
+        button.title = '复制内容';
+        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+        button.onclick = (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                button.innerHTML = '✓';
+                setTimeout(() => {
+                    button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+                }, 1500);
+            });
+        };
+        messageWrapper.appendChild(button);
+    }
+
+    function setupModelSelector() {
+        modelDropdownList.innerHTML = '';
+        models.forEach(model => {
+            const option = document.createElement('div');
+            option.className = 'model-option';
+            option.dataset.value = model.id;
+            option.innerHTML = `
+                <div class="model-option-text">
+                    <h4>${model.name}</h4>
+                    <p>${model.description}</p>
+                </div>
+                <span class="checkmark">✓</span>
+            `;
+            option.addEventListener('click', () => {
+                currentModel = model.id;
+                updateSelectorDisplay();
+                modelDropdownList.classList.remove('active');
+            });
+            modelDropdownList.appendChild(option);
+        });
+        updateSelectorDisplay();
+    }
+
+    function updateSelectorDisplay() {
+        const selectedModel = models.find(m => m.id === currentModel);
+        selectedModelDisplay.textContent = selectedModel.name;
+        document.querySelectorAll('.model-option').forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.value === currentModel);
+        });
+    }
+
+    selectedModelDisplay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        modelDropdownList.classList.toggle('active');
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!modelDropdownList.contains(e.target)) {
+            modelDropdownList.classList.remove('active');
+        }
+    });
+
+    // --- 初始化 ---
+    setupModelSelector(); 
+
     // --- 事件监听 ---
     sendButton.addEventListener('click', handleSend);
     userInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter' && !sendButton.disabled) {
-            handleSend();
-        }
+        if (event.key === 'Enter' && !sendButton.disabled) { handleSend(); }
     });
     userInput.addEventListener('input', () => {
         if (regenerateButton.style.visibility !== 'hidden') {
