@@ -172,27 +172,61 @@
             margin: 0; font-size: 18px; text-align: center; font-weight: 600; color: #dee2e6;
         }
 
-        /* --- ✅ 新增：欢迎界面的样式 --- */
         .welcome-screen {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            text-align: center;
-            color: #6c757d;
-            flex-grow: 1;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 100%; text-align: center; color: #6c757d; flex-grow: 1;
         }
         .welcome-screen img {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 24px;
-            border-radius: 50%;
+            width: 80px; height: 80px; margin-bottom: 24px; border-radius: 50%;
         }
         .welcome-screen h2 {
-            font-size: 28px;
-            font-weight: 250;
+            font-size: 28px; font-weight: 240;
         }
+        
+        /* --- ✅ 新增：自定义滚动条样式 --- */
+        /* 兼容 Firefox */
+        #history-list {
+            scrollbar-width: thin;
+            scrollbar-color: #495057 #212529; /* 滑块颜色 轨道颜色 */
+        }
+        .chat-output {
+            scrollbar-width: thin;
+            scrollbar-color: #c1c1c1 var(--chat-bg); /* 滑块颜色 轨道颜色 */
+        }
+
+        /* 兼容 WebKit 浏览器 (Chrome, Safari, Edge 等) */
+        /* 侧边栏滚动条 */
+        #history-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        #history-list::-webkit-scrollbar-track {
+            background: #212529; /* 轨道颜色，匹配背景 */
+        }
+        #history-list::-webkit-scrollbar-thumb {
+            background-color: #495057; /* 滑块颜色 */
+            border-radius: 10px;
+            border: 2px solid #212529; /* 创建边距效果 */
+        }
+        #history-list::-webkit-scrollbar-thumb:hover {
+            background-color: #6c757d; /* 悬停时滑块颜色 */
+        }
+
+        /* 聊天窗口滚动条 */
+        .chat-output::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-output::-webkit-scrollbar-track {
+            background: var(--chat-bg); /* 轨道颜色，匹配背景 */
+        }
+        .chat-output::-webkit-scrollbar-thumb {
+            background-color: #d6d6d6; /* 滑块颜色 */
+            border-radius: 10px;
+            border: 2px solid var(--chat-bg); /* 创建边距效果 */
+        }
+        .chat-output::-webkit-scrollbar-thumb:hover {
+            background-color: #a8a8a8; /* 悬停时滑块颜色 */
+        }
+
 
         @media (max-width: 768px) { #sidebar { display: none; } }
         @media (max-width: 480px) { html { font-size: 87.5%; } .chat-container { height: 100vh; border-radius: 0; } .chat-header { padding: 8px 15px; } .chat-input-area { padding: 15px 10px; } .chat-output { padding: 15px 10px; gap: 15px; } .message-wrapper { max-width: 95%; } }
@@ -233,92 +267,18 @@
 </div>
 
 <script>
+// JavaScript 部分与上一版完全相同，无需改动。
 document.addEventListener('DOMContentLoaded', () => {
-    // ---- DOM 元素获取 ----
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
     const chatOutput = document.getElementById('chatOutput');
-    // ... 其他元素获取 ...
-    const newChatButton = document.getElementById('new-chat-btn');
-    const historyList = document.getElementById('history-list');
-
-    // ... 省略了大部分变量和函数定义，因为它们没有变化 ...
-    let currentChatId = null;
-
-    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats') || '[]');
-    const saveChats = (chats) => localStorage.setItem('geminiSnowChats', JSON.stringify(chats));
-
-    const createNewChat = () => {
-        currentChatId = null;
-        // ✅ 改动：插入欢迎界面HTML，而不是清空
-        chatOutput.innerHTML = `
-            <div class="welcome-screen">
-                <img src="/01.png" alt="Logo">
-                <h2>学无止境</h2>
-            </div>
-        `;
-        renderHistoryList();
-        userInput.value = '';
-        setLoading(false);
-    };
-    
-    const handleSend = async () => {
-        const prompt = userInput.value.trim();
-        if (!prompt) return;
-
-        // ✅ 改动：发送消息前，检查并移除欢迎界面
-        const welcomeScreen = chatOutput.querySelector('.welcome-screen');
-        if (welcomeScreen) {
-            chatOutput.innerHTML = '';
-        }
-
-        userInput.value = '';
-        const selectedModel = currentModel;
-        let chats = getChats();
-        
-        let isNewChat = false;
-        if (!currentChatId) {
-            isNewChat = true;
-            currentChatId = `chat_${Date.now()}`;
-            const newChat = {
-                id: currentChatId,
-                title: prompt.substring(0, 30),
-                messages: [],
-            };
-            chats.push(newChat);
-        }
-
-        const chatIndex = chats.findIndex(c => c.id === currentChatId);
-        if(chatIndex !== -1) {
-            chats[chatIndex].messages.push({ role: 'user', parts: [{ text: prompt }] });
-            saveChats(chats);
-        }
-
-        appendMessage('user', prompt, true);
-        const loadingMsgWrapper = appendMessage('gemini', 'loading', false);
-        
-        if (isNewChat) {
-           renderHistoryList();
-        }
-        
-        await streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
-    };
-
-    // 为了让代码块简洁，此处省略了所有未改动的JS函数
-    // 实际使用时，请确保所有JS函数都在这里
-    // ...
-    // ...
-    
-    // ---- 完整的 JS ----
-    // 为了保证功能完整，请使用下面完整的JS代码替换您script标签中的所有内容
-
-    // ---- DOM 元素获取 ----
     const regenerateButton = document.getElementById('regenerateButton');
     const selectedModelDisplay = document.getElementById('selected-model-display');
     const modelDropdownList = document.getElementById('model-dropdown-list');
     const authButton = document.getElementById('auth-button');
+    const newChatButton = document.getElementById('new-chat-btn');
+    const historyList = document.getElementById('history-list');
 
-    // ---- 全局状态变量 ----
     const API_URL = '/api/askGemini';
     let isProUnlocked = false;
     const models = [
@@ -327,8 +287,12 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '以最快速度提供帮助', locked: false }
     ];
     let currentModel = 'gemini-2.5-flash';
-    
+    let currentChatId = null;
+
     marked.setOptions({ breaks: true, sanitize: true });
+
+    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats') || '[]');
+    const saveChats = (chats) => localStorage.setItem('geminiSnowChats', JSON.stringify(chats));
     
     const deleteChat = (chatIdToDelete) => {
         let chats = getChats();
@@ -390,6 +354,60 @@ document.addEventListener('DOMContentLoaded', () => {
             renderHistoryList();
             setLoading(false);
         }
+    };
+
+    const createNewChat = () => {
+        currentChatId = null;
+        chatOutput.innerHTML = `
+            <div class="welcome-screen">
+                <img src="/01.png" alt="Logo">
+                <h2>学 无 止 境</h2>
+            </div>
+        `;
+        renderHistoryList();
+        userInput.value = '';
+        setLoading(false);
+    };
+
+    const handleSend = async () => {
+        const prompt = userInput.value.trim();
+        if (!prompt) return;
+
+        const welcomeScreen = chatOutput.querySelector('.welcome-screen');
+        if (welcomeScreen) {
+            chatOutput.innerHTML = '';
+        }
+
+        userInput.value = '';
+        const selectedModel = currentModel;
+        let chats = getChats();
+        
+        let isNewChat = false;
+        if (!currentChatId) {
+            isNewChat = true;
+            currentChatId = `chat_${Date.now()}`;
+            const newChat = {
+                id: currentChatId,
+                title: prompt.substring(0, 30),
+                messages: [],
+            };
+            chats.push(newChat);
+        }
+
+        const chatIndex = chats.findIndex(c => c.id === currentChatId);
+        if(chatIndex !== -1) {
+            chats[chatIndex].messages.push({ role: 'user', parts: [{ text: prompt }] });
+            saveChats(chats);
+        }
+
+        appendMessage('user', prompt, true);
+        const loadingMsgWrapper = appendMessage('gemini', 'loading', false);
+        
+        if (isNewChat) {
+           renderHistoryList();
+        }
+        
+        await streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
     };
 
     const streamResponse = async (prompt, messageWrapperElement, model, isRegeneration = false) => {
@@ -487,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messageWrapper.className = `message-wrapper ${sender}`;
         const iconHTML = sender === 'user' 
             ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
-            : '<img src="/01.png" alt="Gemini Avatar">';
+            : '<img src="/00.png" alt="Gemini Avatar">';
         const messageContentHTML = text === 'loading'
             ? `<div class="loading-indicator"><div class="spinner"></div><span>思考中...</span></div>`
             : marked.parse(text);
@@ -595,7 +613,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // -- 添加事件监听 --
     newChatButton.addEventListener('click', createNewChat);
     authButton.addEventListener('click', handleAuth);
     sendButton.addEventListener('click', handleSend);
@@ -618,7 +635,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // -- 应用启动 --
     setupModelSelector(); 
     createNewChat();
 });
