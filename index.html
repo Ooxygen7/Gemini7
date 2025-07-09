@@ -81,7 +81,7 @@
             background-size: 400% 400%; animation: animatedGradient 3s ease infinite;
         }
         .copy-message-button {
-            position: absolute; top: 50px; left: 6px; background: #fff; border: 1px solid var(--border-color);
+            position: absolute; top: 5px; left: 6px; background: #fff; border: 1px solid var(--border-color);
             border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex;
             justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s, transform 0.2s; transform: scale(0.8);
         }
@@ -258,7 +258,7 @@
         <div class="chat-output" id="chatOutput"></div>
         <div class="chat-input-area">
             <div class="chat-input">
-                <input type="text" id="userInput" placeholder="在这里输入你的问题..." autocomplete="off">
+                <input type="text" id="userInput" placeholder="问一问Gemini" autocomplete="off">
                 <button id="regenerateButton" class="input-action-button" title="重新生成"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
                 <button id="sendButton" class="input-action-button" title="发送"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
             </div>
@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messageWrapper.className = `message-wrapper ${sender}`;
         const iconHTML = sender === 'user' 
             ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
-            : '<img src="/00.png" alt="Gemini Avatar">';
+            : '<img src="/01.png" alt="Gemini Avatar">';
         const messageContentHTML = text === 'loading'
             ? `<div class="loading-indicator"><div class="spinner"></div><span>思考中...</span></div>`
             : marked.parse(text);
