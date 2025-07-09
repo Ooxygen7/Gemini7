@@ -1,10 +1,9 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// 从环境变量中初始化
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export const config = {
-  runtime: 'edge', // Vercel 推荐流式传输使用 Edge Runtime
+  runtime: 'edge',
 };
 
 export default async function handler(req) {
@@ -13,33 +12,35 @@ export default async function handler(req) {
   }
 
   try {
-    const { prompt } = await req.json();
+    // 从请求中同时获取 prompt 和 history
+    const { prompt, history } = await req.json();
+
     if (!prompt) {
       return new Response('Bad Request: Missing prompt.', { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
-    // 发起流式请求
-    const result = await model.generateContentStream(prompt);
+    // ✅ 核心改动：使用历史记录开启一个聊天会话
+    const chat = model.startChat({
+      history: history || [], // 如果没有历史记录，则使用空数组
+    });
 
-    // 创建一个可读流来将 Gemini 的输出转发给前端
+    // ✅ 核心改动：使用 chat.sendMessageStream 来发送带有上下文的新消息
+    const result = await chat.sendMessageStream(prompt);
+
     const stream = new ReadableStream({
       async start(controller) {
         for await (const chunk of result.stream) {
           const chunkText = chunk.text();
-          // 将每个文本块编码并推送到流中
           controller.enqueue(new TextEncoder().encode(chunkText));
         }
         controller.close();
       },
     });
-
-    // 将流作为响应返回
+    
     return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-      },
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
 
   } catch (error) {
