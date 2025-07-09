@@ -167,89 +167,244 @@
         #regenerateButton { visibility: hidden; }
         @media (max-width: 480px) { html { font-size: 87.5%; } .chat-container { height: 100vh; border-radius: 0; } .chat-header { padding: 8px 15px; } .chat-input-area { padding: 15px 10px; } .chat-output { padding: 15px 10px; gap: 15px; } .message-wrapper { max-width: 95%; } }
         @media (hover: none) or (pointer: coarse) { .message-wrapper .copy-message-button { opacity: 0.5; transform: scale(1); } }
+                /* --- 新增：主布局和侧边栏样式 --- */
+        .main-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            max-width: 1200px; /* 稍微加宽以容纳侧边栏 */
+            max-height: 90vh;
+            background: var(--chat-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 260px;
+            background-color: #212529; /* 深色背景 */
+            color: var(--light-text-color);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            border-bottom: 1px solid #343a40;
+        }
+
+        #new-chat-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: transparent;
+            color: var(--light-text-color);
+            border: 1px solid #6c757d;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        #new-chat-btn:hover {
+            background-color: #343a40;
+        }
+
+        #history-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .history-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* 超出部分显示省略号 */
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .history-item:hover {
+            background-color: #343a40;
+        }
+
+        .history-item.active {
+            background-color: #495057; /* 选中项的背景色 */
+        }
+
+        /* 调整聊天容器以适应新布局 */
+        .chat-container {
+            flex-grow: 1; /* 占据剩余空间 */
+            height: 100%; /* 高度占满父容器 */
+            max-width: none;
+            max-height: none;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                display: none; /* 在小屏幕上暂时隐藏侧边栏，这部分可以后续优化为抽屉式 */
+            }
+        }
     </style>
 </head>
-<body>
 
-<div class="chat-container">
-    <div class="chat-header">
-        <h2>GeminiSnow</h2>
-        <div class="header-controls">
-            <button id="auth-button">认证</button>
-            <div class="model-selector-wrapper">
-                <div class="selected-model" id="selected-model-display"></div>
-                <div class="model-dropdown" id="model-dropdown-list"></div>
+<body>
+<div class="main-container">
+
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <button id="new-chat-btn">＋ 发起新对话</button>
+        </div>
+        <div id="history-list">
+            </div>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>GeminiSnow</h2>
+            <div class="header-controls">
+                <button id="auth-button">认证</button>
+                <div class="model-selector-wrapper">
+                    <div class="selected-model" id="selected-model-display"></div>
+                    <div class="model-dropdown" id="model-dropdown-list"></div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="chat-output" id="chatOutput">
-        <div class="message-wrapper gemini">
-            <div class="message-icon"><img src="/00.png" alt="Gemini Avatar"></div>
-            <div class="message">欢迎使用GeminiSnow！<br><b>这是一个通过API代理来直接与Gemini2.5Pro进行对话的项目</b>。<br>输入你的任何问题来开始！<b><br>如果出现任何问题，请联系反季雪。</div>
+        <div class="chat-output" id="chatOutput">
+            </div>
+        
+        <div class="chat-input-area">
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="在这里输入你的问题..." autocomplete="off">
+                <button id="regenerateButton" class="input-action-button" title="重新生成"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
+                <button id="sendButton" class="input-action-button" title="发送"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
+            </div>
         </div>
-    </div>
-    
-    <div class="chat-input-area">
-        <div class="chat-input">
-            <input type="text" id="userInput" placeholder="在这里输入你的问题..." autocomplete="off">
-            <button id="regenerateButton" class="input-action-button" title="重新生成"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
-            <button id="sendButton" class="input-action-button" title="发送"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
-        </div>
-    </div>
+    </div> 
 
-</div> 
+</div>
+
 
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+    // ---- DOM 元素获取 ----
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
     const chatOutput = document.getElementById('chatOutput');
     const regenerateButton = document.getElementById('regenerateButton');
     const selectedModelDisplay = document.getElementById('selected-model-display');
     const modelDropdownList = document.getElementById('model-dropdown-list');
-    const authButton = document.getElementById('auth-button'); // 新增
-    
-    const API_URL = '/api/askGemini';
-    let lastUserPrompt = '';
-    let conversationHistory = [];
-    let isProUnlocked = false; // 新增：认证状态
+    const authButton = document.getElementById('auth-button');
+    // 新增侧边栏元素
+    const newChatButton = document.getElementById('new-chat-btn');
+    const historyList = document.getElementById('history-list');
 
-    // 您的模型列表，为 Pro 模型添加 locked 属性
+    // ---- 全局状态变量 ----
+    const API_URL = '/api/askGemini';
+    let isProUnlocked = false;
     const models = [
         { id: 'gemini-2.5-flash', name: '2.5 Flash', description: '快速提供全方位的帮助', locked: false },
         { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码', locked: true },
         { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '以最快速度提供帮助', locked: false }
     ];
-
-    let currentModel = 'gemini-2.5-flash'; // 您指定的默认模型
+    let currentModel = 'gemini-2.5-flash';
+    let currentChatId = null; // 用于追踪当前是哪个聊天
 
     marked.setOptions({ breaks: true, sanitize: true });
 
-    async function getApiResponse(prompt, history, model) {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, history, model }),
-        });
-        if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
-        return response;
-    }
+    // ---- 本地存储核心函数 ----
+    const getChats = () => {
+        const chatsJSON = localStorage.getItem('geminiSnowChats');
+        return chatsJSON ? JSON.parse(chatsJSON) : [];
+    };
 
+    const saveChats = (chats) => {
+        localStorage.setItem('geminiSnowChats', JSON.stringify(chats));
+    };
+
+    // ---- 聊天和历史记录渲染函数 ----
+    const renderHistoryList = () => {
+        const chats = getChats();
+        historyList.innerHTML = '';
+        chats.forEach(chat => {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.textContent = chat.title;
+            item.dataset.chatId = chat.id;
+            if (chat.id === currentChatId) {
+                item.classList.add('active');
+            }
+            item.addEventListener('click', () => loadChat(chat.id));
+            historyList.prepend(item); // 让最新的聊天显示在最上面
+        });
+    };
+    
+    const renderChatWindow = (messages) => {
+        chatOutput.innerHTML = '';
+        messages.forEach(msg => appendMessage(msg.role, msg.parts[0].text, false));
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+    };
+    
+    const loadChat = (chatId) => {
+        const chats = getChats();
+        const chat = chats.find(c => c.id === chatId);
+        if (chat) {
+            currentChatId = chatId;
+            renderChatWindow(chat.messages);
+            renderHistoryList(); // 更新高亮状态
+            setLoading(false); // 确保按钮可用
+        }
+    };
+
+    const createNewChat = () => {
+        currentChatId = null;
+        chatOutput.innerHTML = ''; // 清空聊天窗口
+        appendMessage('gemini', '欢迎使用GeminiSnow！<br><b>这是一个通过API代理来直接与Gemini进行对话的项目</b>。<br>输入你的任何问题来开始！<b><br>如果出现任何问题，请联系反季雪。', false);
+        renderHistoryList();
+        userInput.value = '';
+        setLoading(false);
+    };
+
+    // ---- API 及消息处理核心逻辑 (大部分与原来相似，但集成了会话管理) ----
     async function streamResponse(prompt, messageWrapperElement, model, isRegeneration = false) {
         setLoading(true);
         messageWrapperElement.classList.add('gemini-loading');
         const messageElement = messageWrapperElement.querySelector('.message');
         messageWrapperElement.classList.add('streaming-in');
+        
+        let chats = getChats();
+        let currentMessages = [];
+        if(isRegeneration) {
+            const chat = chats.find(c => c.id === currentChatId);
+            currentMessages = chat.messages.slice(0, -1);
+        } else {
+            const chat = chats.find(c => c.id === currentChatId);
+            currentMessages = chat ? chat.messages : [];
+        }
+
         try {
-            let historyForThisRequest = conversationHistory;
-            if (isRegeneration) {
-                historyForThisRequest = conversationHistory.slice(0, -1);
-            }
-            const response = await getApiResponse(prompt, historyForThisRequest, model);
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, history: currentMessages, model }),
+            });
+            if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
+            
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = '';
             messageElement.innerHTML = '';
+
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
@@ -257,15 +412,23 @@
                 messageElement.innerHTML = marked.parse(fullText + '▋');
                 chatOutput.scrollTop = chatOutput.scrollHeight;
             }
-            if (isRegeneration) {
-                conversationHistory[conversationHistory.length - 1] = { role: 'model', parts: [{ text: fullText }] };
-            } else {
-                conversationHistory.push({ role: 'model', parts: [{ text: fullText }] });
+            
+            // 响应完成后，保存到对应的聊天记录中
+            chats = getChats(); // 重新获取以防万一
+            const chatIndex = chats.findIndex(c => c.id === currentChatId);
+            const modelMessage = { role: 'model', parts: [{ text: fullText }] };
+            if (chatIndex !== -1) {
+                if (isRegeneration) {
+                    chats[chatIndex].messages[chats[chatIndex].messages.length - 1] = modelMessage;
+                } else {
+                    chats[chatIndex].messages.push(modelMessage);
+                }
             }
+            saveChats(chats);
+
             messageElement.innerHTML = marked.parse(fullText);
             addCopyButtonsToCodeBlocks(messageElement);
-            addCopyButtonToMessage(messageWrapperElement, fullText); 
-            setTimeout(() => { messageWrapperElement.classList.remove('streaming-in'); }, 500);
+            addCopyButtonToMessage(messageWrapperElement, fullText);
         } catch (error) {
             console.error('Error:', error);
             updateMessage(messageWrapperElement, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试或暂时使用其他模型。<br></b>如果仍然无法正常使用，请联系反季雪。');
@@ -278,22 +441,54 @@
     async function handleSend() {
         const prompt = userInput.value.trim();
         if (!prompt) return;
-        lastUserPrompt = prompt;
+        
         userInput.value = '';
         const selectedModel = currentModel;
-        conversationHistory.push({ role: 'user', parts: [{ text: prompt }] });
-        appendMessage('user', prompt);
-        const loadingMsgWrapper = appendMessage('gemini', 'loading');
-        streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
+        let chats = getChats();
+        
+        // 如果是新聊天，先创建它
+        if (!currentChatId) {
+            currentChatId = `chat_${Date.now()}`;
+            const newChat = {
+                id: currentChatId,
+                title: prompt.substring(0, 30), // 用问题的前30个字符作为标题
+                messages: [],
+            };
+            chats.push(newChat);
+        }
+
+        // 添加用户消息并保存
+        const chatIndex = chats.findIndex(c => c.id === currentChatId);
+        if(chatIndex !== -1) {
+            chats[chatIndex].messages.push({ role: 'user', parts: [{ text: prompt }] });
+            saveChats(chats);
+        }
+
+        appendMessage('user', prompt, true);
+        const loadingMsgWrapper = appendMessage('gemini', 'loading', false);
+        
+        if (chats.length > 0 && chatIndex !== -1 && chats[chatIndex].messages.length === 1) {
+           renderHistoryList(); // 如果是新聊天，立即更新侧边栏
+        }
+        
+        await streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
     }
 
     async function regenerateLastResponse() {
-        if (!lastUserPrompt) return;
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        if (!chat || chat.messages.length < 2) return;
+
+        // 找到最后一条用户消息作为 prompt
+        const lastUserMessage = chat.messages.slice().reverse().find(m => m.role === 'user');
+        if (!lastUserMessage) return;
+        const lastUserPrompt = lastUserMessage.parts[0].text;
+        
         const lastGeminiMsgWrapper = chatOutput.querySelector('.message-wrapper.gemini:last-of-type');
         if (!lastGeminiMsgWrapper) return;
-        const selectedModel = currentModel;
+        
         updateMessage(lastGeminiMsgWrapper, 'loading');
-        streamResponse(lastUserPrompt, lastGeminiMsgWrapper, selectedModel, true);
+        await streamResponse(lastUserPrompt, lastGeminiMsgWrapper, currentModel, true);
     }
 
     function setLoading(isLoading) {
@@ -301,14 +496,18 @@
         regenerateButton.disabled = isLoading;
         userInput.disabled = isLoading;
         selectedModelDisplay.style.pointerEvents = isLoading ? 'none' : 'auto';
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
         if (isLoading) {
             regenerateButton.style.visibility = 'hidden';
-        } else if (lastUserPrompt) {
+        } else if (chat && chat.messages.length > 0) {
             regenerateButton.style.visibility = 'visible';
+        } else {
+             regenerateButton.style.visibility = 'hidden';
         }
     }
     
-    function appendMessage(sender, text) {
+    function appendMessage(sender, text, shouldAddCopyButton) {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message-wrapper ${sender}`;
         const iconHTML = sender === 'user' 
@@ -320,8 +519,10 @@
         messageWrapper.innerHTML = `<div class="message-icon">${iconHTML}</div><div class="message">${messageContentHTML}</div>`;
         chatOutput.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
-        if (sender !== 'user' && text !== 'loading') {
+        
+        if (sender === 'gemini' && text !== 'loading' && shouldAddCopyButton) {
              addCopyButtonToMessage(messageWrapper, text);
+             addCopyButtonsToCodeBlocks(messageWrapper);
         }
         return messageWrapper;
     }
@@ -338,135 +539,124 @@
         }
         chatOutput.scrollTop = chatOutput.scrollHeight;
     }
-
-    function addCopyButtonsToCodeBlocks(container) {
-        const codeBlocks = container.querySelectorAll('pre');
-        codeBlocks.forEach(block => {
-            const button = document.createElement('button');
-            button.className = 'copy-code-button';
-            button.textContent = '复制';
-            button.onclick = () => {
-                const code = block.querySelector('code').innerText;
-                navigator.clipboard.writeText(code).then(() => {
-                    button.textContent = '已复制!';
-                    setTimeout(() => { button.textContent = '复制'; }, 2000);
-                });
-            };
-            block.appendChild(button);
-        });
-    }
-
-    function addCopyButtonToMessage(messageWrapper, textToCopy) {
-        const existingButton = messageWrapper.querySelector('.copy-message-button');
-        if (existingButton) existingButton.remove();
-        const button = document.createElement('button');
-        button.className = 'copy-message-button';
-        button.title = '复制内容';
-        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-        button.onclick = (e) => {
-            e.stopPropagation();
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                button.innerHTML = '✓';
-                setTimeout(() => {
-                    button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-                }, 1500);
-            });
-        };
-        messageWrapper.appendChild(button);
-    }
-
-    // --- 新增/修改的模型选择器与认证逻辑 ---
-    function setupModelSelector() {
-        modelDropdownList.innerHTML = '';
-        models.forEach(model => {
-            const option = document.createElement('div');
-            option.className = 'model-option';
-            option.dataset.value = model.id;
-            
-            const isLocked = model.locked && !isProUnlocked;
-            if (isLocked) {
-                option.classList.add('disabled');
-            }
-
-            option.innerHTML = `
-                <div class="model-option-text">
-                    <h4>${model.name} ${isLocked ? '🔒' : ''}</h4>
-                    <p>${model.description}</p>
-                </div>
-                <span class="checkmark">✓</span>
-            `;
-
-            if (!isLocked) {
-                option.addEventListener('click', () => {
-                    currentModel = model.id;
-                    updateSelectorDisplay();
-                    modelDropdownList.classList.remove('active');
-                });
-            } else {
-                // 如果模型被锁定，点击时提示需要认证
-                option.addEventListener('click', () => {
-                    alert('此模型需要认证才能使用。请点击“认证”按钮进行解锁。');
-                });
-            }
-            modelDropdownList.appendChild(option);
-        });
-        updateSelectorDisplay();
-    }
-
-    function updateSelectorDisplay() {
-        const selectedModel = models.find(m => m.id === currentModel);
-        if (selectedModel) {
-            selectedModelDisplay.textContent = selectedModel.name;
-        }
-        document.querySelectorAll('.model-option').forEach(opt => {
-            opt.classList.toggle('selected', opt.dataset.value === currentModel);
-        });
-    }
     
-    function handleAuth() {
+    // ---- 复制按钮等辅助函数 (基本不变) ----
+    function addCopyButtonsToCodeBlocks(container) { /* ... 此函数内容保持不变 ... */ }
+    function addCopyButtonToMessage(messageWrapper, textToCopy) { /* ... 此函数内容保持不变 ... */ }
+    
+    // ---- 模型选择器与认证逻辑 (基本不变) ----
+    function setupModelSelector() { /* ... 此函数内容保持不变 ... */ }
+    function updateSelectorDisplay() { /* ... 此函数内容保持不变 ... */ }
+    function handleAuth() { /* ... 此函数内容保持不变, 但可以简化，因为我们已将模型切换逻辑集成到setupModelSelector中 ... */ 
         const enteredCode = prompt("请输入认证代码以解锁 Pro 模型：");
         if (enteredCode === null) return;
-
         if (enteredCode.trim() === "703777") {
             isProUnlocked = true;
             alert("认证成功！2.5 Pro 模型已解锁。");
             authButton.style.display = 'none';
-            // 如果当前选中的是被锁定的模型，解锁后自动切换过去
-            const lockedProModel = models.find(m => m.id === 'gemini-2.5-pro');
-            if(lockedProModel) {
-                currentModel = lockedProModel.id;
-            }
-            setupModelSelector(); // 重新渲染菜单以解锁选项
+            currentModel = 'gemini-2.5-pro'; // 自动切换到Pro
+            setupModelSelector(); // 重新渲染菜单
         } else {
             alert("代码错误，认证失败。");
         }
     }
 
-    selectedModelDisplay.addEventListener('click', (e) => {
-        e.stopPropagation();
-        modelDropdownList.classList.toggle('active');
-    });
-    
-    document.addEventListener('click', (e) => {
-        if (!modelDropdownList.contains(e.target)) {
-            modelDropdownList.classList.remove('active');
-        }
-    });
+    // ---- 初始化和事件监听 ----
+    function initialize() {
+        // 将未改变的函数代码复制到这里
+        addCopyButtonsToCodeBlocks = function(container) {
+            const codeBlocks = container.querySelectorAll('pre');
+            codeBlocks.forEach(block => {
+                if (block.querySelector('.copy-code-button')) return;
+                const button = document.createElement('button');
+                button.className = 'copy-code-button';
+                button.textContent = '复制';
+                button.onclick = () => {
+                    const code = block.querySelector('code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.textContent = '已复制!';
+                        setTimeout(() => { button.textContent = '复制'; }, 2000);
+                    });
+                };
+                block.appendChild(button);
+            });
+        };
+        addCopyButtonToMessage = function(messageWrapper, textToCopy) {
+            const existingButton = messageWrapper.querySelector('.copy-message-button');
+            if (existingButton) existingButton.remove();
+            const button = document.createElement('button');
+            button.className = 'copy-message-button';
+            button.title = '复制内容';
+            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+            button.onclick = (e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    button.innerHTML = '✓';
+                    setTimeout(() => {
+                        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+                    }, 1500);
+                });
+            };
+            messageWrapper.appendChild(button);
+        };
+        setupModelSelector = function() {
+            modelDropdownList.innerHTML = '';
+            models.forEach(model => {
+                const option = document.createElement('div');
+                option.className = 'model-option';
+                option.dataset.value = model.id;
+                const isLocked = model.locked && !isProUnlocked;
+                if (isLocked) option.classList.add('disabled');
+                option.innerHTML = `<div class="model-option-text"><h4>${model.name} ${isLocked ? '🔒' : ''}</h4><p>${model.description}</p></div><span class="checkmark">✓</span>`;
+                if (!isLocked) {
+                    option.addEventListener('click', () => {
+                        currentModel = model.id;
+                        updateSelectorDisplay();
+                        modelDropdownList.classList.remove('active');
+                    });
+                } else {
+                    option.addEventListener('click', () => alert('此模型需要认证才能使用。请点击“认证”按钮进行解锁。'));
+                }
+                modelDropdownList.appendChild(option);
+            });
+            updateSelectorDisplay();
+        };
+        updateSelectorDisplay = function() {
+            const selectedModel = models.find(m => m.id === currentModel);
+            if (selectedModel) selectedModelDisplay.textContent = selectedModel.name;
+            document.querySelectorAll('.model-option').forEach(opt => opt.classList.toggle('selected', opt.dataset.value === currentModel));
+        };
+        
+        // -- 添加事件监听 --
+        newChatButton.addEventListener('click', createNewChat);
+        authButton.addEventListener('click', handleAuth);
+        sendButton.addEventListener('click', handleSend);
+        userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' && !sendButton.disabled) { handleSend(); }
+        });
+        userInput.addEventListener('input', () => {
+            if (regenerateButton.style.visibility !== 'hidden') {
+                regenerateButton.style.visibility = 'hidden';
+            }
+        });
+        regenerateButton.addEventListener('click', regenerateLastResponse);
+        selectedModelDisplay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            modelDropdownList.classList.toggle('active');
+        });
+        document.addEventListener('click', (e) => {
+            if (!modelDropdownList.contains(e.target) && !selectedModelDisplay.contains(e.target)) {
+                modelDropdownList.classList.remove('active');
+            }
+        });
 
-    // --- 初始化和事件监听 ---
-    setupModelSelector(); 
-    authButton.addEventListener('click', handleAuth);
-    sendButton.addEventListener('click', handleSend);
-    userInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter' && !sendButton.disabled) { handleSend(); }
-    });
-    userInput.addEventListener('input', () => {
-        if (regenerateButton.style.visibility !== 'hidden') {
-            regenerateButton.style.visibility = 'hidden';
-        }
-    });
-    regenerateButton.addEventListener('click', regenerateLastResponse);
+        // -- 应用启动 --
+        setupModelSelector(); 
+        createNewChat(); // 启动时创建一个新聊天
+    }
 
+    initialize();
+});
 </script>
 </body>
 </html>
