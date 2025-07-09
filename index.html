@@ -18,125 +18,40 @@
             --code-bg: #282c34;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-
-        body {
-            font-family: var(--font-family);
-            background-color: var(--body-bg);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            padding: 1rem;
-            box-sizing: border-box;
-        }
-
-        .chat-container {
-            width: 100%;
-            max-width: 800px;
-            height: 90vh;
-            background: var(--chat-bg);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .chat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
-        }
+        body { font-family: var(--font-family); background-color: var(--body-bg); margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; padding: 1rem; box-sizing: border-box; }
+        .chat-container { width: 100%; max-width: 800px; height: 90vh; background: var(--chat-bg); border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); display: flex; flex-direction: column; overflow: hidden; }
+        .chat-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
         .chat-header h2 { font-size: 20px; margin: 0; font-weight: 600; }
-        
-        /* --- 模型选择器与认证按钮布局 --- */
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        #auth-button {
-            padding: 6px 10px;
-            font-size: 12px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
+        .header-controls { display: flex; align-items: center; gap: 10px; }
+        #auth-button { padding: 6px 10px; font-size: 12px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; }
         #auth-button:hover { background-color: #5a6268; }
-
         .model-selector-wrapper { position: relative; }
-        .selected-model {
-            background-color: var(--gemini-msg-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .selected-model { background-color: var(--gemini-msg-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
         .selected-model::after { content: '▼'; font-size: 10px; transform: scaleY(0.8); }
-        .model-dropdown {
-            display: none;
-            position: absolute;
-            top: 105%;
-            right: 0;
-            background-color: #333;
-            color: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 10;
-            width: 250px;
-        }
+        .model-dropdown { display: none; position: absolute; top: 105%; right: 0; background-color: #333; color: white; border-radius: 8px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10; width: 250px; }
         .model-dropdown.active { display: block; }
         .model-option { padding: 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s; }
         .model-option:not(.disabled):hover { background-color: #444; }
         .model-option.selected { background-color: #555; }
-        
-        /* 新增：锁定状态的样式 */
-        .model-option.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background-color: #383838;
-        }
+        .model-option.disabled { opacity: 0.5; cursor: not-allowed; background-color: #383838; }
         .model-option-text h4 { margin: 0 0 4px; font-size: 14px; }
         .model-option-text p { margin: 0; font-size: 12px; color: #ccc; }
         .model-option .checkmark { font-size: 18px; color: white; visibility: hidden; }
         .model-option.selected .checkmark { visibility: visible; }
-
         .chat-output { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
         .message-wrapper { display: flex; align-items: flex-start; gap: 10px; max-width: 90%; position: relative; }
         .message-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin-top: 5px; }
         .message { padding: 12px 18px; border-radius: 18px; line-height: 1.6; word-wrap: break-word; word-break: break-word; min-width: 0; }
-        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .gemini.streaming-in .message { animation: fadeIn 0.5s ease-out; }
-        
         .gemini .message-icon { background-color: transparent; }
         .gemini .message { background-color: var(--gemini-msg-bg); color: var(--text-color); border-bottom-left-radius: 4px; }
         .message-icon img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        
         @keyframes animatedGradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .gemini-loading .message {
-            color: var(--text-color);
-            background: linear-gradient(125deg, #e9ecef, #f8f9fa, #e9ecef, #dee2e6);
-            background-size: 400% 400%;
-            animation: animatedGradient 3s ease infinite;
-        }
-
+        .gemini-loading .message { color: var(--text-color); background: linear-gradient(125deg, #e9ecef, #f8f9fa, #e9ecef, #dee2e6); background-size: 400% 400%; animation: animatedGradient 3s ease infinite; }
         .copy-message-button { position: absolute; top: 50px; left: 6px; background: #fff; border: 1px solid var(--border-color); border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s, transform 0.2s; transform: scale(0.8); }
         .message-wrapper:hover .copy-message-button { opacity: 1; transform: scale(1); }
         .gemini.message-wrapper { display: inline-flex; }
-        
         .user { align-self: flex-end; flex-direction: row-reverse; }
         .user .message { background-color: var(--user-msg-bg); color: var(--light-text-color); border-bottom-right-radius: 4px; }
         .user .message-icon { background-color: var(--accent-color); }
@@ -186,7 +101,7 @@
     <div class="chat-output" id="chatOutput">
         <div class="message-wrapper gemini">
             <div class="message-icon"><img src="/00.png" alt="Gemini Avatar"></div>
-            <div class="message">欢迎使用GeminiSnow！<br><b>这是一个通过API代理来直接与Gemini2.5Pro进行对话的项目</b>。<br>输入你的任何问题来开始！<b><br>如果出现任何问题，请联系反季雪。</div>
+            <div class="message">欢迎使用GeminiSnow！<br><b>这是一个通过API代理来直接与Gemini进行对话的项目</b>。<br>输入你的任何问题来开始！<b><br>如果出现任何问题，请联系反季雪。</div>
         </div>
     </div>
     
@@ -207,31 +122,37 @@
     const regenerateButton = document.getElementById('regenerateButton');
     const selectedModelDisplay = document.getElementById('selected-model-display');
     const modelDropdownList = document.getElementById('model-dropdown-list');
-    const authButton = document.getElementById('auth-button'); // 新增
+    const authButton = document.getElementById('auth-button');
     
     const API_URL = '/api/askGemini';
     let lastUserPrompt = '';
     let conversationHistory = [];
-    let isProUnlocked = false; // 新增：认证状态
+    let isProUnlocked = false;
+    let authToken = ''; // 用于存储认证成功后的“通行证”
 
-    // 您的模型列表，为 Pro 模型添加 locked 属性
+    // 您的模型列表
     const models = [
+        { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '以最快速度提供帮助', locked: false },
         { id: 'gemini-2.5-flash', name: '2.5 Flash', description: '快速提供全方位的帮助', locked: false },
-        { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码', locked: true },
-        { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '以最快速度提供帮助', locked: false }
+        { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码', locked: true }
     ];
 
-    let currentModel = 'gemini-2.5-flash'; // 您指定的默认模型
+    let currentModel = 'gemini-2.5-flash';
 
     marked.setOptions({ breaks: true, sanitize: true });
 
-    async function getApiResponse(prompt, history, model) {
+    async function getApiResponse(prompt, history, model, token) {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, history, model }),
+            body: JSON.stringify({ prompt, history, model, token }),
         });
-        if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
+        if (!response.ok) {
+            if (response.status === 403) {
+                 throw new Error('AUTH_REQUIRED');
+            }
+            throw new Error(`服务器错误: ${response.status}`);
+        }
         return response;
     }
 
@@ -245,7 +166,9 @@
             if (isRegeneration) {
                 historyForThisRequest = conversationHistory.slice(0, -1);
             }
-            const response = await getApiResponse(prompt, historyForThisRequest, model);
+            
+            const response = await getApiResponse(prompt, historyForThisRequest, model, authToken);
+            
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = '';
@@ -268,7 +191,11 @@
             setTimeout(() => { messageWrapperElement.classList.remove('streaming-in'); }, 500);
         } catch (error) {
             console.error('Error:', error);
-            updateMessage(messageWrapperElement, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试或暂时使用其他模型。<br></b>如果仍然无法正常使用，请联系反季雪。');
+            if (error.message === 'AUTH_REQUIRED') {
+                updateMessage(messageWrapperElement, '🔒 **认证失败**<br>您需要先点击顶部的“认证”按钮，才能使用 Pro 模型。');
+            } else {
+                updateMessage(messageWrapperElement, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试或暂时使用其他模型。<br></b>如果仍然无法正常使用，请联系反季雪。');
+            }
         } finally {
             messageWrapperElement.classList.remove('gemini-loading');
             setLoading(false);
@@ -375,19 +302,16 @@
         messageWrapper.appendChild(button);
     }
 
-    // --- 新增/修改的模型选择器与认证逻辑 ---
     function setupModelSelector() {
         modelDropdownList.innerHTML = '';
         models.forEach(model => {
             const option = document.createElement('div');
             option.className = 'model-option';
             option.dataset.value = model.id;
-            
             const isLocked = model.locked && !isProUnlocked;
             if (isLocked) {
                 option.classList.add('disabled');
             }
-
             option.innerHTML = `
                 <div class="model-option-text">
                     <h4>${model.name} ${isLocked ? '🔒' : ''}</h4>
@@ -395,7 +319,6 @@
                 </div>
                 <span class="checkmark">✓</span>
             `;
-
             if (!isLocked) {
                 option.addEventListener('click', () => {
                     currentModel = model.id;
@@ -403,7 +326,6 @@
                     modelDropdownList.classList.remove('active');
                 });
             } else {
-                // 如果模型被锁定，点击时提示需要认证
                 option.addEventListener('click', () => {
                     alert('此模型需要认证才能使用。请点击“认证”按钮进行解锁。');
                 });
@@ -423,22 +345,35 @@
         });
     }
     
-    function handleAuth() {
+    // ✅ 核心改动：全新的、安全的认证函数
+    async function handleAuth() {
         const enteredCode = prompt("请输入认证代码以解锁 Pro 模型：");
         if (enteredCode === null) return;
 
-        if (enteredCode.trim() === "703777") {
-            isProUnlocked = true;
-            alert("认证成功！2.5 Pro 模型已解锁。");
-            authButton.style.display = 'none';
-            // 如果当前选中的是被锁定的模型，解锁后自动切换过去
-            const lockedProModel = models.find(m => m.id === 'gemini-2.5-pro');
-            if(lockedProModel) {
-                currentModel = lockedProModel.id;
+        try {
+            const response = await fetch('/api/authenticate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: enteredCode.trim() }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                isProUnlocked = true;
+                authToken = data.token; // 保存通行证
+                alert("认证成功！Gemini2.5 Pro 模型已解锁。");
+                authButton.style.display = 'none';
+                const proModel = models.find(m => m.locked);
+                if(proModel) {
+                    currentModel = proModel.id; // 自动切换到解锁的 Pro 模型
+                }
+                setupModelSelector(); // 重新渲染菜单以解锁选项
+            } else {
+                alert("代码错误，认证失败。");
             }
-            setupModelSelector(); // 重新渲染菜单以解锁选项
-        } else {
-            alert("代码错误，认证失败。");
+        } catch (error) {
+            alert("认证请求失败，请稍后再试。");
         }
     }
 
