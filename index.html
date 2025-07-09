@@ -18,145 +18,110 @@
             --code-bg: #282c34;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-
         body {
-            font-family: var(--font-family);
-            background-color: var(--body-bg);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            padding: 1rem;
-            box-sizing: border-box;
+            font-family: var(--font-family); background-color: var(--body-bg); margin: 0; display: flex;
+            justify-content: center; align-items: center; height: 100vh; padding: 1rem; box-sizing: border-box;
         }
-
         .chat-container {
-            width: 100%;
-            max-width: 800px;
-            height: 90vh;
-            background: var(--chat-bg);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            width: 100%; max-width: 800px; height: 90vh; background: var(--chat-bg);
+            border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); display: flex;
+            flex-direction: column; overflow: hidden;
         }
-        
         .chat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
+            display: flex; justify-content: flex-end; align-items: center;
+            padding: 10px 20px; flex-shrink: 0;
         }
-        .chat-header h2 { font-size: 20px; margin: 0; font-weight: 600; }
-        
-        /* --- 模型选择器与认证按钮布局 --- */
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .header-controls { display: flex; align-items: center; gap: 10px; }
         #auth-button {
-            padding: 6px 10px;
-            font-size: 12px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
+            padding: 6px 10px; font-size: 12px; background-color: #6c757d; color: white;
+            border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s;
         }
         #auth-button:hover { background-color: #5a6268; }
-
         .model-selector-wrapper { position: relative; }
         .selected-model {
-            background-color: var(--gemini-msg-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            background-color: var(--gemini-msg-bg); border-radius: 8px; padding: 8px 12px;
+            font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px;
         }
         .selected-model::after { content: '▼'; font-size: 10px; transform: scaleY(0.8); }
         .model-dropdown {
-            display: none;
-            position: absolute;
-            top: 105%;
-            right: 0;
-            background-color: #333;
-            color: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 10;
-            width: 250px;
+            display: none; position: absolute; top: 105%; right: 0; background-color: #333;
+            color: white; border-radius: 8px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10; width: 250px;
         }
         .model-dropdown.active { display: block; }
-        .model-option { padding: 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s; }
+        .model-option {
+            padding: 12px; border-radius: 6px; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center; transition: background-color 0.2s;
+        }
         .model-option:not(.disabled):hover { background-color: #444; }
         .model-option.selected { background-color: #555; }
-        
-        /* 新增：锁定状态的样式 */
-        .model-option.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background-color: #383838;
-        }
+        .model-option.disabled { opacity: 0.5; cursor: not-allowed; background-color: #383838; }
         .model-option-text h4 { margin: 0 0 4px; font-size: 14px; }
         .model-option-text p { margin: 0; font-size: 12px; color: #ccc; }
         .model-option .checkmark { font-size: 18px; color: white; visibility: hidden; }
         .model-option.selected .checkmark { visibility: visible; }
-
-        .chat-output { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .chat-output {
+            flex-grow: 1; padding: 20px; overflow-y: auto; display: flex;
+            flex-direction: column; gap: 20px;
+        }
         .message-wrapper { display: flex; align-items: flex-start; gap: 10px; max-width: 90%; position: relative; }
-        .message-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin-top: 5px; }
+        .message-icon {
+            width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center;
+            align-items: center; flex-shrink: 0; margin-top: 5px;
+        }
         .message { padding: 12px 18px; border-radius: 18px; line-height: 1.6; word-wrap: break-word; word-break: break-word; min-width: 0; }
-        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .gemini.streaming-in .message { animation: fadeIn 0.5s ease-out; }
-        
         .gemini .message-icon { background-color: transparent; }
         .gemini .message { background-color: var(--gemini-msg-bg); color: var(--text-color); border-bottom-left-radius: 4px; }
         .message-icon img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        
         @keyframes animatedGradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .gemini-loading .message {
-            color: var(--text-color);
-            background: linear-gradient(125deg, #e9ecef, #f8f9fa, #e9ecef, #dee2e6);
-            background-size: 400% 400%;
-            animation: animatedGradient 3s ease infinite;
+            color: var(--text-color); background: linear-gradient(125deg, #e9ecef, #f8f9fa, #e9ecef, #dee2e6);
+            background-size: 400% 400%; animation: animatedGradient 3s ease infinite;
         }
-
-        .copy-message-button { position: absolute; top: 50px; left: 6px; background: #fff; border: 1px solid var(--border-color); border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s, transform 0.2s; transform: scale(0.8); }
+        .copy-message-button {
+            position: absolute; top: 50px; left: 6px; background: #fff; border: 1px solid var(--border-color);
+            border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex;
+            justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s, transform 0.2s; transform: scale(0.8);
+        }
         .message-wrapper:hover .copy-message-button { opacity: 1; transform: scale(1); }
         .gemini.message-wrapper { display: inline-flex; }
-        
         .user { align-self: flex-end; flex-direction: row-reverse; }
         .user .message { background-color: var(--user-msg-bg); color: var(--light-text-color); border-bottom-right-radius: 4px; }
         .user .message-icon { background-color: var(--accent-color); }
         .loading-indicator { display: flex; align-items: center; gap: 10px; font-style: italic; color: #6c757d; }
-        .spinner { width: 18px; height: 18px; border: 3px solid rgba(0, 0, 0, 0.1); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; }
+        .spinner {
+            width: 18px; height: 18px; border: 3px solid rgba(0, 0, 0, 0.1);
+            border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
         .message p { margin: 0 0 10px; }
         .message p:last-child { margin-bottom: 0; }
         .message ul, .message ol { padding-left: 20px; }
-        .message pre { background-color: var(--code-bg); color: var(--light-text-color); padding: 15px; border-radius: 8px; overflow-x: auto; position: relative; }
+        .message pre {
+            background-color: var(--code-bg); color: var(--light-text-color); padding: 15px;
+            border-radius: 8px; overflow-x: auto; position: relative;
+        }
         .message code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; font-size: 14px; }
-        .copy-code-button { position: absolute; top: 10px; right: 10px; background-color: #555; color: white; border: none; padding: 5px 8px; border-radius: 5px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+        .copy-code-button {
+            position: absolute; top: 10px; right: 10px; background-color: #555; color: white;
+            border: none; padding: 5px 8px; border-radius: 5px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;
+        }
         .message pre:hover .copy-code-button { opacity: 1; }
         .message table { width: 100%; border-collapse: collapse; margin: 15px 0; }
         .message th, .message td { border: 1px solid var(--border-color); padding: 8px 12px; text-align: left; }
         .message th { background-color: #f2f2f2; }
-        .chat-input-area { border-top: 1px solid var(--border-color); padding: 20px; }
+        .chat-input-area { padding: 20px; }
         .chat-input { display: flex; align-items: center; background-color: var(--gemini-msg-bg); border-radius: 12px; padding: 5px; }
-        #userInput { flex-grow: 1; border: none; background: transparent; padding: 10px 15px; font-size: 16px; outline: none; color: var(--text-color); min-width: 0; }
-        .input-action-button { display: flex; justify-content: center; align-items: center; border: none; background: transparent; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; margin-left: 5px; }
+        #userInput {
+            flex-grow: 1; border: none; background: transparent; padding: 10px 15px;
+            font-size: 16px; outline: none; color: var(--text-color); min-width: 0;
+        }
+        .input-action-button {
+            display: flex; justify-content: center; align-items: center; border: none; background: transparent;
+            width: 40px; height: 40px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; margin-left: 5px;
+        }
         .input-action-button svg { width: 20px; height: 20px; stroke: #6c757d; transition: stroke 0.2s ease; }
         .input-action-button:hover:not(:disabled) { background-color: #dee2e6; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .input-action-button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -165,112 +130,89 @@
         #sendButton:hover:not(:disabled) { background-color: #000; }
         #sendButton:disabled { background-color: #6c757d; opacity: 1; }
         #regenerateButton { visibility: hidden; }
-        @media (max-width: 480px) { html { font-size: 87.5%; } .chat-container { height: 100vh; border-radius: 0; } .chat-header { padding: 8px 15px; } .chat-input-area { padding: 15px 10px; } .chat-output { padding: 15px 10px; gap: 15px; } .message-wrapper { max-width: 95%; } }
-        @media (hover: none) or (pointer: coarse) { .message-wrapper .copy-message-button { opacity: 0.5; transform: scale(1); } }
-                /* --- 新增：主布局和侧边栏样式 --- */
+
         .main-container {
-            display: flex;
-            width: 100%;
-            height: 100vh;
-            max-width: 1200px; /* 稍微加宽以容纳侧边栏 */
-            max-height: 90vh;
-            background: var(--chat-bg);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
+            display: flex; width: 100%; height: 100vh; max-width: 1200px; max-height: 90vh;
+            background: var(--chat-bg); border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); overflow: hidden;
         }
-
         #sidebar {
-            width: 260px;
-            background-color: #212529; /* 深色背景 */
-            color: var(--light-text-color);
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid var(--border-color);
+            width: 260px; background-color: #212529; color: var(--light-text-color); flex-shrink: 0;
+            display: flex; flex-direction: column;
         }
-
-        .sidebar-header {
-            padding: 15px;
-            border-bottom: 1px solid #343a40;
-        }
-
+        .sidebar-header { padding: 15px; }
         #new-chat-btn {
-            width: 100%;
-            padding: 10px;
-            background-color: transparent;
-            color: var(--light-text-color);
-            border: 1px solid #6c757d;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
+            width: 100%; padding: 10px; background-color: transparent; color: var(--light-text-color);
+            border: 1px solid #6c757d; border-radius: 8px; font-size: 14px; cursor: pointer; transition: background-color 0.2s, color 0.2s;
         }
-
-        #new-chat-btn:hover {
-            background-color: #343a40;
-        }
-
+        #new-chat-btn:hover { background-color: #343a40; }
         #history-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+            flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px;
         }
+        .history-item.active { background-color: #495057; }
+        .chat-container { flex-grow: 1; height: 100%; max-width: none; max-height: none; box-shadow: none; border-radius: 0; display: flex; flex-direction: column; }
 
         .history-item {
-            padding: 12px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis; /* 超出部分显示省略号 */
-            font-size: 14px;
-            transition: background-color 0.2s;
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+            padding: 12px 15px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s;
+        }
+        .history-item:hover { background-color: #343a40; }
+        .history-item-title {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;
+        }
+        .delete-chat-btn {
+            background: none; border: none; color: #8a9199; cursor: pointer; padding: 5px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .delete-chat-btn:hover { background-color: #495057; color: #f8f9fa; }
+        .delete-chat-btn svg { width: 16px; height: 16px; }
+
+        #sidebar-footer { padding: 20px; }
+        #sidebar-footer h3 {
+            margin: 0; font-size: 18px; text-align: center; font-weight: 600; color: #dee2e6;
         }
 
-        .history-item:hover {
-            background-color: #343a40;
+        /* --- ✅ 新增：欢迎界面的样式 --- */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            color: #6c757d;
+            flex-grow: 1;
+        }
+        .welcome-screen img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 24px;
+            border-radius: 50%;
+        }
+        .welcome-screen h2 {
+            font-size: 28px;
+            font-weight: 500;
         }
 
-        .history-item.active {
-            background-color: #495057; /* 选中项的背景色 */
-        }
-
-        /* 调整聊天容器以适应新布局 */
-        .chat-container {
-            flex-grow: 1; /* 占据剩余空间 */
-            height: 100%; /* 高度占满父容器 */
-            max-width: none;
-            max-height: none;
-            box-shadow: none;
-            border-radius: 0;
-        }
-
-        @media (max-width: 768px) {
-            #sidebar {
-                display: none; /* 在小屏幕上暂时隐藏侧边栏，这部分可以后续优化为抽屉式 */
-            }
-        }
+        @media (max-width: 768px) { #sidebar { display: none; } }
+        @media (max-width: 480px) { html { font-size: 87.5%; } .chat-container { height: 100vh; border-radius: 0; } .chat-header { padding: 8px 15px; } .chat-input-area { padding: 15px 10px; } .chat-output { padding: 15px 10px; gap: 15px; } .message-wrapper { max-width: 95%; } }
+        @media (hover: none) or (pointer: coarse) { .message-wrapper .copy-message-button { opacity: 0.5; transform: scale(1); } }
     </style>
 </head>
-
 <body>
-<div class="main-container">
 
+<div class="main-container">
     <div id="sidebar">
         <div class="sidebar-header">
             <button id="new-chat-btn">＋ 发起新对话</button>
         </div>
-        <div id="history-list">
-            </div>
+        <div id="history-list"></div>
+        <div id="sidebar-footer">
+            <h3>GeminiSnow</h3>
+        </div>
     </div>
-
     <div class="chat-container">
         <div class="chat-header">
-            <h2>GeminiSnow</h2>
             <div class="header-controls">
                 <button id="auth-button">认证</button>
                 <div class="model-selector-wrapper">
@@ -279,10 +221,7 @@
                 </div>
             </div>
         </div>
-
-        <div class="chat-output" id="chatOutput">
-            </div>
-        
+        <div class="chat-output" id="chatOutput"></div>
         <div class="chat-input-area">
             <div class="chat-input">
                 <input type="text" id="userInput" placeholder="在这里输入你的问题..." autocomplete="off">
@@ -291,9 +230,7 @@
             </div>
         </div>
     </div> 
-
 </div>
-
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -301,13 +238,85 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
     const chatOutput = document.getElementById('chatOutput');
+    // ... 其他元素获取 ...
+    const newChatButton = document.getElementById('new-chat-btn');
+    const historyList = document.getElementById('history-list');
+
+    // ... 省略了大部分变量和函数定义，因为它们没有变化 ...
+    let currentChatId = null;
+
+    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats') || '[]');
+    const saveChats = (chats) => localStorage.setItem('geminiSnowChats', JSON.stringify(chats));
+
+    const createNewChat = () => {
+        currentChatId = null;
+        // ✅ 改动：插入欢迎界面HTML，而不是清空
+        chatOutput.innerHTML = `
+            <div class="welcome-screen">
+                <img src="/01.png" alt="Logo">
+                <h2>学无止境</h2>
+            </div>
+        `;
+        renderHistoryList();
+        userInput.value = '';
+        setLoading(false);
+    };
+    
+    const handleSend = async () => {
+        const prompt = userInput.value.trim();
+        if (!prompt) return;
+
+        // ✅ 改动：发送消息前，检查并移除欢迎界面
+        const welcomeScreen = chatOutput.querySelector('.welcome-screen');
+        if (welcomeScreen) {
+            chatOutput.innerHTML = '';
+        }
+
+        userInput.value = '';
+        const selectedModel = currentModel;
+        let chats = getChats();
+        
+        let isNewChat = false;
+        if (!currentChatId) {
+            isNewChat = true;
+            currentChatId = `chat_${Date.now()}`;
+            const newChat = {
+                id: currentChatId,
+                title: prompt.substring(0, 30),
+                messages: [],
+            };
+            chats.push(newChat);
+        }
+
+        const chatIndex = chats.findIndex(c => c.id === currentChatId);
+        if(chatIndex !== -1) {
+            chats[chatIndex].messages.push({ role: 'user', parts: [{ text: prompt }] });
+            saveChats(chats);
+        }
+
+        appendMessage('user', prompt, true);
+        const loadingMsgWrapper = appendMessage('gemini', 'loading', false);
+        
+        if (isNewChat) {
+           renderHistoryList();
+        }
+        
+        await streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
+    };
+
+    // 为了让代码块简洁，此处省略了所有未改动的JS函数
+    // 实际使用时，请确保所有JS函数都在这里
+    // ...
+    // ...
+    
+    // ---- 完整的 JS ----
+    // 为了保证功能完整，请使用下面完整的JS代码替换您script标签中的所有内容
+
+    // ---- DOM 元素获取 ----
     const regenerateButton = document.getElementById('regenerateButton');
     const selectedModelDisplay = document.getElementById('selected-model-display');
     const modelDropdownList = document.getElementById('model-dropdown-list');
     const authButton = document.getElementById('auth-button');
-    // 新增侧边栏元素
-    const newChatButton = document.getElementById('new-chat-btn');
-    const historyList = document.getElementById('history-list');
 
     // ---- 全局状态变量 ----
     const API_URL = '/api/askGemini';
@@ -318,34 +327,51 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '以最快速度提供帮助', locked: false }
     ];
     let currentModel = 'gemini-2.5-flash';
-    let currentChatId = null; // 用于追踪当前是哪个聊天
-
+    
     marked.setOptions({ breaks: true, sanitize: true });
+    
+    const deleteChat = (chatIdToDelete) => {
+        let chats = getChats();
+        chats = chats.filter(chat => chat.id !== chatIdToDelete);
+        saveChats(chats);
 
-    // ---- 本地存储核心函数 ----
-    const getChats = () => {
-        const chatsJSON = localStorage.getItem('geminiSnowChats');
-        return chatsJSON ? JSON.parse(chatsJSON) : [];
+        if (currentChatId === chatIdToDelete) {
+            createNewChat();
+        } else {
+            renderHistoryList();
+        }
     };
 
-    const saveChats = (chats) => {
-        localStorage.setItem('geminiSnowChats', JSON.stringify(chats));
-    };
-
-    // ---- 聊天和历史记录渲染函数 ----
     const renderHistoryList = () => {
         const chats = getChats();
         historyList.innerHTML = '';
         chats.forEach(chat => {
             const item = document.createElement('div');
             item.className = 'history-item';
-            item.textContent = chat.title;
             item.dataset.chatId = chat.id;
+
+            const title = document.createElement('div');
+            title.className = 'history-item-title';
+            title.textContent = chat.title;
+            title.addEventListener('click', () => loadChat(chat.id));
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-chat-btn';
+            deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm(`确定要删除对话 "${chat.title}" 吗？`)) {
+                    deleteChat(chat.id);
+                }
+            });
+
             if (chat.id === currentChatId) {
                 item.classList.add('active');
             }
-            item.addEventListener('click', () => loadChat(chat.id));
-            historyList.prepend(item); // 让最新的聊天显示在最上面
+
+            item.appendChild(title);
+            item.appendChild(deleteBtn);
+            historyList.prepend(item);
         });
     };
     
@@ -361,22 +387,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chat) {
             currentChatId = chatId;
             renderChatWindow(chat.messages);
-            renderHistoryList(); // 更新高亮状态
-            setLoading(false); // 确保按钮可用
+            renderHistoryList();
+            setLoading(false);
         }
     };
 
-    const createNewChat = () => {
-        currentChatId = null;
-        chatOutput.innerHTML = ''; // 清空聊天窗口
-        appendMessage('gemini', '欢迎使用GeminiSnow！<br><b>这是一个通过API代理来直接与Gemini进行对话的项目</b>。<br>输入你的任何问题来开始！<b><br>如果出现任何问题，请联系反季雪。', false);
-        renderHistoryList();
-        userInput.value = '';
-        setLoading(false);
-    };
-
-    // ---- API 及消息处理核心逻辑 (大部分与原来相似，但集成了会话管理) ----
-    async function streamResponse(prompt, messageWrapperElement, model, isRegeneration = false) {
+    const streamResponse = async (prompt, messageWrapperElement, model, isRegeneration = false) => {
         setLoading(true);
         messageWrapperElement.classList.add('gemini-loading');
         const messageElement = messageWrapperElement.querySelector('.message');
@@ -384,12 +400,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let chats = getChats();
         let currentMessages = [];
-        if(isRegeneration) {
-            const chat = chats.find(c => c.id === currentChatId);
-            currentMessages = chat.messages.slice(0, -1);
-        } else {
-            const chat = chats.find(c => c.id === currentChatId);
-            currentMessages = chat ? chat.messages : [];
+        const chat = chats.find(c => c.id === currentChatId);
+        if (chat) {
+            currentMessages = isRegeneration ? chat.messages.slice(0, -1) : chat.messages;
         }
 
         try {
@@ -413,8 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 chatOutput.scrollTop = chatOutput.scrollHeight;
             }
             
-            // 响应完成后，保存到对应的聊天记录中
-            chats = getChats(); // 重新获取以防万一
+            chats = getChats();
             const chatIndex = chats.findIndex(c => c.id === currentChatId);
             const modelMessage = { role: 'model', parts: [{ text: fullText }] };
             if (chatIndex !== -1) {
@@ -436,50 +448,13 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapperElement.classList.remove('gemini-loading');
             setLoading(false);
         }
-    }
+    };
 
-    async function handleSend() {
-        const prompt = userInput.value.trim();
-        if (!prompt) return;
-        
-        userInput.value = '';
-        const selectedModel = currentModel;
-        let chats = getChats();
-        
-        // 如果是新聊天，先创建它
-        if (!currentChatId) {
-            currentChatId = `chat_${Date.now()}`;
-            const newChat = {
-                id: currentChatId,
-                title: prompt.substring(0, 30), // 用问题的前30个字符作为标题
-                messages: [],
-            };
-            chats.push(newChat);
-        }
-
-        // 添加用户消息并保存
-        const chatIndex = chats.findIndex(c => c.id === currentChatId);
-        if(chatIndex !== -1) {
-            chats[chatIndex].messages.push({ role: 'user', parts: [{ text: prompt }] });
-            saveChats(chats);
-        }
-
-        appendMessage('user', prompt, true);
-        const loadingMsgWrapper = appendMessage('gemini', 'loading', false);
-        
-        if (chats.length > 0 && chatIndex !== -1 && chats[chatIndex].messages.length === 1) {
-           renderHistoryList(); // 如果是新聊天，立即更新侧边栏
-        }
-        
-        await streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
-    }
-
-    async function regenerateLastResponse() {
+    const regenerateLastResponse = async () => {
         const chats = getChats();
         const chat = chats.find(c => c.id === currentChatId);
         if (!chat || chat.messages.length < 2) return;
 
-        // 找到最后一条用户消息作为 prompt
         const lastUserMessage = chat.messages.slice().reverse().find(m => m.role === 'user');
         if (!lastUserMessage) return;
         const lastUserPrompt = lastUserMessage.parts[0].text;
@@ -489,9 +464,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updateMessage(lastGeminiMsgWrapper, 'loading');
         await streamResponse(lastUserPrompt, lastGeminiMsgWrapper, currentModel, true);
-    }
+    };
 
-    function setLoading(isLoading) {
+    const setLoading = (isLoading) => {
         sendButton.disabled = isLoading;
         regenerateButton.disabled = isLoading;
         userInput.disabled = isLoading;
@@ -505,9 +480,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
              regenerateButton.style.visibility = 'hidden';
         }
-    }
+    };
     
-    function appendMessage(sender, text, shouldAddCopyButton) {
+    const appendMessage = (sender, text, shouldAddCopyButton) => {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message-wrapper ${sender}`;
         const iconHTML = sender === 'user' 
@@ -525,9 +500,9 @@ document.addEventListener('DOMContentLoaded', () => {
              addCopyButtonsToCodeBlocks(messageWrapper);
         }
         return messageWrapper;
-    }
+    };
 
-    function updateMessage(messageWrapperElement, newContent) {
+    const updateMessage = (messageWrapperElement, newContent) => {
         const messageElement = messageWrapperElement.querySelector('.message');
         if (messageElement) {
             if (newContent === 'loading') {
@@ -538,124 +513,114 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         chatOutput.scrollTop = chatOutput.scrollHeight;
-    }
+    };
     
-    // ---- 复制按钮等辅助函数 (基本不变) ----
-    function addCopyButtonsToCodeBlocks(container) { /* ... 此函数内容保持不变 ... */ }
-    function addCopyButtonToMessage(messageWrapper, textToCopy) { /* ... 此函数内容保持不变 ... */ }
+    const addCopyButtonsToCodeBlocks = (container) => {
+        const codeBlocks = container.querySelectorAll('pre');
+        codeBlocks.forEach(block => {
+            if (block.querySelector('.copy-code-button')) return;
+            const button = document.createElement('button');
+            button.className = 'copy-code-button';
+            button.textContent = '复制';
+            button.onclick = () => {
+                const code = block.querySelector('code').innerText;
+                navigator.clipboard.writeText(code).then(() => {
+                    button.textContent = '已复制!';
+                    setTimeout(() => { button.textContent = '复制'; }, 2000);
+                });
+            };
+            block.appendChild(button);
+        });
+    };
     
-    // ---- 模型选择器与认证逻辑 (基本不变) ----
-    function setupModelSelector() { /* ... 此函数内容保持不变 ... */ }
-    function updateSelectorDisplay() { /* ... 此函数内容保持不变 ... */ }
-    function handleAuth() { /* ... 此函数内容保持不变, 但可以简化，因为我们已将模型切换逻辑集成到setupModelSelector中 ... */ 
+    const addCopyButtonToMessage = (messageWrapper, textToCopy) => {
+        const existingButton = messageWrapper.querySelector('.copy-message-button');
+        if (existingButton) existingButton.remove();
+        const button = document.createElement('button');
+        button.className = 'copy-message-button';
+        button.title = '复制内容';
+        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+        button.onclick = (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                button.innerHTML = '✓';
+                setTimeout(() => {
+                    button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+                }, 1500);
+            });
+        };
+        messageWrapper.appendChild(button);
+    };
+
+    const setupModelSelector = () => {
+        modelDropdownList.innerHTML = '';
+        models.forEach(model => {
+            const option = document.createElement('div');
+            option.className = 'model-option';
+            option.dataset.value = model.id;
+            const isLocked = model.locked && !isProUnlocked;
+            if (isLocked) option.classList.add('disabled');
+            option.innerHTML = `<div class="model-option-text"><h4>${model.name} ${isLocked ? '🔒' : ''}</h4><p>${model.description}</p></div><span class="checkmark">✓</span>`;
+            if (!isLocked) {
+                option.addEventListener('click', () => {
+                    currentModel = model.id;
+                    updateSelectorDisplay();
+                    modelDropdownList.classList.remove('active');
+                });
+            } else {
+                option.addEventListener('click', () => alert('此模型需要认证才能使用。请点击“认证”按钮进行解锁。'));
+            }
+            modelDropdownList.appendChild(option);
+        });
+        updateSelectorDisplay();
+    };
+
+    const updateSelectorDisplay = () => {
+        const selectedModel = models.find(m => m.id === currentModel);
+        if (selectedModel) selectedModelDisplay.textContent = selectedModel.name;
+        document.querySelectorAll('.model-option').forEach(opt => opt.classList.toggle('selected', opt.dataset.value === currentModel));
+    };
+    
+    const handleAuth = () => {
         const enteredCode = prompt("请输入认证代码以解锁 Pro 模型：");
         if (enteredCode === null) return;
         if (enteredCode.trim() === "703777") {
             isProUnlocked = true;
             alert("认证成功！2.5 Pro 模型已解锁。");
             authButton.style.display = 'none';
-            currentModel = 'gemini-2.5-pro'; // 自动切换到Pro
-            setupModelSelector(); // 重新渲染菜单
+            currentModel = 'gemini-2.5-pro';
+            setupModelSelector();
         } else {
             alert("代码错误，认证失败。");
         }
-    }
+    };
 
-    // ---- 初始化和事件监听 ----
-    function initialize() {
-        // 将未改变的函数代码复制到这里
-        addCopyButtonsToCodeBlocks = function(container) {
-            const codeBlocks = container.querySelectorAll('pre');
-            codeBlocks.forEach(block => {
-                if (block.querySelector('.copy-code-button')) return;
-                const button = document.createElement('button');
-                button.className = 'copy-code-button';
-                button.textContent = '复制';
-                button.onclick = () => {
-                    const code = block.querySelector('code').innerText;
-                    navigator.clipboard.writeText(code).then(() => {
-                        button.textContent = '已复制!';
-                        setTimeout(() => { button.textContent = '复制'; }, 2000);
-                    });
-                };
-                block.appendChild(button);
-            });
-        };
-        addCopyButtonToMessage = function(messageWrapper, textToCopy) {
-            const existingButton = messageWrapper.querySelector('.copy-message-button');
-            if (existingButton) existingButton.remove();
-            const button = document.createElement('button');
-            button.className = 'copy-message-button';
-            button.title = '复制内容';
-            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-            button.onclick = (e) => {
-                e.stopPropagation();
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    button.innerHTML = '✓';
-                    setTimeout(() => {
-                        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-                    }, 1500);
-                });
-            };
-            messageWrapper.appendChild(button);
-        };
-        setupModelSelector = function() {
-            modelDropdownList.innerHTML = '';
-            models.forEach(model => {
-                const option = document.createElement('div');
-                option.className = 'model-option';
-                option.dataset.value = model.id;
-                const isLocked = model.locked && !isProUnlocked;
-                if (isLocked) option.classList.add('disabled');
-                option.innerHTML = `<div class="model-option-text"><h4>${model.name} ${isLocked ? '🔒' : ''}</h4><p>${model.description}</p></div><span class="checkmark">✓</span>`;
-                if (!isLocked) {
-                    option.addEventListener('click', () => {
-                        currentModel = model.id;
-                        updateSelectorDisplay();
-                        modelDropdownList.classList.remove('active');
-                    });
-                } else {
-                    option.addEventListener('click', () => alert('此模型需要认证才能使用。请点击“认证”按钮进行解锁。'));
-                }
-                modelDropdownList.appendChild(option);
-            });
-            updateSelectorDisplay();
-        };
-        updateSelectorDisplay = function() {
-            const selectedModel = models.find(m => m.id === currentModel);
-            if (selectedModel) selectedModelDisplay.textContent = selectedModel.name;
-            document.querySelectorAll('.model-option').forEach(opt => opt.classList.toggle('selected', opt.dataset.value === currentModel));
-        };
-        
-        // -- 添加事件监听 --
-        newChatButton.addEventListener('click', createNewChat);
-        authButton.addEventListener('click', handleAuth);
-        sendButton.addEventListener('click', handleSend);
-        userInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter' && !sendButton.disabled) { handleSend(); }
-        });
-        userInput.addEventListener('input', () => {
-            if (regenerateButton.style.visibility !== 'hidden') {
-                regenerateButton.style.visibility = 'hidden';
-            }
-        });
-        regenerateButton.addEventListener('click', regenerateLastResponse);
-        selectedModelDisplay.addEventListener('click', (e) => {
-            e.stopPropagation();
-            modelDropdownList.classList.toggle('active');
-        });
-        document.addEventListener('click', (e) => {
-            if (!modelDropdownList.contains(e.target) && !selectedModelDisplay.contains(e.target)) {
-                modelDropdownList.classList.remove('active');
-            }
-        });
+    // -- 添加事件监听 --
+    newChatButton.addEventListener('click', createNewChat);
+    authButton.addEventListener('click', handleAuth);
+    sendButton.addEventListener('click', handleSend);
+    userInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter' && !sendButton.disabled) { handleSend(); }
+    });
+    userInput.addEventListener('input', () => {
+        if (regenerateButton.style.visibility !== 'hidden') {
+            regenerateButton.style.visibility = 'hidden';
+        }
+    });
+    regenerateButton.addEventListener('click', regenerateLastResponse);
+    selectedModelDisplay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        modelDropdownList.classList.toggle('active');
+    });
+    document.addEventListener('click', (e) => {
+        if (!modelDropdownList.contains(e.target) && !selectedModelDisplay.contains(e.target)) {
+            modelDropdownList.classList.remove('active');
+        }
+    });
 
-        // -- 应用启动 --
-        setupModelSelector(); 
-        createNewChat(); // 启动时创建一个新聊天
-    }
-
-    initialize();
+    // -- 应用启动 --
+    setupModelSelector(); 
+    createNewChat();
 });
 </script>
 </body>
