@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Snow</title>
+    <title>GeminiSnow</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
@@ -18,7 +18,6 @@
             --code-bg: #282c34;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-
         body {
             font-family: var(--font-family);
             background-color: var(--body-bg);
@@ -30,7 +29,6 @@
             padding: 1rem;
             box-sizing: border-box;
         }
-
         .chat-container {
             width: 100%;
             max-width: 800px;
@@ -42,6 +40,30 @@
             flex-direction: column;
             overflow: hidden;
         }
+        
+        /* 新增：聊天窗口头部样式 */
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .chat-header h2 {
+            font-size: 20px;
+            margin: 0;
+            font-weight: 600;
+        }
+        #model-selector {
+            background-color: var(--gemini-msg-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+        }
 
         .chat-output {
             flex-grow: 1;
@@ -51,209 +73,61 @@
             flex-direction: column;
             gap: 20px;
         }
-        
-        .message-wrapper {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            max-width: 90%;
-        }
-        
-        .message-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 0;
-            margin-top: 5px;
-        }
-
-        .message {
-            padding: 12px 18px;
-            border-radius: 18px;
-            line-height: 1.6;
-            word-wrap: break-word;
-        }
-
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .gemini.streaming-in .message {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .gemini .message-icon {
-            background-color: transparent;
-        }
-        .gemini .message {
-            background-color: var(--gemini-msg-bg);
-            color: var(--text-color);
-            border-bottom-left-radius: 4px;
-        }
-        .message-icon img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        
-        .user {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
-        .user .message {
-            background-color: var(--accent-color);
-            color: var(--light-text-color);
-            border-bottom-right-radius: 4px;
-        }
-        .user .message-icon {
-            background-color: var(--accent-color);
-        }
-
-        .loading-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-style: italic;
-            color: #6c757d;
-        }
-        .spinner {
-            width: 18px;
-            height: 18px;
-            border: 3px solid rgba(0, 0, 0, 0.1);
-            border-top-color: var(--accent-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* --- Markdown 内容样式 --- */
+        .message-wrapper { display: flex; align-items: flex-start; gap: 10px; max-width: 90%; }
+        .message-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin-top: 5px; }
+        .message { padding: 12px 18px; border-radius: 18px; line-height: 1.6; word-wrap: break-word; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .gemini.streaming-in .message { animation: fadeIn 0.5s ease-out; }
+        .gemini .message-icon { background-color: transparent; }
+        .gemini .message { background-color: var(--gemini-msg-bg); color: var(--text-color); border-bottom-left-radius: 4px; }
+        .message-icon img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .user { align-self: flex-end; flex-direction: row-reverse; }
+        .user .message { background-color: var(--accent-color); color: var(--light-text-color); border-bottom-right-radius: 4px; }
+        .user .message-icon { background-color: var(--accent-color); }
+        .loading-indicator { display: flex; align-items: center; gap: 10px; font-style: italic; color: #6c757d; }
+        .spinner { width: 18px; height: 18px; border: 3px solid rgba(0, 0, 0, 0.1); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .message p { margin: 0 0 10px; }
         .message p:last-child { margin-bottom: 0; }
         .message ul, .message ol { padding-left: 20px; }
-        .message pre {
-            background-color: var(--code-bg);
-            color: var(--light-text-color);
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto;
-            position: relative;
-        }
-        .message code {
-            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-            font-size: 14px;
-        }
-        .copy-code-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #555;
-            color: white;
-            border: none;
-            padding: 5px 8px;
-            border-radius: 5px;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
+        .message pre { background-color: var(--code-bg); color: var(--light-text-color); padding: 15px; border-radius: 8px; overflow-x: auto; position: relative; }
+        .message code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; font-size: 14px; }
+        .copy-code-button { position: absolute; top: 10px; right: 10px; background-color: #555; color: white; border: none; padding: 5px 8px; border-radius: 5px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
         .message pre:hover .copy-code-button { opacity: 1; }
-        .message table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-        .message th, .message td {
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            text-align: left;
-        }
+        .message table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .message th, .message td { border: 1px solid var(--border-color); padding: 8px 12px; text-align: left; }
         .message th { background-color: #f2f2f2; }
-
-        /* --- 输入区域 --- */
-        .chat-input-area {
-            border-top: 1px solid var(--border-color);
-            padding: 20px;
-        }
-        .chat-input {
-            display: flex;
-            align-items: center;
-            background-color: var(--gemini-msg-bg);
-            border-radius: 12px;
-            padding: 5px;
-        }
-        #userInput {
-            flex-grow: 1;
-            border: none;
-            background: transparent;
-            padding: 10px 15px;
-            font-size: 16px;
-            outline: none;
-            color: var(--text-color);
-        }
-
-        .input-action-button {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: none;
-            background: transparent;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-            margin-left: 5px;
-        }
-        .input-action-button svg {
-            width: 20px;
-            height: 20px;
-            stroke: #6c757d;
-            transition: stroke 0.2s ease;
-        }
-        .input-action-button:hover:not(:disabled) {
-            background-color: #dee2e6;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .input-action-button:disabled {
-             opacity: 0.4;
-             cursor: not-allowed;
-        }
-        
-        #sendButton {
-            background-color: var(--accent-color);
-        }
-        #sendButton svg {
-            stroke: white;
-        }
-        #sendButton:hover:not(:disabled) {
-            background-color: #0056b3;
-        }
-        #sendButton:disabled {
-            background-color: #a0cfff;
-            opacity: 1;
-        }
-        
-        #regenerateButton {
-            visibility: hidden;
-        }
-        
+        .chat-input-area { border-top: 1px solid var(--border-color); padding: 20px; }
+        .chat-input { display: flex; align-items: center; background-color: var(--gemini-msg-bg); border-radius: 12px; padding: 5px; }
+        #userInput { flex-grow: 1; border: none; background: transparent; padding: 10px 15px; font-size: 16px; outline: none; color: var(--text-color); min-width: 0; }
+        .input-action-button { display: flex; justify-content: center; align-items: center; border: none; background: transparent; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; margin-left: 5px; }
+        .input-action-button svg { width: 20px; height: 20px; stroke: #6c757d; transition: stroke 0.2s ease; }
+        .input-action-button:hover:not(:disabled) { background-color: #dee2e6; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .input-action-button:disabled { opacity: 0.4; cursor: not-allowed; }
+        #sendButton { background-color: var(--accent-color); }
+        #sendButton svg { stroke: white; }
+        #sendButton:hover:not(:disabled) { background-color: #0056b3; }
+        #sendButton:disabled { background-color: #a0cfff; opacity: 1; }
+        #regenerateButton { visibility: hidden; }
+        @media (max-width: 480px) { .chat-input-area { padding: 15px 10px; } .chat-output { padding: 15px; gap: 15px; } .message-wrapper { max-width: 95%; } }
     </style>
 </head>
 <body>
 
 <div class="chat-container">
+    <div class="chat-header">
+        <h2>Gemini Snow</h2>
+        <select id="model-selector">
+            <option value="gemini-2.5-pro" selected>🏆Gemini 2.5 Pro 专业，生成速度慢，负载大</option>
+            <option value="gemini-2.5-flash">💡Gemini 2.5 Flash 平衡之选，生成速度快</option>
+            <option value="gemini-2.0-flash">⚡️Gemini 2.0 Flash 历代模型，生成速度快</option>
+        </select>
+    </div>
+
     <div class="chat-output" id="chatOutput">
         <div class="message-wrapper gemini">
             <div class="message-icon"><img src="/00.png" alt="Gemini Avatar"></div>
-            <div class="message">欢迎使用GeminiSnow！<br><b>这是一个通过API代理来直接与Gemini2.5Pro进行对话的项目</b>。<br>输入你的任何问题来开始！<b><br>如果出现任何问题，请联系反季雪。</b></div>
+            <div class="message">欢迎使用GeminiSnow！<br><b>这是一个通过API代理来直接与Gemini2.5Pro进行对话的项目</b>。<br>输入你的任何问题来开始！<b><br>如果出现任何问题，请联系反季雪。</div>
         </div>
     </div>
     
@@ -275,6 +149,7 @@
     const sendButton = document.getElementById('sendButton');
     const chatOutput = document.getElementById('chatOutput');
     const regenerateButton = document.getElementById('regenerateButton');
+    const modelSelector = document.getElementById('model-selector'); // 新增
     
     const API_URL = '/api/askGemini';
     let lastUserPrompt = '';
@@ -282,20 +157,22 @@
 
     marked.setOptions({ breaks: true, sanitize: true });
 
-    async function getApiResponse(prompt, history) {
+    // 修改：函数现在需要接收 model 参数
+    async function getApiResponse(prompt, history, model) {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, history }),
+            // 修改：将选中的 model 一同发送到后端
+            body: JSON.stringify({ prompt, history, model }),
         });
         if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
         return response;
     }
 
-    async function streamResponse(prompt, messageWrapperElement, isRegeneration = false) {
+    // 修改：函数现在需要接收 model 参数
+    async function streamResponse(prompt, messageWrapperElement, model, isRegeneration = false) {
         setLoading(true);
         const messageElement = messageWrapperElement.querySelector('.message');
-
         messageWrapperElement.classList.add('streaming-in');
 
         try {
@@ -304,7 +181,9 @@
                 historyForThisRequest = conversationHistory.slice(0, -1);
             }
 
-            const response = await getApiResponse(prompt, historyForThisRequest);
+            // 修改：将 model 传递给 API 请求函数
+            const response = await getApiResponse(prompt, historyForThisRequest, model);
+            
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = '';
@@ -326,14 +205,11 @@
 
             messageElement.innerHTML = marked.parse(fullText);
             addCopyButtonsToCodeBlocks(messageElement);
-            // 动画结束后可以移除类，以防重复触发
-            setTimeout(() => {
-                messageWrapperElement.classList.remove('streaming-in');
-            }, 500);
+            setTimeout(() => { messageWrapperElement.classList.remove('streaming-in'); }, 500);
 
         } catch (error) {
             console.error('Error:', error);
-            messageElement.textContent = '抱歉，出错了。请等待后重试或将信息提供给反季雪。';
+            updateMessage(messageWrapperElement, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试。<br></b>如果多次等待后仍然无法正常使用，请联系反季雪。');
         } finally {
             setLoading(false);
         }
@@ -345,14 +221,15 @@
 
         lastUserPrompt = prompt;
         userInput.value = '';
+        const selectedModel = modelSelector.value; // 获取当前选中的模型
         
         conversationHistory.push({ role: 'user', parts: [{ text: prompt }] });
         
         appendMessage('user', prompt);
-
         const loadingMsgWrapper = appendMessage('gemini', 'loading');
         
-        streamResponse(prompt, loadingMsgWrapper, false);
+        // 将选中的模型传递给流式处理函数
+        streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
     }
 
     async function regenerateLastResponse() {
@@ -360,16 +237,19 @@
         const lastGeminiMsgWrapper = chatOutput.querySelector('.message-wrapper.gemini:last-of-type');
         if (!lastGeminiMsgWrapper) return;
         
-
+        const selectedModel = modelSelector.value; // 获取当前选中的模型
         updateMessage(lastGeminiMsgWrapper, 'loading');
         
-        streamResponse(lastUserPrompt, lastGeminiMsgWrapper, true);
+        // 将选中的模型传递给流式处理函数
+        streamResponse(lastUserPrompt, lastGeminiMsgWrapper, selectedModel, true);
     }
-    
+
+    // 其他函数（setLoading, appendMessage, updateMessage, addCopyButtonsToCodeBlocks）保持不变
     function setLoading(isLoading) {
         sendButton.disabled = isLoading;
         regenerateButton.disabled = isLoading;
         userInput.disabled = isLoading;
+        modelSelector.disabled = isLoading; // 新增：加载时禁用模型选择
         if (isLoading) {
             regenerateButton.style.visibility = 'hidden';
         } else if (lastUserPrompt) {
@@ -383,16 +263,13 @@
         const iconHTML = sender === 'user' 
             ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
             : '<img src="/00.png" alt="Gemini Avatar">';
-        
         const messageContentHTML = text === 'loading'
             ? `<div class="loading-indicator"><div class="spinner"></div><span>思考中...</span></div>`
             : text;
-
         messageWrapper.innerHTML = `
             <div class="message-icon">${iconHTML}</div>
             <div class="message">${messageContentHTML}</div>
         `;
-        
         chatOutput.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         return messageWrapper;
@@ -401,7 +278,6 @@
     function updateMessage(messageWrapperElement, newContent) {
         const messageElement = messageWrapperElement.querySelector('.message');
         if (messageElement) {
-            // 修改：同样处理 'loading' 状态
             if (newContent === 'loading') {
                 messageElement.innerHTML = `<div class="loading-indicator"><div class="spinner"></div><span>重新生成中...</span></div>`;
             } else {
