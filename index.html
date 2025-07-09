@@ -295,7 +295,6 @@
     async function streamResponse(prompt, messageWrapperElement, isRegeneration = false) {
         setLoading(true);
         const messageElement = messageWrapperElement.querySelector('.message');
-        messageElement.innerHTML = ''; // 清空内容以准备接收流
 
         messageWrapperElement.classList.add('streaming-in');
 
