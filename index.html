@@ -226,8 +226,6 @@
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = '';
-            
-            messageElement.innerHTML = ''; // 清空"思考中"
 
             while (true) {
                 const { done, value } = await reader.read();
