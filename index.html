@@ -21,15 +21,35 @@
         body {
             font-family: var(--font-family); background-color: var(--body-bg); margin: 0; display: flex;
             justify-content: center; align-items: center; height: 100vh; padding: 1rem; box-sizing: border-box;
+            overflow: hidden;
+        }
+        .main-container {
+            position: relative;
+            display: flex; width: 100%; height: 100%; max-width: 1200px; max-height: 90vh;
+            background: var(--chat-bg); border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); overflow: hidden;
         }
         .chat-container {
-            width: 100%; max-width: 800px; height: 90vh; background: var(--chat-bg);
+            width: 100%; height: 100%; background: var(--chat-bg);
             border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); display: flex;
             flex-direction: column; overflow: hidden;
         }
         .chat-header {
-            display: flex; justify-content: flex-end; align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             padding: 10px 20px; flex-shrink: 0;
+        }
+        
+        /* ✅ New: Wrapper for left-side header content */
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        #menu-toggle-btn {
+            display: none;
+            background: none; border: none; padding: 8px; margin-left: -8px; cursor: pointer;
+        }
+        #menu-toggle-btn svg {
+            width: 24px; height: 24px; stroke: var(--text-color);
         }
         .header-controls { display: flex; align-items: center; gap: 10px; }
         #auth-button {
@@ -73,22 +93,37 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .gemini.streaming-in .message { animation: fadeIn 0.5s ease-out; }
         .gemini .message-icon { background-color: transparent; }
+        
         .gemini .message {
-            background-color: transparent; /* 移除气泡背景 */
+            background-color: transparent;
             color: var(--text-color);
-            padding: 0; /* 移除气泡内边距 */
-            border-radius: 0; /* 移除气泡圆角 */
+            padding: 0;
+            border-radius: 0;
         }
+        
         .message-icon img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        @keyframes animatedGradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        
         .gemini-loading .message {
-            color: var(--text-color); background: linear-gradient(125deg, #e9ecef, #f8f9fa, #e9ecef, #dee2e6);
-            background-size: 400% 400%; animation: animatedGradient 3s ease infinite;
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
         }
         .copy-message-button {
-            position: absolute; top: 35px; left: 6px; background: #fff; border: 1px solid var(--border-color);
-            border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex;
-            justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s, transform 0.2s; transform: scale(0.8);
+            position: absolute;
+            bottom: 0px;
+            left: 6px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            transform: scale(0.8);
         }
         .message-wrapper:hover .copy-message-button { opacity: 1; transform: scale(1); }
         .gemini.message-wrapper { display: inline-flex; }
@@ -135,11 +170,6 @@
         #sendButton:hover:not(:disabled) { background-color: #000; }
         #sendButton:disabled { background-color: #6c757d; opacity: 1; }
         #regenerateButton { visibility: hidden; }
-
-        .main-container {
-            display: flex; width: 100%; height: 100vh; max-width: 1200px; max-height: 90vh;
-            background: var(--chat-bg); border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); overflow: hidden;
-        }
         #sidebar {
             width: 260px; background-color: #212529; color: var(--light-text-color); flex-shrink: 0;
             display: flex; flex-direction: column;
@@ -155,7 +185,6 @@
         }
         .history-item.active { background-color: #495057; }
         .chat-container { flex-grow: 1; height: 100%; max-width: none; max-height: none; box-shadow: none; border-radius: 0; display: flex; flex-direction: column; }
-
         .history-item {
             display: flex; justify-content: space-between; align-items: center; gap: 10px;
             padding: 12px 15px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s;
@@ -171,12 +200,10 @@
         }
         .delete-chat-btn:hover { background-color: #495057; color: #f8f9fa; }
         .delete-chat-btn svg { width: 16px; height: 16px; }
-
         #sidebar-footer { padding: 20px; }
         #sidebar-footer h3 {
             margin: 0; font-size: 18px; text-align: center; font-weight: 600; color: #dee2e6;
         }
-
         .welcome-screen {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             height: 100%; text-align: center; color: #6c757d; flex-grow: 1;
@@ -187,60 +214,77 @@
         .welcome-screen h2 {
             font-size: 28px; font-weight: 240;
         }
-        
-        /* --- ✅ 新增：自定义滚动条样式 --- */
-        /* 兼容 Firefox */
         #history-list {
             scrollbar-width: thin;
-            scrollbar-color: #495057 #212529; /* 滑块颜色 轨道颜色 */
+            scrollbar-color: #495057 #212529;
         }
         .chat-output {
             scrollbar-width: thin;
-            scrollbar-color: #c1c1c1 var(--chat-bg); /* 滑块颜色 轨道颜色 */
+            scrollbar-color: #c1c1c1 var(--chat-bg);
         }
-
-        /* 兼容 WebKit 浏览器 (Chrome, Safari, Edge 等) */
-        /* 侧边栏滚动条 */
-        #history-list::-webkit-scrollbar {
-            width: 8px;
-        }
-        #history-list::-webkit-scrollbar-track {
-            background: #212529; /* 轨道颜色，匹配背景 */
-        }
+        #history-list::-webkit-scrollbar { width: 8px; }
+        #history-list::-webkit-scrollbar-track { background: #212529; }
         #history-list::-webkit-scrollbar-thumb {
-            background-color: #495057; /* 滑块颜色 */
-            border-radius: 10px;
-            border: 2px solid #212529; /* 创建边距效果 */
+            background-color: #495057; border-radius: 10px; border: 2px solid #212529;
         }
-        #history-list::-webkit-scrollbar-thumb:hover {
-            background-color: #6c757d; /* 悬停时滑块颜色 */
-        }
-
-        /* 聊天窗口滚动条 */
-        .chat-output::-webkit-scrollbar {
-            width: 8px;
-        }
-        .chat-output::-webkit-scrollbar-track {
-            background: var(--chat-bg); /* 轨道颜色，匹配背景 */
-        }
+        #history-list::-webkit-scrollbar-thumb:hover { background-color: #6c757d; }
+        .chat-output::-webkit-scrollbar { width: 8px; }
+        .chat-output::-webkit-scrollbar-track { background: var(--chat-bg); }
         .chat-output::-webkit-scrollbar-thumb {
-            background-color: #d6d6d6; /* 滑块颜色 */
-            border-radius: 10px;
-            border: 2px solid var(--chat-bg); /* 创建边距效果 */
+            background-color: #d6d6d6; border-radius: 10px; border: 2px solid var(--chat-bg);
         }
-        .chat-output::-webkit-scrollbar-thumb:hover {
-            background-color: #a8a8a8; /* 悬停时滑块颜色 */
+        .chat-output::-webkit-scrollbar-thumb:hover { background-color: #a8a8a8; }
+        
+        #sidebar-backdrop {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
-
-
-        @media (max-width: 768px) { #sidebar { display: none; } }
-        @media (max-width: 480px) { html { font-size: 87.5%; } .chat-container { height: 100vh; border-radius: 0; } .chat-header { padding: 8px 15px; } .chat-input-area { padding: 15px 10px; } .chat-output { padding: 15px 10px; gap: 15px; } .message-wrapper { max-width: 95%; } }
-        @media (hover: none) or (pointer: coarse) { .message-wrapper .copy-message-button { opacity: 0.5; transform: scale(1); } }
+        
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            .main-container {
+                max-height: 100vh; height: 100%; border-radius: 0;
+            }
+            #menu-toggle-btn { display: block; }
+            #sidebar {
+                position: absolute;
+                top: 0; left: 0; height: 100%;
+                z-index: 100;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                border-right: 1px solid #495057;
+            }
+            .sidebar-open #sidebar {
+                transform: translateX(0);
+            }
+            .sidebar-open #sidebar-backdrop {
+                display: block;
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+        @media (max-width: 480px) {
+            html { font-size: 87.5%; }
+            .chat-container { border-radius: 0; }
+            .chat-header { padding: 8px 15px; }
+            .chat-input-area { padding: 15px 10px; }
+            .chat-output { padding: 15px 10px; gap: 15px; }
+            .message-wrapper { max-width: 95%; }
+        }
+        @media (hover: none) or (pointer: coarse) {
+            .message-wrapper .copy-message-button { opacity: 0.5; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
 
-<div class="main-container">
+<div class="main-container" id="main-container">
     <div id="sidebar">
         <div class="sidebar-header">
             <button id="new-chat-btn">＋ 发起新对话</button>
@@ -250,8 +294,15 @@
             <h3>GeminiSnow</h3>
         </div>
     </div>
+
     <div class="chat-container">
         <div class="chat-header">
+            <div class="header-left">
+                <button id="menu-toggle-btn">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+            </div>
+            
             <div class="header-controls">
                 <button id="auth-button">认证</button>
                 <div class="model-selector-wrapper">
@@ -269,11 +320,18 @@
             </div>
         </div>
     </div> 
+    
+    <div id="sidebar-backdrop"></div>
 </div>
 
 <script>
-// JavaScript 部分与上一版完全相同，无需改动。
 document.addEventListener('DOMContentLoaded', () => {
+    // ✅ New: Add elements for sidebar toggle
+    const mainContainer = document.getElementById('main-container');
+    const menuToggleButton = document.getElementById('menu-toggle-btn');
+    const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+    // Note: 'sidebar' element is not needed here as we toggle class on the parent
+
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
     const chatOutput = document.getElementById('chatOutput');
@@ -286,6 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const API_URL = '/api/askGemini';
     let isProUnlocked = false;
+    // --- Unchanged: Preserving your exact model list ---
     const models = [
         { id: 'gemini-2.5-flash', name: '2.5 Flash', description: '快速提供全方位的帮助', locked: false },
         { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码', locked: true },
@@ -358,6 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderChatWindow(chat.messages);
             renderHistoryList();
             setLoading(false);
+            // ✅ New: Close sidebar after selecting a chat on mobile
+            mainContainer.classList.remove('sidebar-open');
         }
     };
 
@@ -372,6 +433,8 @@ document.addEventListener('DOMContentLoaded', () => {
         renderHistoryList();
         userInput.value = '';
         setLoading(false);
+        // ✅ New: Close sidebar when creating a new chat on mobile
+        mainContainer.classList.remove('sidebar-open');
     };
 
     const handleSend = async () => {
@@ -429,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetch('/api/askGemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt, history: currentMessages, model }),
@@ -618,16 +681,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // -- Add Event Listeners --
     newChatButton.addEventListener('click', createNewChat);
     authButton.addEventListener('click', handleAuth);
     sendButton.addEventListener('click', handleSend);
     userInput.addEventListener('keypress', (event) => {
         if (event.key === 'Enter' && !sendButton.disabled) { handleSend(); }
-    });
-    userInput.addEventListener('input', () => {
-        if (regenerateButton.style.visibility !== 'hidden') {
-            regenerateButton.style.visibility = 'hidden';
-        }
     });
     regenerateButton.addEventListener('click', regenerateLastResponse);
     selectedModelDisplay.addEventListener('click', (e) => {
@@ -640,6 +699,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ✅ New: Event listeners for sidebar toggle
+    menuToggleButton.addEventListener('click', () => {
+        mainContainer.classList.toggle('sidebar-open');
+    });
+
+    sidebarBackdrop.addEventListener('click', () => {
+        mainContainer.classList.remove('sidebar-open');
+    });
+
+    // -- App Initialization --
     setupModelSelector(); 
     createNewChat();
 });
