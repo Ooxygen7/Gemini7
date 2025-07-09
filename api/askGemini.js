@@ -19,7 +19,7 @@ export default async function handler(req) {
       return new Response('Bad Request: Missing prompt.', { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
     // ✅ 核心改动：使用历史记录开启一个聊天会话
     const chat = model.startChat({
