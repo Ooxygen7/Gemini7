@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini 对话</title>
+    <title>GeminiSnow</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
@@ -99,8 +99,9 @@
 
         .chat-output { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
         .message-wrapper { display: flex; align-items: flex-start; gap: 10px; max-width: 90%; position: relative; }
+        .gemini.message-wrapper {display: inline-flex; /* 让容器宽度自适应内容，而不是撑满 */}
         .message-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin-top: 5px; }
-        .message { padding: 12px 18px; border-radius: 18px; line-height: 1.6; word-wrap: break-word; }
+        .message { padding: 12px 18px; border-radius: 18px; line-height: 1.6; word-wrap: break-word;word-break: break-word; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .gemini.streaming-in .message { animation: fadeIn 0.5s ease-out; }
         .gemini .message-icon { background-color: transparent; }
@@ -162,7 +163,30 @@
         #sendButton:hover:not(:disabled) { background-color: #0056b3; }
         #sendButton:disabled { background-color: #a0cfff; opacity: 1; }
         #regenerateButton { visibility: hidden; }
-        @media (max-width: 480px) { .chat-input-area { padding: 15px 10px; } .chat-output { padding: 15px; gap: 15px; } .message-wrapper { max-width: 95%; } }
+        @media (max-width: 480px) {
+            /* 减小根字体大小，实现类似缩放的效果 */
+            html {
+                font-size: 87.5%; /* 相当于 14px，默认是 16px */
+            }
+
+            .chat-container {
+                height: 100vh; /* 在手机上占满整个屏幕高度 */
+                border-radius: 0;
+            }
+            .chat-header {
+                padding: 8px 15px;
+            }
+            .chat-input-area {
+                padding: 10px;
+            }
+            .chat-output {
+                padding: 15px 10px;
+                gap: 15px;
+            }
+            .message-wrapper {
+                max-width: 95%;
+            }
+        }
         @media (hover: none) or (pointer: coarse) {
             .message-wrapper .copy-message-button {
                 /* 在手机等触摸设备上，让复制按钮一直可见，而不是悬浮显示 */
@@ -177,7 +201,7 @@
 <div class="chat-container">
 
     <div class="chat-header">
-        <h2>Gemini</h2>
+        <h2>GeminiSnow</h2>
         <div class="model-selector-wrapper">
             <div class="selected-model" id="selected-model-display">2.5 Flash</div>
             <div class="model-dropdown" id="model-dropdown-list">
@@ -338,10 +362,6 @@
         
         chatOutput.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
-
-        if (sender === 'user') {
-            addCopyButtonToMessage(messageWrapper, text);
-        }
 
         return messageWrapper;
     }
