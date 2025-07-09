@@ -12,21 +12,23 @@ export default async function handler(req) {
   }
 
   try {
-    // 从请求中同时获取 prompt 和 history
-    const { prompt, history } = await req.json();
+    // ✅ 核心改动：从请求中额外获取 model 名称
+    const { prompt, history, model: selectedModel } = await req.json();
 
     if (!prompt) {
       return new Response('Bad Request: Missing prompt.', { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    // 如果前端没有提供模型名称，则使用一个默认的稳定模型
+    const modelToUse = selectedModel || "gemini-2.5-flash";
 
-    // ✅ 核心改动：使用历史记录开启一个聊天会话
+    // ✅ 核心改动：使用前端传来的模型名称来初始化模型
+    const model = genAI.getGenerativeModel({ model: modelToUse });
+
     const chat = model.startChat({
-      history: history || [], // 如果没有历史记录，则使用空数组
+      history: history || [],
     });
 
-    // ✅ 核心改动：使用 chat.sendMessageStream 来发送带有上下文的新消息
     const result = await chat.sendMessageStream(prompt);
 
     const stream = new ReadableStream({
