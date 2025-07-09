@@ -2,12 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="jiaobiao.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini跳台</title>
+    <title>Gemini Snow</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        /* --- 全局样式和变量 --- */
         :root {
             --body-bg: #f4f6f8;
             --chat-bg: #ffffff;
@@ -33,7 +31,6 @@
             box-sizing: border-box;
         }
 
-        /* --- 聊天容器 --- */
         .chat-container {
             width: 100%;
             max-width: 800px;
@@ -46,7 +43,6 @@
             overflow: hidden;
         }
 
-        /* --- 聊天输出区域 --- */
         .chat-output {
             flex-grow: 1;
             padding: 20px;
@@ -56,7 +52,6 @@
             gap: 20px;
         }
         
-        /* --- 消息通用样式 --- */
         .message-wrapper {
             display: flex;
             align-items: flex-start;
@@ -82,9 +77,17 @@
             word-wrap: break-word;
         }
 
-        /* --- Gemini 消息样式 --- */
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .gemini.streaming-in .message {
+            animation: fadeIn 0.5s ease-out;
+        }
+
         .gemini .message-icon {
-            background-color: transparent; /* 移除背景色以正确显示图片 */
+            background-color: transparent;
         }
         .gemini .message {
             background-color: var(--gemini-msg-bg);
@@ -98,7 +101,6 @@
             object-fit: cover;
         }
         
-        /* --- 用户消息样式 --- */
         .user {
             align-self: flex-end;
             flex-direction: row-reverse;
@@ -110,6 +112,25 @@
         }
         .user .message-icon {
             background-color: var(--accent-color);
+        }
+
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-style: italic;
+            color: #6c757d;
+        }
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* --- Markdown 内容样式 --- */
@@ -176,7 +197,6 @@
             color: var(--text-color);
         }
 
-        /* --- 输入框内按钮的通用样式 --- */
         .input-action-button {
             display: flex;
             justify-content: center;
@@ -222,7 +242,7 @@
         }
         
         #regenerateButton {
-            visibility: hidden; /* 默认隐藏 */
+            visibility: hidden;
         }
         
     </style>
@@ -233,13 +253,13 @@
     <div class="chat-output" id="chatOutput">
         <div class="message-wrapper gemini">
             <div class="message-icon"><img src="/00.png" alt="Gemini Avatar"></div>
-            <div class="message">欢迎使用反季雪的Gemini跳台。你可以通过本页面与Gemini2.5Pro进行<b>无限制次数的对话</b>，并且无视Google的IP封锁。<b>如果出现任何问题，请联系反季雪</b>。</div>
+            <div class="message">欢迎使用GeminiSnow！<br><b>这是一个通过API代理来直接与Gemini2.5Pro进行对话的项目</b>。<br>输入你的任何问题来开始！<b><br>如果出现任何问题，请联系反季雪。</b></div>
         </div>
     </div>
     
     <div class="chat-input-area">
         <div class="chat-input">
-            <input type="text" id="userInput" placeholder="输入内容..." autocomplete="off">
+            <input type="text" id="userInput" placeholder="在这里输入你的问题..." autocomplete="off">
             <button id="regenerateButton" class="input-action-button" title="重新生成">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             </button>
@@ -258,26 +278,34 @@
     
     const API_URL = '/api/askGemini';
     let lastUserPrompt = '';
+    let conversationHistory = [];
 
     marked.setOptions({ breaks: true, sanitize: true });
 
-    // 新的流式处理函数
-    async function streamResponse(prompt, messageWrapperElement) {
+    async function getApiResponse(prompt, history) {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, history }),
+        });
+        if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
+        return response;
+    }
+
+    async function streamResponse(prompt, messageWrapperElement, isRegeneration = false) {
         setLoading(true);
         const messageElement = messageWrapperElement.querySelector('.message');
-        messageElement.innerHTML = ''; // 清空“思考中...”
+        messageElement.innerHTML = ''; // 清空内容以准备接收流
+
+        messageWrapperElement.classList.add('streaming-in');
 
         try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`服务器错误: ${response.status}`);
+            let historyForThisRequest = conversationHistory;
+            if (isRegeneration) {
+                historyForThisRequest = conversationHistory.slice(0, -1);
             }
 
+            const response = await getApiResponse(prompt, historyForThisRequest);
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = '';
@@ -287,17 +315,26 @@
                 if (done) break;
                 
                 fullText += decoder.decode(value, { stream: true });
-                messageElement.innerHTML = marked.parse(fullText + '▋'); // 添加一个闪烁的光标效果
+                messageElement.innerHTML = marked.parse(fullText + '▋');
                 chatOutput.scrollTop = chatOutput.scrollHeight;
             }
             
-            // 最终渲染，移除光标
+            if (isRegeneration) {
+                conversationHistory[conversationHistory.length - 1] = { role: 'model', parts: [{ text: fullText }] };
+            } else {
+                conversationHistory.push({ role: 'model', parts: [{ text: fullText }] });
+            }
+
             messageElement.innerHTML = marked.parse(fullText);
             addCopyButtonsToCodeBlocks(messageElement);
+            // 动画结束后可以移除类，以防重复触发
+            setTimeout(() => {
+                messageWrapperElement.classList.remove('streaming-in');
+            }, 500);
 
         } catch (error) {
             console.error('Error:', error);
-            messageElement.textContent = '抱歉，出错了。请检查网络连接或联系反季雪。';
+            messageElement.textContent = '抱歉，出错了。请等待后重试或将信息提供给反季雪。';
         } finally {
             setLoading(false);
         }
@@ -310,53 +347,70 @@
         lastUserPrompt = prompt;
         userInput.value = '';
         
-        appendMessage('user', prompt);
-        const loadingMsgWrapper = appendMessage('gemini', '思考中...');
+        conversationHistory.push({ role: 'user', parts: [{ text: prompt }] });
         
-        // 调用流式处理函数
-        streamResponse(prompt, loadingMsgWrapper);
+        appendMessage('user', prompt);
+
+        const loadingMsgWrapper = appendMessage('gemini', 'loading');
+        
+        streamResponse(prompt, loadingMsgWrapper, false);
     }
 
     async function regenerateLastResponse() {
         if (!lastUserPrompt) return;
-
         const lastGeminiMsgWrapper = chatOutput.querySelector('.message-wrapper.gemini:last-of-type');
         if (!lastGeminiMsgWrapper) return;
         
-        // 调用流式处理函数进行重新生成
-        streamResponse(lastUserPrompt, lastGeminiMsgWrapper);
-    }
 
+        updateMessage(lastGeminiMsgWrapper, 'loading');
+        
+        streamResponse(lastUserPrompt, lastGeminiMsgWrapper, true);
+    }
+    
     function setLoading(isLoading) {
         sendButton.disabled = isLoading;
         regenerateButton.disabled = isLoading;
         userInput.disabled = isLoading;
         if (isLoading) {
-            regenerateButton.style.display = 'none';
+            regenerateButton.style.visibility = 'hidden';
         } else if (lastUserPrompt) {
-            regenerateButton.style.display = 'flex';
+            regenerateButton.style.visibility = 'visible';
         }
     }
     
     function appendMessage(sender, text) {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message-wrapper ${sender}`;
-        let iconHTML = '';
-        if (sender === 'user') {
-            iconHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
-        } else {
-            iconHTML = '<img src="/00.png" alt="Gemini Avatar">';
-        }
+        const iconHTML = sender === 'user' 
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+            : '<img src="/00.png" alt="Gemini Avatar">';
         
-        // 对于用户消息和加载提示，我们用 textContent，因为它们不含 Markdown
+        const messageContentHTML = text === 'loading'
+            ? `<div class="loading-indicator"><div class="spinner"></div><span>思考中...</span></div>`
+            : text;
+
         messageWrapper.innerHTML = `
             <div class="message-icon">${iconHTML}</div>
-            <div class="message">${text}</div>
+            <div class="message">${messageContentHTML}</div>
         `;
         
         chatOutput.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         return messageWrapper;
+    }
+
+    function updateMessage(messageWrapperElement, newContent) {
+        const messageElement = messageWrapperElement.querySelector('.message');
+        if (messageElement) {
+            // 修改：同样处理 'loading' 状态
+            if (newContent === 'loading') {
+                messageElement.innerHTML = `<div class="loading-indicator"><div class="spinner"></div><span>重新生成中...</span></div>`;
+            } else {
+                messageElement.innerHTML = marked.parse(newContent);
+                addCopyButtonsToCodeBlocks(messageElement);
+            }
+        }
+        chatOutput.scrollTop = chatOutput.scrollHeight;
     }
 
     function addCopyButtonsToCodeBlocks(container) {
@@ -384,8 +438,8 @@
         }
     });
     userInput.addEventListener('input', () => {
-        if (regenerateButton.style.display !== 'none') {
-            regenerateButton.style.display = 'none';
+        if (regenerateButton.style.visibility !== 'hidden') {
+            regenerateButton.style.visibility = 'hidden';
         }
     });
     regenerateButton.addEventListener('click', regenerateLastResponse);
