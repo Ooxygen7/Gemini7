@@ -12,26 +12,23 @@ export default async function handler(req) {
   }
 
   try {
-    // 增加了对 token 的接收
-    const { prompt, history, model: selectedModel, token } = await req.json();
+    // ✅ 核心改动：从请求中额外获取 model 名称
+    const { prompt, history, model: selectedModel } = await req.json();
 
     if (!prompt) {
       return new Response('Bad Request: Missing prompt.', { status: 400 });
     }
 
-    const modelToUse = selectedModel || "gemini-2.5-flash"; // 使用您的模型作为默认
+    // 如果前端没有提供模型名称，则使用一个默认的稳定模型
+    const modelToUse = selectedModel || "gemini-2.5-flash";
 
-    // ✅ 核心改动：如果请求的是包含 'pro' 的模型，则进行认证
-    if (modelToUse.includes('pro')) {
-      const correctToken = process.env.AUTH_TOKEN;
-      if (token !== correctToken) {
-        // 如果 token 不匹配，则拒绝访问
-        return new Response('Authentication required for Pro model', { status: 403 });
-      }
-    }
-
+    // ✅ 核心改动：使用前端传来的模型名称来初始化模型
     const model = genAI.getGenerativeModel({ model: modelToUse });
-    const chat = model.startChat({ history: history || [] });
+
+    const chat = model.startChat({
+      history: history || [],
+    });
+
     const result = await chat.sendMessageStream(prompt);
 
     const stream = new ReadableStream({
@@ -44,7 +41,9 @@ export default async function handler(req) {
       },
     });
     
-    return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+    return new Response(stream, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
 
   } catch (error) {
     console.error('Error in stream generation:', error);
