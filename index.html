@@ -125,10 +125,8 @@
         .gemini.message-wrapper { display: inline-flex; }
         .user { align-self: flex-end; flex-direction: row-reverse; }
         .user .message { background-color: var(--user-msg-bg); color: var(--light-text-color); border-bottom-right-radius: 4px; }
-        /* ✅ Hide user avatar */
         .user .message-icon { display: none; }
         
-        /* ✅ Style for edit icon */
         .edit-icon {
             display: none;
             align-items: center;
@@ -144,12 +142,10 @@
         .edit-icon:hover {
             color: #f8f9fa;
         }
-        /* ✅ Show icon only for the latest user message */
         .message-wrapper.latest-user-message .edit-icon {
             display: flex;
         }
 
-        /* ✅ Style for the editing textarea */
         .message textarea {
             width: 100%;
             box-sizing: border-box;
@@ -163,7 +159,7 @@
             line-height: inherit;
             resize: none;
             outline: none;
-            overflow-y: hidden; /* Prevent scrollbar */
+            overflow-y: hidden;
         }
         
         .user .message-icon { background-color: var(--accent-color); }
@@ -525,7 +521,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chatOutput.innerHTML = '';
         messages.forEach((msg, index) => appendMessage(msg.role, msg.parts[0].text, index));
         chatOutput.scrollTop = chatOutput.scrollHeight;
-        updateEditIcon();
     };
     
     const loadChat = (chatId) => {
@@ -581,6 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chat = chats.find(c => c.id === currentChatId);
         }
 
+        const historyForAPI = [...chat.messages];
         chat.messages.push({ role: 'user', parts: [{ text: prompt }] });
         const userMessageIndex = chat.messages.length - 1;
         saveChats(chats);
@@ -592,21 +588,24 @@ document.addEventListener('DOMContentLoaded', () => {
            renderHistoryList();
         }
         
-        await streamResponse(prompt, loadingMsgWrapper, false);
+        await streamResponse(prompt, loadingMsgWrapper, false, historyForAPI);
     };
     
-    const streamResponse = async (prompt, messageWrapperElement, isRegeneration = false) => {
+    const streamResponse = async (prompt, messageWrapperElement, isRegeneration = false, historyOverride = null) => {
         setLoading(true);
         messageWrapperElement.classList.add('gemini-loading');
         const messageElement = messageWrapperElement.querySelector('.message');
-        const messageIcon = messageWrapperElement.querySelector('.message-icon');
-        messageWrapperElement.classList.add('streaming-in');
         
-        if (messageIcon) messageIcon.onclick = null;
-
         let chats = getChats();
         let chat = chats.find(c => c.id === currentChatId);
-        const historyForAPI = isRegeneration ? chat.messages.slice(0, -1) : chat.messages;
+        
+        let historyForAPI;
+        if (historyOverride) {
+            historyForAPI = historyOverride;
+        } else if (isRegeneration) {
+            const lastUserMsgIndex = chat.messages.map(m => m.role).lastIndexOf('user');
+            historyForAPI = chat.messages.slice(0, lastUserMsgIndex);
+        }
 
         try {
             const response = await fetch(API_URL, {
@@ -709,7 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
         messageWrapper.innerHTML = `${iconHTML}<div class="message">${messageContentHTML}</div>`;
         
-        // User messages are reversed, so the edit icon should be first in the DOM order
         if(senderClass === 'user'){
             messageWrapper.insertBefore(messageWrapper.querySelector('.message'), messageWrapper.firstChild);
         }
@@ -720,9 +718,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (senderClass === 'gemini' && text !== 'loading') {
              addCopyToElement(messageWrapper.querySelector('.message-icon'), text);
              addCopyButtonsToCodeBlocks(messageWrapper);
-        } else if (senderClass === 'user'){
-            updateEditIcon();
         }
+        updateEditIcon();
         
         return messageWrapper;
     };
@@ -736,28 +733,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const userMessages = chatOutput.querySelectorAll('.message-wrapper.user');
         if (userMessages.length > 0) {
             const lastUserMessage = userMessages[userMessages.length - 1];
-            lastUserMessage.classList.add('latest-user-message');
-
-            const editIcon = lastUserMessage.querySelector('.edit-icon');
-            if (editIcon && !editIcon.dataset.listener) {
-                editIcon.addEventListener('click', () => makeMessageEditable(lastUserMessage));
-                editIcon.dataset.listener = 'true';
+            const geminiMessageAfter = lastUserMessage.nextElementSibling;
+            
+            if (geminiMessageAfter && geminiMessageAfter.classList.contains('gemini')) {
+                lastUserMessage.classList.add('latest-user-message');
+                const editIcon = lastUserMessage.querySelector('.edit-icon');
+                if (editIcon && !editIcon.dataset.listener) {
+                    editIcon.addEventListener('click', () => makeMessageEditable(lastUserMessage));
+                    editIcon.dataset.listener = 'true';
+                }
             }
         }
     };
 
     const makeMessageEditable = (messageWrapper) => {
         const messageDiv = messageWrapper.querySelector('.message');
-        if(messageDiv.querySelector('textarea')) return; // Already in edit mode
+        if(messageDiv.querySelector('textarea')) return;
 
-        // Extract plain text from the potentially rich HTML content
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = messageDiv.innerHTML;
         const currentText = tempDiv.innerText;
 
         const textarea = document.createElement('textarea');
-        textarea.value = currentText;
+        textarea.value = currentText.trim(); // ✅ FIX: Trim whitespace
         textarea.rows = 1;
+        
+        let isSaving = false; // ✅ FIX: Flag to prevent blur event conflict
 
         const autoResize = () => {
             textarea.style.height = 'auto';
@@ -768,12 +769,15 @@ document.addEventListener('DOMContentLoaded', () => {
         textarea.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
+                isSaving = true;
                 saveAndRegenerate(messageWrapper, textarea.value);
             }
         });
         
-        textarea.addEventListener('blur', () => { // Revert if user clicks away
-            messageDiv.innerHTML = marked.parse(currentText);
+        textarea.addEventListener('blur', () => {
+            if (!isSaving) { // ✅ FIX: Only revert if not saving
+                messageDiv.innerHTML = marked.parse(currentText);
+            }
         });
 
         messageDiv.innerHTML = '';
@@ -792,32 +796,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!geminiWrapper || !geminiWrapper.classList.contains('gemini')) {
             messageWrapper.querySelector('.message').innerHTML = marked.parse(newText);
-            return; // No Gemini message to regenerate
+            return;
         }
         
         setLoading(true);
         updateMessage(geminiWrapper, 'loading');
+        // ✅ FIX: Correctly update the user message bubble with the new text
         messageWrapper.querySelector('.message').innerHTML = marked.parse(newText);
 
         let chats = getChats();
         let chat = chats.find(c => c.id === currentChatId);
 
-        // Update user message in storage
         chat.messages[messageIndex].parts[0].text = newText;
         
-        const historyForAPI = chat.messages.slice(0, messageIndex + 1);
+        // ✅ FIX: History should be everything BEFORE the message being edited
+        const historyForAPI = chat.messages.slice(0, messageIndex);
 
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                // ✅ FIX: Send the correct prompt and history
                 body: JSON.stringify({ prompt: newText, history: historyForAPI, model: currentModel }),
             });
             if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
             
             const fullText = await streamIntoElement(response, geminiWrapper.querySelector('.message'));
             
-            // Update Gemini message in storage
             chats = getChats();
             chat = chats.find(c => c.id === currentChatId);
             if(chat.messages[geminiMessageIndex]) {
@@ -826,7 +831,8 @@ document.addEventListener('DOMContentLoaded', () => {
             saveChats(chats);
             addCopyToElement(geminiWrapper.querySelector('.message-icon'), fullText);
         } catch(error) {
-             updateMessage(geminiWrapper, '⚠ 编辑后重新生成失败。');
+             console.error("Regeneration after edit failed:", error);
+             updateMessage(geminiWrapper, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试或暂时使用其他模型。<br></b>如果仍然无法正常使用，请联系反季雪。');
         } finally {
             setLoading(false);
         }
