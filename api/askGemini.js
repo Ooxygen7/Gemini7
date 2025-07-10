@@ -13,7 +13,7 @@ export default async function handler(req) {
 
   try {
     // ✅ 核心改动 1: 从请求中额外获取 model 和 stream 参数
-    const { prompt, history, model: selectedModel, stream: streamRequested } = await req.json();
+    const { prompt, history, model: selectedModel, stream: streamRequested } = req.body;
 
     if (!prompt) {
       return new Response('Bad Request: Missing prompt.', { status: 400 });
