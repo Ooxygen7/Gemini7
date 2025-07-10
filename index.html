@@ -95,6 +95,9 @@
         }
         .message { padding: 12px 18px; border-radius: 18px; line-height: 1.6; word-wrap: break-word; word-break: break-word; min-width: 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-effect {
+            animation: fadeIn 0.5s ease-out;
+        }
         .gemini.streaming-in .message { animation: fadeIn 0.5s ease-out; }
         .gemini .message-icon { background-color: transparent; }
         
@@ -970,6 +973,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 fullText = data.text; // Assumes backend returns { "text": "..." }
                 if (fullText) {
                     messageElement.innerHTML = marked.parse(fullText);
+                    messageElement.classList.add('fade-in-effect');
+                    messageElement.addEventListener('animationend', () => {
+                        messageElement.classList.remove('fade-in-effect');
+                    }, { once: true });
                     addCopyButtonsToCodeBlocks(messageElement);
                 } else {
                     throw new Error("Non-streaming response did not contain text.");
@@ -1176,85 +1183,110 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const saveAndRegenerate = async (messageWrapper, newText) => {
-        newText = newText.trim();
-        if(!newText) return;
+    newText = newText.trim();
+    if (!newText) return;
 
-        const messageIndex = parseInt(messageWrapper.dataset.messageIndex, 10);
-        const geminiWrapper = messageWrapper.nextElementSibling;
-        const geminiMessageIndex = messageIndex + 1;
+    const messageIndex = parseInt(messageWrapper.dataset.messageIndex, 10);
+    const geminiWrapper = messageWrapper.nextElementSibling;
+    const geminiMessageIndex = messageIndex + 1;
 
-        if (!geminiWrapper || !geminiWrapper.classList.contains('gemini')) {
-            messageWrapper.querySelector('.message').innerHTML = marked.parse(newText);
-            return;
-        }
-        
-        setLoading(true);
-        abortController = new AbortController();
-        updateMessage(geminiWrapper, 'loading');
+    if (!geminiWrapper || !geminiWrapper.classList.contains('gemini')) {
         messageWrapper.querySelector('.message').innerHTML = marked.parse(newText);
+        return;
+    }
 
-        let chats = getChats();
-        let chat = chats.find(c => c.id === currentChatId);
+    setLoading(true);
+    abortController = new AbortController();
+    updateMessage(geminiWrapper, 'loading');
+    messageWrapper.querySelector('.message').innerHTML = marked.parse(newText);
 
-        chat.messages[messageIndex].parts[0].text = newText;
-        
-        const historyForAPI = buildHistoryWithPresets(chat.messages.slice(0, messageIndex));
+    let chats = getChats();
+    let chat = chats.find(c => c.id === currentChatId);
 
-        const isStreamingEnabled = getStreamingState();
+    chat.messages[messageIndex].parts[0].text = newText;
 
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    prompt: newText, 
-                    history: historyForAPI, 
-                    model: currentModel,
-                    stream: isStreamingEnabled // Inform backend
-                }),
-                signal: abortController.signal
-            });
-            if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
-            
-            let fullText;
-            if (isStreamingEnabled) {
-                fullText = await streamIntoElement(response, geminiWrapper.querySelector('.message'));
-            } else {
+    const historyForAPI = buildHistoryWithPresets(chat.messages.slice(0, messageIndex));
+
+    const isStreamingEnabled = getStreamingState();
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt: newText,
+                history: historyForAPI,
+                model: currentModel,
+                stream: isStreamingEnabled // Inform backend
+            }),
+            signal: abortController.signal
+        });
+        if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
+
+        let fullText;
+        // 定位到需要更新和添加动画的元素
+        const messageElementForEdit = geminiWrapper.querySelector('.message');
+
+        if (isStreamingEnabled) {
+            fullText = await streamIntoElement(response, messageElementForEdit);
+        } else {
+            // ==========================================================
+            // ===== 核心改动开始：增强的非流式逻辑与淡入效果 =====
+            // ==========================================================
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                // 1. 如果后端返回的是JSON，按JSON解析
                 const data = await response.json();
                 fullText = data.text;
-                if (fullText) {
-                    geminiWrapper.querySelector('.message').innerHTML = marked.parse(fullText);
-                    addCopyButtonsToCodeBlocks(geminiWrapper.querySelector('.message'));
-                } else {
-                     throw new Error("Non-streaming response did not contain text.");
-                }
-            }
-            
-            if(fullText === null) return;
-            
-            chats = getChats();
-            chat = chats.find(c => c.id === currentChatId);
-            if(chat.messages[geminiMessageIndex]) {
-                chat.messages[geminiMessageIndex].parts[0].text = fullText;
             } else {
-                 chat.messages.splice(geminiMessageIndex, 0, { role: 'model', parts: [{ text: fullText }] });
+                // 2. 如果是其他类型（如纯文本），则按纯文本解析，增强容错性
+                fullText = await response.text();
             }
-            saveChats(chats);
-            addCopyToElement(geminiWrapper.querySelector('.message-icon'), fullText);
-        } catch(error) {
-            if (error.name === 'AbortError') {
-                updateMessage(geminiWrapper, '已停止生成。');
-                console.log('Generation stopped by user.');
-            } else {
-                 console.error("Regeneration after edit failed:", error);
-                 updateMessage(geminiWrapper, '<b>重新生成失败。</b><br>这可能是模型载荷过大，或是你的网络问题：<br>建议暂时更换其他模型或检查你的网络设置；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
-            }
-        } finally {
-            abortController = null;
-            setLoading(false);
-        }
-    };
 
+            if (fullText) {
+                // 3. 更新内容
+                messageElementForEdit.innerHTML = marked.parse(fullText);
+
+                // 4. 添加淡入动画效果
+                messageElementForEdit.classList.add('fade-in-effect');
+                
+                // 5. 动画结束后移除类，以便下次可以再次触发
+                messageElementForEdit.addEventListener('animationend', () => {
+                    messageElementForEdit.classList.remove('fade-in-effect');
+                }, { once: true });
+
+                addCopyButtonsToCodeBlocks(messageElementForEdit);
+            } else {
+                throw new Error("Non-streaming response did not contain text.");
+            }
+            // ==========================================================
+            // ===== 核心改动结束 =====
+            // ==========================================================
+        }
+
+        if (fullText === null) return;
+
+        chats = getChats();
+        chat = chats.find(c => c.id === currentChatId);
+        if (chat.messages[geminiMessageIndex]) {
+            chat.messages[geminiMessageIndex].parts[0].text = fullText;
+        } else {
+            chat.messages.splice(geminiMessageIndex, 0, { role: 'model', parts: [{ text: fullText }] });
+        }
+        saveChats(chats);
+        addCopyToElement(geminiWrapper.querySelector('.message-icon'), fullText);
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            updateMessage(geminiWrapper, '已停止生成。');
+        } else {
+            console.error("Regeneration after edit failed:", error);
+            updateMessage(geminiWrapper, '<b>重新生成失败。</b><br>这可能是模型载荷过大，或是你的网络问题：<br>建议暂时更换其他模型或检查你的网络设置；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
+        }
+    } finally {
+        abortController = null;
+        setLoading(false);
+    }
+};
     const addCopyToElement = (element, textToCopy) => {
         if (!element) return;
         const originalIconHTML = '<img src="/01.png" alt="Gemini Avatar">';
