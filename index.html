@@ -368,7 +368,7 @@
             transition: opacity 0.3s ease;
         }
         
-        #custom-modal-overlay, #presets-modal-overlay, #preferences-modal-overlay /* MODIFIED */ {
+        #custom-modal-overlay, #presets-modal-overlay, #preferences-modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -385,12 +385,12 @@
         }
         #custom-modal-overlay:not(.modal-hidden),
         #presets-modal-overlay:not(.modal-hidden),
-        #preferences-modal-overlay:not(.modal-hidden) /* MODIFIED */
+        #preferences-modal-overlay:not(.modal-hidden)
          {
             opacity: 1;
             visibility: visible;
         }
-        #custom-modal, #presets-modal, #preferences-modal /* MODIFIED */ {
+        #custom-modal, #presets-modal, #preferences-modal {
             background-color: white;
             padding: 24px;
             border-radius: 16px;
@@ -402,7 +402,7 @@
         }
         #custom-modal-overlay:not(.modal-hidden) #custom-modal,
         #presets-modal-overlay:not(.modal-hidden) #presets-modal,
-        #preferences-modal-overlay:not(.modal-hidden) #preferences-modal /* MODIFIED */
+        #preferences-modal-overlay:not(.modal-hidden) #preferences-modal
         {
             transform: scale(1);
         }
@@ -465,26 +465,70 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
-        #presets-modal, #preferences-modal /* MODIFIED */ {
+        #presets-modal, #preferences-modal {
              max-width: 500px;
         }
 
-        .modal-header /* MODIFIED */ {
+        .modal-header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 16px;
         }
-        .modal-title /* MODIFIED */ {
+        .modal-title {
             margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--text-color);
         }
-        .modal-close-btn /* MODIFIED */ {
+        .modal-close-btn {
             background: none; border: none; font-size: 24px; color: #6c757d;
             cursor: pointer; padding: 5px; line-height: 1;
         }
-        .modal-intro /* MODIFIED */ {
+        .modal-intro {
             margin-top: 0; margin-bottom: 24px; color: #6c757d; line-height: 1.6;
         }
-        .options-list /* MODIFIED */ { display: flex; flex-direction: column; gap: 15px; }
-        .option-item /* MODIFIED */ {
+        .jieshao {
+            display: flex; justify-content: space-between; align-items: center; color: #6c757d; line-height: 1.6;
+        }
+        
+        /* MODIFIED/NEW Styles for Custom Preset */
+        .custom-preset-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .custom-preset-toggle-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .custom-preset-toggle-wrapper label {
+            color: var(--text-color);
+            font-size: 1rem;
+            user-select: none;
+            cursor: pointer;
+        }
+        #custom-preset-input {
+            width: 100%;
+            height: 120px;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #custom-preset-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(33, 37, 41, 0.1);
+        }
+        /* END MODIFIED/NEW Styles */
+        
+        .options-list { display: flex; flex-direction: column; gap: 15px; }
+        .option-item {
             display: flex; justify-content: space-between; align-items: center;
             padding: 12px; background-color: #f8f9fa; border-radius: 8px;
         }
@@ -555,7 +599,7 @@
              </div>
              <div class="settings-menu-item" id="advanced-presets-button">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3z"></path><polyline points="15 3 15 8 20 8"></polyline></svg>
-                <span>高级预设</span>
+                <span>预设指令</span>
              </div>
              <div class="settings-menu-item" id="auth-button">
                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg>
@@ -621,12 +665,21 @@
     <div id="presets-modal-overlay" class="modal-hidden">
         <div id="presets-modal">
             <div class="modal-header">
-                <h3 class="modal-title">高级预设</h3>
+                <h3 class="modal-title">预设指令</h3>
                 <button class="modal-close-btn" data-target="presets-modal-overlay">&times;</button>
             </div>
-            <p class="modal-intro">启用以下选项，可以为Gemini添加持续性的指令，影响所有对话。这些指令在后台生效，不会显示在聊天记录中。</p>
-            <div class="options-list" id="preset-options-list"></div>
-        </div>
+            <p class="modal-intro">启用下方开关并输入你的指令。该指令将作为持续性的系统级提示词，将在后台生效，不会出现在聊天记录中。<br><b>开启后进行聊天的任何对话都会持续受到影响。</b></p>
+            <div class="custom-preset-container">
+                <div class="custom-preset-toggle-wrapper">
+                    <label for="custom-preset-toggle">启用自定义预设指令</label>
+                    <label class="switch">
+                        <input type="checkbox" id="custom-preset-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <textarea id="custom-preset-input" placeholder="例：你是一位专业翻译，请将我的所有输入都翻译成英文。"></textarea>
+            </div>
+            </div>
     </div>
 
     <div id="preferences-modal-overlay" class="modal-hidden">
@@ -639,6 +692,7 @@
             <div class="options-list">
                 <div class="option-item">
                     <label for="streaming-toggle">启用流式传输</label>
+                    <p class="jieshao">不建议关闭：非流式传输可能导致超时</p>
                     <label class="switch">
                         <input type="checkbox" id="streaming-toggle">
                         <span class="slider"></span>
@@ -669,11 +723,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const newChatButton = document.getElementById('new-chat-btn');
     const historyList = document.getElementById('history-list');
     
+    // MODIFIED: References for new custom preset elements
     const advancedPresetsButton = document.getElementById('advanced-presets-button');
     const presetsModalOverlay = document.getElementById('presets-modal-overlay');
-    const presetOptionsList = document.getElementById('preset-options-list');
+    const customPresetToggle = document.getElementById('custom-preset-toggle');
+    const customPresetInput = document.getElementById('custom-preset-input');
 
-    // NEW Element References for Preferences Modal
+    // Element References for Preferences Modal
     const preferencesButton = document.getElementById('preferences-button');
     const preferencesModalOverlay = document.getElementById('preferences-modal-overlay');
     const streamingToggle = document.getElementById('streaming-toggle');
@@ -690,13 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentModel = 'gemini-2.5-flash';
     let currentChatId = null;
 
-    const presetPrompts = [
-        { id: 'preset-concise', label: '简洁模式', prompt: 'Please keep your answers concise and to the point.' },
-        { id: 'preset-expert', label: '专家模式', prompt: 'Act as an expert in the relevant field. Provide detailed, accurate, and in-depth explanations.' },
-        { id: 'preset-eli5', label: '“五岁小孩”模式', prompt: 'Explain it to me like I\'m five years old.' },
-        { id: 'preset-code', label: '代码助手', prompt: 'You are a coding assistant. Provide code solutions with explanations. Use markdown for code blocks.' },
-        { id: 'preset-creative', label: '创意模式', prompt: 'Think outside the box and provide creative and imaginative responses.' },
-    ];
+    // REMOVED: Old presetPrompts array is no longer needed.
 
     marked.setOptions({ breaks: true, sanitize: true });
     
@@ -771,32 +821,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats') || '[]');
     const saveChats = (chats) => localStorage.setItem('geminiSnowChats', JSON.stringify(chats));
     
-    const getPresetStates = () => JSON.parse(localStorage.getItem('geminiSnowPresets') || '{}');
-    const savePresetStates = (states) => localStorage.setItem('geminiSnowPresets', JSON.stringify(states));
+    // NEW: Functions to manage the new custom preset state in localStorage
+    const getCustomPreset = () => {
+        const preset = localStorage.getItem('geminiSnowCustomPreset');
+        return preset ? JSON.parse(preset) : { enabled: false, prompt: '' };
+    };
+    const saveCustomPreset = (settings) => localStorage.setItem('geminiSnowCustomPreset', JSON.stringify(settings));
 
-    // NEW Streaming State Management
+    // Streaming State Management
     const getStreamingState = () => {
         const state = localStorage.getItem('geminiSnowStreaming');
         return state === null ? true : JSON.parse(state); // Default to true
     };
     const saveStreamingState = (isEnabled) => localStorage.setItem('geminiSnowStreaming', JSON.stringify(isEnabled));
 
-
+    // MODIFIED: buildHistoryWithPresets now uses the single custom preset
     const buildHistoryWithPresets = (history) => {
-        const presetStates = getPresetStates();
-        const activePresets = presetPrompts.filter(p => presetStates[p.id]);
+        const customPreset = getCustomPreset();
 
-        if (activePresets.length === 0) {
-            return history;
+        if (customPreset.enabled && customPreset.prompt && customPreset.prompt.trim() !== '') {
+            const presetMessages = [
+                { role: 'user', parts: [{ text: `System instruction: ${customPreset.prompt.trim()}` }] },
+                { role: 'model', parts: [{ text: 'OK, I will follow that instruction.' }] }
+            ];
+            return [...presetMessages, ...history];
         }
-
-        const presetMessages = [];
-        activePresets.forEach(p => {
-            presetMessages.push({ role: 'user', parts: [{ text: `System instruction: ${p.prompt}` }] });
-            presetMessages.push({ role: 'model', parts: [{ text: 'OK, I will follow that instruction.' }] });
-        });
         
-        return [...presetMessages, ...history];
+        return history;
     };
 
     const deleteChat = async (chatIdToDelete) => {
@@ -930,7 +981,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await streamResponse(prompt, loadingMsgWrapper, false, historyForAPI);
     };
     
-    // MODIFIED streamResponse function
     const streamResponse = async (prompt, messageWrapperElement, isRegeneration = false, historyOverride = null) => {
         setLoading(true);
         abortController = new AbortController();
@@ -959,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     prompt, 
                     history: historyForAPI, 
                     model: currentModel,
-                    stream: isStreamingEnabled // Inform backend about streaming preference
+                    stream: isStreamingEnabled
                 }),
                 signal: abortController.signal
             });
@@ -970,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fullText = await streamIntoElement(response, messageElement);
             } else {
                 const data = await response.json();
-                fullText = data.text; // Assumes backend returns { "text": "..." }
+                fullText = data.text; 
                 if (fullText) {
                     messageElement.innerHTML = marked.parse(fullText);
                     messageElement.classList.add('fade-in-effect');
@@ -983,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            if(fullText === null) return; // Aborted case
+            if(fullText === null) return;
             
             chats = getChats();
             chat = chats.find(c => c.id === currentChatId);
@@ -1003,7 +1053,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Generation stopped by user.');
             } else {
                 console.error('Error:', error);
-                updateMessage(messageWrapperElement, '<b>抱歉，出错了。</b><br>这可能是模型载荷过大，或是你的网络问题：<br>建议暂时更换其他模型或检查你的网络设置；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
+                updateMessage(messageWrapperElement, '<b>抱歉，出错了。</b><br>这可能是模型载荷过大或是超时：<br>建议暂时更换其他模型或检查你的网络设置并在偏好中打开流式传输；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
             }
         } finally {
             messageWrapperElement.classList.remove('gemini-loading');
@@ -1084,7 +1134,6 @@ document.addEventListener('DOMContentLoaded', () => {
         regenerateButton.style.visibility = showRegenerate ? 'visible' : 'hidden';
     };
     
-    // ... (All other functions from previous step remain the same)
     const appendMessage = (sender, text, messageIndex) => {
         const senderClass = (sender === 'model') ? 'gemini' : sender;
         
@@ -1217,51 +1266,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 prompt: newText,
                 history: historyForAPI,
                 model: currentModel,
-                stream: isStreamingEnabled // Inform backend
+                stream: isStreamingEnabled
             }),
             signal: abortController.signal
         });
         if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
 
         let fullText;
-        // 定位到需要更新和添加动画的元素
         const messageElementForEdit = geminiWrapper.querySelector('.message');
 
         if (isStreamingEnabled) {
             fullText = await streamIntoElement(response, messageElementForEdit);
         } else {
-            // ==========================================================
-            // ===== 核心改动开始：增强的非流式逻辑与淡入效果 =====
-            // ==========================================================
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
-                // 1. 如果后端返回的是JSON，按JSON解析
                 const data = await response.json();
                 fullText = data.text;
             } else {
-                // 2. 如果是其他类型（如纯文本），则按纯文本解析，增强容错性
                 fullText = await response.text();
             }
 
             if (fullText) {
-                // 3. 更新内容
                 messageElementForEdit.innerHTML = marked.parse(fullText);
-
-                // 4. 添加淡入动画效果
                 messageElementForEdit.classList.add('fade-in-effect');
-                
-                // 5. 动画结束后移除类，以便下次可以再次触发
                 messageElementForEdit.addEventListener('animationend', () => {
                     messageElementForEdit.classList.remove('fade-in-effect');
                 }, { once: true });
-
                 addCopyButtonsToCodeBlocks(messageElementForEdit);
             } else {
                 throw new Error("Non-streaming response did not contain text.");
             }
-            // ==========================================================
-            // ===== 核心改动结束 =====
-            // ==========================================================
         }
 
         if (fullText === null) return;
@@ -1395,44 +1429,27 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsMenu.classList.remove('active');
     };
 
+    // MODIFIED: setupPresetsModal now configures the new custom preset elements
     const setupPresetsModal = () => {
-        presetOptionsList.innerHTML = '';
-        const presetStates = getPresetStates();
+        const currentPreset = getCustomPreset();
+        
+        customPresetToggle.checked = currentPreset.enabled;
+        customPresetInput.value = currentPreset.prompt;
 
-        presetPrompts.forEach(preset => {
-            const optionEl = document.createElement('div');
-            optionEl.className = 'option-item';
+        customPresetToggle.addEventListener('change', () => {
+            const preset = getCustomPreset();
+            preset.enabled = customPresetToggle.checked;
+            saveCustomPreset(preset);
+        });
 
-            const labelEl = document.createElement('label');
-            labelEl.setAttribute('for', preset.id);
-            labelEl.textContent = preset.label;
-
-            const switchWrapper = document.createElement('label');
-            switchWrapper.className = 'switch';
-            const inputEl = document.createElement('input');
-            inputEl.type = 'checkbox';
-            inputEl.id = preset.id;
-            inputEl.checked = presetStates[preset.id] || false;
-
-            inputEl.addEventListener('change', () => {
-                const currentStates = getPresetStates();
-                currentStates[preset.id] = inputEl.checked;
-                savePresetStates(currentStates);
-            });
-
-            const slider = document.createElement('span');
-            slider.className = 'slider';
-
-            switchWrapper.appendChild(inputEl);
-            switchWrapper.appendChild(slider);
-
-            optionEl.appendChild(labelEl);
-            optionEl.appendChild(switchWrapper);
-            presetOptionsList.appendChild(optionEl);
+        customPresetInput.addEventListener('input', () => {
+            const preset = getCustomPreset();
+            preset.prompt = customPresetInput.value;
+            saveCustomPreset(preset);
         });
     };
 
-    // NEW Setup for Preferences Modal
+    // Setup for Preferences Modal
     const setupPreferencesModal = () => {
         streamingToggle.checked = getStreamingState();
         streamingToggle.addEventListener('change', () => {
@@ -1476,7 +1493,6 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsMenu.classList.remove('active');
     });
     
-    // NEW Listeners for Preferences Modal
     preferencesButton.addEventListener('click', () => {
         preferencesModalOverlay.classList.remove('modal-hidden');
         settingsMenu.classList.remove('active');
@@ -1521,7 +1537,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // -- App Initialization --
     setupModelSelector();
     setupPresetsModal();
-    setupPreferencesModal(); // NEW
+    setupPreferencesModal();
     createNewChat();
 });
 </script>
