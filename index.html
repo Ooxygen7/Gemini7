@@ -616,7 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (done) break;
                 fullText += decoder.decode(value, { stream: true });
                 messageElement.innerHTML = marked.parse(fullText + '▋');
-                chatOutput.scrollTop = chatOutput.scrollHeight;
+                // chatOutput.scrollTop = chatOutput.scrollHeight; // THIS LINE IS COMMENTED OUT TO PREVENT AUTO-SCROLL
             }
             
             chats = getChats();
