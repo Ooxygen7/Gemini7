@@ -2,9 +2,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export const config = {
-  runtime: 'edge',
-};
+//export const config = {
+//  runtime: 'edge',
+//};
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
