@@ -38,7 +38,6 @@
             padding: 10px 20px; flex-shrink: 0;
         }
         
-        /* ✅ New: Wrapper for left-side header content */
         .header-left {
             display: flex;
             align-items: center;
@@ -52,23 +51,28 @@
             width: 24px; height: 24px; stroke: var(--text-color);
         }
         .header-controls { display: flex; align-items: center; gap: 10px; }
-        #auth-button {
-            padding: 6px 10px; font-size: 12px; background-color: #6c757d; color: white;
-            border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s;
-        }
-        #auth-button:hover { background-color: #5a6268; }
         .model-selector-wrapper { position: relative; }
         .selected-model {
             background-color: var(--gemini-msg-bg); border-radius: 8px; padding: 8px 12px;
             font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px;
         }
         .selected-model::after { content: '▼'; font-size: 10px; transform: scaleY(0.8); }
+        
         .model-dropdown {
-            display: none; position: absolute; top: 105%; right: 0; background-color: #333;
+            position: absolute; top: 105%; right: 0; background-color: #333;
             color: white; border-radius: 8px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 10; width: 250px;
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
         }
-        .model-dropdown.active { display: block; }
+        .model-dropdown.active {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .model-option {
             padding: 12px; border-radius: 6px; cursor: pointer; display: flex;
             justify-content: space-between; align-items: center; transition: background-color 0.2s;
@@ -94,6 +98,16 @@
         .gemini.streaming-in .message { animation: fadeIn 0.5s ease-out; }
         .gemini .message-icon { background-color: transparent; }
         
+        /* ✅ New: Add cursor pointer and hover effect to Gemini avatar */
+        .gemini .message-icon {
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .gemini .message-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 8px rgba(0,0,0,0.15);
+        }
+
         .gemini .message {
             background-color: transparent;
             color: var(--text-color);
@@ -108,24 +122,8 @@
             padding: 0;
             border-radius: 0;
         }
-        .copy-message-button {
-            position: absolute;
-            bottom: 0px;
-            left: 6px;
-            background: #fff;
-            border: 1px solid var(--border-color);
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.2s, transform 0.2s;
-            transform: scale(0.8);
-        }
-        .message-wrapper:hover .copy-message-button { opacity: 1; transform: scale(1); }
+        /* ✅ Removed: .copy-message-button styles are gone */
+
         .gemini.message-wrapper { display: inline-flex; }
         .user { align-self: flex-end; flex-direction: row-reverse; }
         .user .message { background-color: var(--user-msg-bg); color: var(--light-text-color); border-bottom-right-radius: 4px; }
@@ -172,7 +170,7 @@
         #regenerateButton { visibility: hidden; }
         #sidebar {
             width: 260px; background-color: #212529; color: var(--light-text-color); flex-shrink: 0;
-            display: flex; flex-direction: column;
+            display: flex; flex-direction: column; position: relative;
         }
         .sidebar-header { padding: 15px; }
         #new-chat-btn {
@@ -200,10 +198,82 @@
         }
         .delete-chat-btn:hover { background-color: #495057; color: #f8f9fa; }
         .delete-chat-btn svg { width: 16px; height: 16px; }
-        #sidebar-footer { padding: 20px; }
-        #sidebar-footer h3 {
-            margin: 0; font-size: 18px; text-align: center; font-weight: 600; color: #dee2e6;
+        
+        #sidebar-footer {
+            padding: 15px;
         }
+        #settings-button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #settings-button:hover {
+            background-color: #343a40;
+        }
+        #settings-button svg {
+            width: 20px;
+            height: 20px;
+            stroke: #dee2e6;
+            flex-shrink: 0;
+        }
+        .settings-button-text {
+            font-weight: 500;
+            color: #dee2e6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .settings-button-text .hover-text {
+            display: none;
+        }
+        #settings-button:hover .hover-text {
+            display: inline;
+        }
+        #settings-button:hover .default-text {
+            display: none;
+        }
+        #settings-menu {
+            position: absolute;
+            bottom: 75px; 
+            left: 15px;
+            right: 15px;
+            background-color: #333;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
+            z-index: 10;
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+        }
+        #settings-menu.active {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .settings-menu-item {
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s;
+            color: var(--light-text-color);
+        }
+        .settings-menu-item:hover {
+            background-color: #444;
+        }
+        .settings-menu-item svg {
+            width: 18px;
+            height: 18px;
+        }
+
         .welcome-screen {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             height: 100%; text-align: center; color: #6c757d; flex-grow: 1;
@@ -277,9 +347,6 @@
             .chat-output { padding: 15px 10px; gap: 15px; }
             .message-wrapper { max-width: 95%; }
         }
-        @media (hover: none) or (pointer: coarse) {
-            .message-wrapper .copy-message-button { opacity: 0.5; transform: scale(1); }
-        }
     </style>
 </head>
 <body>
@@ -290,8 +357,22 @@
             <button id="new-chat-btn">＋ 发起新对话</button>
         </div>
         <div id="history-list"></div>
+        
+        <div id="settings-menu">
+             <div class="settings-menu-item" id="auth-button">
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                 <span>升级到UltraSnow</span>
+             </div>
+        </div>
+
         <div id="sidebar-footer">
-            <h3>GeminiSnow</h3>
+            <div id="settings-button">
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                 <div class="settings-button-text">
+                     <span class="default-text">Gemini Snow Pro</span>
+                     <span class="hover-text">设置</span>
+                 </div>
+            </div>
         </div>
     </div>
 
@@ -304,7 +385,6 @@
             </div>
             
             <div class="header-controls">
-                <button id="auth-button">认证</button>
                 <div class="model-selector-wrapper">
                     <div class="selected-model" id="selected-model-display"></div>
                     <div class="model-dropdown" id="model-dropdown-list"></div>
@@ -326,11 +406,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // ✅ New: Add elements for sidebar toggle
     const mainContainer = document.getElementById('main-container');
     const menuToggleButton = document.getElementById('menu-toggle-btn');
     const sidebarBackdrop = document.getElementById('sidebar-backdrop');
-    // Note: 'sidebar' element is not needed here as we toggle class on the parent
+    const settingsButton = document.getElementById('settings-button');
+    const settingsMenu = document.getElementById('settings-menu');
 
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
@@ -344,7 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const API_URL = '/api/askGemini';
     let isProUnlocked = false;
-    // --- Unchanged: Preserving your exact model list ---
     const models = [
         { id: 'gemini-2.5-flash', name: '2.5 Flash', description: '快速提供全方位的帮助', locked: false },
         { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码', locked: true },
@@ -405,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const renderChatWindow = (messages) => {
         chatOutput.innerHTML = '';
-        messages.forEach(msg => appendMessage(msg.role, msg.parts[0].text, false));
+        messages.forEach(msg => appendMessage(msg.role, msg.parts[0].text));
         chatOutput.scrollTop = chatOutput.scrollHeight;
     };
     
@@ -417,7 +496,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderChatWindow(chat.messages);
             renderHistoryList();
             setLoading(false);
-            // ✅ New: Close sidebar after selecting a chat on mobile
             mainContainer.classList.remove('sidebar-open');
         }
     };
@@ -433,7 +511,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderHistoryList();
         userInput.value = '';
         setLoading(false);
-        // ✅ New: Close sidebar when creating a new chat on mobile
         mainContainer.classList.remove('sidebar-open');
     };
 
@@ -468,8 +545,8 @@ document.addEventListener('DOMContentLoaded', () => {
             saveChats(chats);
         }
 
-        appendMessage('user', prompt, true);
-        const loadingMsgWrapper = appendMessage('gemini', 'loading', false);
+        appendMessage('user', prompt);
+        const loadingMsgWrapper = appendMessage('gemini', 'loading');
         
         if (isNewChat) {
            renderHistoryList();
@@ -478,12 +555,42 @@ document.addEventListener('DOMContentLoaded', () => {
         await streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
     };
 
+    // ✅ New: Function to add copy functionality to an element
+    const addCopyToElement = (element, textToCopy) => {
+        if (!element) return;
+
+        const originalIconHTML = '<img src="/01.png" alt="Gemini Avatar">';
+        element.title = '点击复制内容';
+
+        element.onclick = (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                element.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: #28a745;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                element.title = '已复制!';
+                setTimeout(() => {
+                    element.innerHTML = originalIconHTML;
+                    element.title = '点击复制内容';
+                }, 1500);
+            }).catch(err => {
+                console.error('复制失败: ', err);
+                element.title = '复制失败!';
+                setTimeout(() => {
+                    element.title = '点击复制内容';
+                }, 1500);
+            });
+        };
+    };
+
     const streamResponse = async (prompt, messageWrapperElement, model, isRegeneration = false) => {
         setLoading(true);
         messageWrapperElement.classList.add('gemini-loading');
         const messageElement = messageWrapperElement.querySelector('.message');
+        const messageIcon = messageWrapperElement.querySelector('.message-icon');
         messageWrapperElement.classList.add('streaming-in');
         
+        // Disable click while loading
+        if (messageIcon) messageIcon.onclick = null;
+
         let chats = getChats();
         let currentMessages = [];
         const chat = chats.find(c => c.id === currentChatId);
@@ -526,7 +633,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             messageElement.innerHTML = marked.parse(fullText);
             addCopyButtonsToCodeBlocks(messageElement);
-            addCopyButtonToMessage(messageWrapperElement, fullText);
+            // ✅ Modified: Add copy functionality to the avatar after stream completion
+            addCopyToElement(messageIcon, fullText);
+
         } catch (error) {
             console.error('Error:', error);
             updateMessage(messageWrapperElement, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试或暂时使用其他模型。<br></b>如果仍然无法正常使用，请联系反季雪。');
@@ -568,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    const appendMessage = (sender, text, shouldAddCopyButton) => {
+    const appendMessage = (sender, text) => {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message-wrapper ${sender}`;
         const iconHTML = sender === 'user' 
@@ -581,8 +690,10 @@ document.addEventListener('DOMContentLoaded', () => {
         chatOutput.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         
-        if (sender === 'gemini' && text !== 'loading' && shouldAddCopyButton) {
-             addCopyButtonToMessage(messageWrapper, text);
+        // ✅ Modified: Add copy functionality for non-loading Gemini messages
+        if (sender === 'gemini' && text !== 'loading') {
+             const messageIcon = messageWrapper.querySelector('.message-icon');
+             addCopyToElement(messageIcon, text);
              addCopyButtonsToCodeBlocks(messageWrapper);
         }
         return messageWrapper;
@@ -619,24 +730,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    const addCopyButtonToMessage = (messageWrapper, textToCopy) => {
-        const existingButton = messageWrapper.querySelector('.copy-message-button');
-        if (existingButton) existingButton.remove();
-        const button = document.createElement('button');
-        button.className = 'copy-message-button';
-        button.title = '复制内容';
-        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-        button.onclick = (e) => {
-            e.stopPropagation();
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                button.innerHTML = '✓';
-                setTimeout(() => {
-                    button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-                }, 1500);
-            });
-        };
-        messageWrapper.appendChild(button);
-    };
+    // ✅ Removed: The old addCopyButtonToMessage function is gone.
 
     const setupModelSelector = () => {
         modelDropdownList.innerHTML = '';
@@ -654,7 +748,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     modelDropdownList.classList.remove('active');
                 });
             } else {
-                option.addEventListener('click', () => alert('此模型需要认证才能使用。请点击“认证”按钮进行解锁。'));
+                option.addEventListener('click', () => alert('此模型需要升级到UltraSnow才能使用。点击侧栏中的设置进行升级。'));
             }
             modelDropdownList.appendChild(option);
         });
@@ -668,17 +762,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const handleAuth = () => {
-        const enteredCode = prompt("请输入认证代码以解锁 Pro 模型：");
+        const enteredCode = prompt("目前UltraSnow处于内测阶段，请输入测试代码以升级：");
         if (enteredCode === null) return;
         if (enteredCode.trim() === "703777") {
             isProUnlocked = true;
-            alert("认证成功！2.5 Pro 模型已解锁。");
+            alert("已升级到UltraSnow！");
             authButton.style.display = 'none';
             currentModel = 'gemini-2.5-pro';
             setupModelSelector();
         } else {
-            alert("代码错误，认证失败。");
+            alert("代码错误，升级失败。");
         }
+        settingsMenu.classList.remove('active');
     };
 
     // -- Add Event Listeners --
@@ -693,13 +788,21 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         modelDropdownList.classList.toggle('active');
     });
+
+    settingsButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        settingsMenu.classList.toggle('active');
+    });
+
     document.addEventListener('click', (e) => {
         if (!modelDropdownList.contains(e.target) && !selectedModelDisplay.contains(e.target)) {
             modelDropdownList.classList.remove('active');
         }
+        if (!settingsMenu.contains(e.target) && !settingsButton.contains(e.target)) {
+            settingsMenu.classList.remove('active');
+        }
     });
 
-    // ✅ New: Event listeners for sidebar toggle
     menuToggleButton.addEventListener('click', () => {
         mainContainer.classList.toggle('sidebar-open');
     });
