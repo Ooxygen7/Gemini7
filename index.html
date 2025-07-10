@@ -193,6 +193,11 @@
         #userInput {
             flex-grow: 1; border: none; background: transparent; padding: 10px 15px;
             font-size: 16px; outline: none; color: var(--text-color); min-width: 0;
+            resize: none;
+            overflow-y: hidden;
+            line-height: 1; 
+            max-height: 120px;
+            box-sizing: border-box; /* 新增：这是解决问题的关键 */
         }
         .input-action-button {
             display: flex; justify-content: center; align-items: center; border: none; background: transparent;
@@ -636,7 +641,7 @@
         <div class="chat-output" id="chatOutput"></div>
         <div class="chat-input-area">
             <div class="chat-input">
-                <input type="text" id="userInput" placeholder="问一问Gemini" autocomplete="off">
+                <textarea id="userInput" placeholder="问一问Gemini" autocomplete="off" rows="1"></textarea>
                 <button id="regenerateButton" class="input-action-button" title="重新生成"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
                 <button id="sendButton" class="input-action-button" title="发送">
                     <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -714,6 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsMenu = document.getElementById('settings-menu');
 
     const userInput = document.getElementById('userInput');
+    const initialHeight = userInput.offsetHeight;
     const sendButton = document.getElementById('sendButton');
     const chatOutput = document.getElementById('chatOutput');
     const regenerateButton = document.getElementById('regenerateButton');
@@ -940,6 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const handleSend = async () => {
+        userInput.style.height = 'auto'; 
         const prompt = userInput.value.trim();
         if (!prompt) return;
 
@@ -1471,12 +1478,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    userInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter' && !userInput.disabled) {
+    userInput.addEventListener('keydown', (event) => {
+        // 当用户按下 Enter 键，并且没有同时按下 Shift 键时，发送消息
+        if (event.key === 'Enter' && !event.shiftKey && !userInput.disabled) {
+            event.preventDefault(); // 阻止默认的换行行为
             handleSend();
         }
+        // 当用户按下 Shift + Enter 时，textarea 会执行默认的换行操作
     });
-
+    userInput.addEventListener('input', () => {
+        userInput.style.height = 'auto'; // 先重置高度
+        userInput.style.height = `${userInput.scrollHeight}px`; // 再设置为内容的实际高度
+    });
     regenerateButton.addEventListener('click', regenerateLastResponse);
     selectedModelDisplay.addEventListener('click', (e) => {
         e.stopPropagation();
