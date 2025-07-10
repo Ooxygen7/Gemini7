@@ -1314,7 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateMessage(geminiWrapper, '已停止生成。');
         } else {
             console.error("Regeneration after edit failed:", error);
-            updateMessage(geminiWrapper, '<b>重新生成失败。</b><br>这可能是模型载荷过大，或是你的网络问题：<br>建议暂时更换其他模型或检查你的网络设置；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
+            updateMessage(geminiWrapper, '<b>重新生成失败。</b><br>这可能是模型载荷过大或是超时：<br>建议暂时更换其他模型或检查你的网络设置并在偏好中打开流式传输；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
         }
     } finally {
         abortController = null;
