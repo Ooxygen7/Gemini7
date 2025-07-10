@@ -23,7 +23,7 @@ export default async function handler(req) {
     const isStreaming = streamRequested !== false;
 
     // 如果前端没有提供模型名称，则使用一个默认的稳定模型
-    const modelToUse = selectedModel || "gemini-1.5-flash";
+    const modelToUse = selectedModel || "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({ model: modelToUse });
 
     const chat = model.startChat({
