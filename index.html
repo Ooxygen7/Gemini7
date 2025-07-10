@@ -200,15 +200,15 @@
         .input-action-button:disabled { opacity: 0.4; cursor: not-allowed; }
         #sendButton { background-color: var(--accent-color); }
         #sendButton .send-icon { stroke: white; }
-        #sendButton .stop-icon { fill: white; }
+        #sendButton .stop-icon { stroke: white; }
         #sendButton:hover:not(:disabled) { background-color: #000; }
         #sendButton:disabled { background-color: #6c757d; opacity: 1; }
         
         #sendButton .stop-icon { display: none; }
         #sendButton.is-loading .send-icon { display: none; }
         #sendButton.is-loading .stop-icon { display: block; }
-        #sendButton.is-loading { background-color: #dc3545; } /* Stop button red color */
-        #sendButton.is-loading:hover { background-color: #c82333; } /* Stop button hover color */
+        #sendButton.is-loading { background-color: #dc3545; }
+        #sendButton.is-loading:hover { background-color: #c82333; }
         
         #regenerateButton { visibility: hidden; }
         #sidebar {
@@ -365,6 +365,98 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
         }
+
+        /* ✅ Custom Modal Styles */
+        #custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #custom-modal-overlay:not(.modal-hidden) {
+            opacity: 1;
+            visibility: visible;
+        }
+        #custom-modal {
+            background-color: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            width: 90%;
+            max-width: 450px;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+        #custom-modal-overlay:not(.modal-hidden) #custom-modal {
+            transform: scale(1);
+        }
+        #modal-title {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        #modal-message {
+            margin-top: 0;
+            margin-bottom: 24px;
+            color: #6c757d;
+            line-height: 1.6;
+        }
+        #modal-input-wrapper {
+            margin-bottom: 24px;
+        }
+        #modal-input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        #modal-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(33, 37, 41, 0.1);
+        }
+        #modal-button-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        #modal-cancel-btn {
+            background-color: #e9ecef;
+            color: var(--text-color);
+        }
+        #modal-cancel-btn:hover {
+            background-color: #dee2e6;
+        }
+        #modal-confirm-btn {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        #modal-confirm-btn:hover {
+            background-color: #000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
         
         @media (max-width: 768px) {
             body { padding: 0; }
@@ -448,7 +540,7 @@
                 <button id="regenerateButton" class="input-action-button" title="重新生成"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
                 <button id="sendButton" class="input-action-button" title="发送">
                     <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                    <svg class="stop-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="white" fill="white"></rect></svg>
+                    <svg class="stop-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="white" fill="white"></rect></svg>
                 </button>
             </div>
         </div>
@@ -456,6 +548,21 @@
     
     <div id="sidebar-backdrop"></div>
 </div>
+
+<div id="custom-modal-overlay" class="modal-hidden">
+    <div id="custom-modal">
+        <h3 id="modal-title"></h3>
+        <p id="modal-message"></p>
+        <div id="modal-input-wrapper">
+            <input type="text" id="modal-input" autocomplete="off">
+        </div>
+        <div id="modal-button-wrapper">
+            <button id="modal-cancel-btn" class="modal-btn"></button>
+            <button id="modal-confirm-btn" class="modal-btn"></button>
+        </div>
+    </div>
+</div>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -487,19 +594,100 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentChatId = null;
 
     marked.setOptions({ breaks: true, sanitize: true });
+    
+    // ✅ Custom Modal Logic
+    const showCustomModal = (options) => {
+        const config = {
+            type: 'alert', // 'alert', 'confirm', or 'prompt'
+            title: '',
+            message: '',
+            placeholder: '',
+            confirmText: '确定',
+            cancelText: '取消'
+        };
+        Object.assign(config, options);
+
+        const overlay = document.getElementById('custom-modal-overlay');
+        const titleEl = document.getElementById('modal-title');
+        const messageEl = document.getElementById('modal-message');
+        const inputWrapper = document.getElementById('modal-input-wrapper');
+        const inputEl = document.getElementById('modal-input');
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+
+        titleEl.textContent = config.title;
+        messageEl.textContent = config.message;
+        confirmBtn.textContent = config.confirmText;
+        cancelBtn.textContent = config.cancelText;
+        inputEl.placeholder = config.placeholder;
+        inputEl.value = '';
+
+        inputWrapper.style.display = config.type === 'prompt' ? 'block' : 'none';
+        cancelBtn.style.display = config.type === 'alert' ? 'none' : 'inline-block';
+
+        overlay.classList.remove('modal-hidden');
+        if (config.type === 'prompt') {
+            inputEl.focus();
+        }
+
+        return new Promise((resolve) => {
+            let isResolved = false;
+
+            const close = (value) => {
+                if (isResolved) return;
+                isResolved = true;
+                overlay.classList.add('modal-hidden');
+                resolve(value);
+            };
+
+            confirmBtn.onclick = () => {
+                close(config.type === 'prompt' ? inputEl.value : true);
+            };
+
+            cancelBtn.onclick = () => {
+                close(config.type === 'prompt' ? null : false);
+            };
+
+            overlay.onclick = (e) => {
+                if (e.target === overlay) {
+                    cancelBtn.click();
+                }
+            };
+
+            inputEl.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    confirmBtn.click();
+                } else if (e.key === 'Escape') {
+                    cancelBtn.click();
+                }
+            }
+        });
+    };
 
     const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats') || '[]');
     const saveChats = (chats) => localStorage.setItem('geminiSnowChats', JSON.stringify(chats));
     
-    const deleteChat = (chatIdToDelete) => {
+    const deleteChat = async (chatIdToDelete) => {
         let chats = getChats();
-        chats = chats.filter(chat => chat.id !== chatIdToDelete);
-        saveChats(chats);
+        const chatToDelete = chats.find(chat => chat.id === chatIdToDelete);
+        if (!chatToDelete) return;
+        
+        const confirmed = await showCustomModal({
+            type: 'confirm',
+            title: '删除对话',
+            message: `您确定要删除对话 "${chatToDelete.title}" 吗？此操作无法撤销。`,
+            confirmText: '删除',
+            cancelText: '取消'
+        });
 
-        if (currentChatId === chatIdToDelete) {
-            createNewChat();
-        } else {
-            renderHistoryList();
+        if (confirmed) {
+            chats = chats.filter(chat => chat.id !== chatIdToDelete);
+            saveChats(chats);
+            if (currentChatId === chatIdToDelete) {
+                createNewChat();
+            } else {
+                renderHistoryList();
+            }
         }
     };
 
@@ -523,9 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (confirm(`确定要删除对话 "${chat.title}" 吗？`)) {
-                    deleteChat(chat.id);
-                }
+                deleteChat(chat.id);
             });
 
             if (chat.id === currentChatId) {
@@ -659,7 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Generation stopped by user.');
             } else {
                 console.error('Error:', error);
-                updateMessage(messageWrapperElement, '⚠抱歉，出错了。');
+                updateMessage(messageWrapperElement, '<b>抱歉，出错了。</b><br>这可能是模型载荷过大，或是你的网络问题：<br>建议暂时更换其他模型或检查你的网络设置；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
             }
         } finally {
             messageWrapperElement.classList.remove('gemini-loading');
@@ -710,7 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const setLoading = (isLoading) => {
         userInput.disabled = isLoading;
-        newChatButton.disabled = isLoading; // ✅ Disable new chat button
+        newChatButton.disabled = isLoading;
         regenerateButton.disabled = isLoading;
         selectedModelDisplay.style.pointerEvents = isLoading ? 'none' : 'auto';
 
@@ -887,7 +1073,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Generation stopped by user.');
             } else {
                  console.error("Regeneration after edit failed:", error);
-                 updateMessage(geminiWrapper, '⚠ 编辑后重新生成失败。');
+                 updateMessage(geminiWrapper, '<b>重新生成失败。</b><br>这可能是模型载荷过大，或是你的网络问题：<br>建议暂时更换其他模型或检查你的网络设置；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
             }
         } finally {
             abortController = null;
@@ -947,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    const setupModelSelector = () => {
+    const setupModelSelector = async () => {
         modelDropdownList.innerHTML = '';
         models.forEach(model => {
             const option = document.createElement('div');
@@ -963,7 +1149,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     modelDropdownList.classList.remove('active');
                 });
             } else {
-                option.addEventListener('click', () => alert('此模型需要升级到UltraSnow才能使用。点击侧栏中的设置进行升级。'));
+                option.addEventListener('click', () => showCustomModal({
+                    type: 'alert',
+                    title: '模型已锁定',
+                    message: '此高级模型需要升级到UltraSnow才能使用。请点击侧栏中的设置进行升级。',
+                }));
             }
             modelDropdownList.appendChild(option);
         });
@@ -976,17 +1166,25 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.model-option').forEach(opt => opt.classList.toggle('selected', opt.dataset.value === currentModel));
     };
     
-    const handleAuth = () => {
-        const enteredCode = prompt("目前UltraSnow处于内测阶段，请输入测试代码以升级：");
+    const handleAuth = async () => {
+        const enteredCode = await showCustomModal({
+            type: 'prompt',
+            title: '升级到 UltraSnow',
+            message: '目前UltraSnow处于内部测试阶段，请输入测试代码以解锁高级模型。',
+            placeholder: '请输入测试代码',
+            confirmText: '升级'
+        });
+
         if (enteredCode === null) return;
+        
         if (enteredCode.trim() === "703777") {
             isProUnlocked = true;
-            alert("已升级到UltraSnow！");
+            await showCustomModal({type: 'alert', title: '操作成功', message: '已成功升级到UltraSnow！所有模型已解锁。'});
             authButton.style.display = 'none';
             currentModel = 'gemini-2.5-pro';
             setupModelSelector();
         } else {
-            alert("代码错误，升级失败。");
+            await showCustomModal({type: 'alert', title: '操作失败', message: '代码错误，升级失败。'});
         }
         settingsMenu.classList.remove('active');
     };
