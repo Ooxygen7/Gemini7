@@ -195,14 +195,13 @@
             display: flex; justify-content: center; align-items: center; border: none; background: transparent;
             width: 40px; height: 40px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; margin-left: 5px;
         }
-        .input-action-button svg { width: 20px; height: 20px; stroke: #6c757d; transition: stroke 0.2s ease; }
+        .input-action-button svg { width: 20px; height: 20px; transition: stroke 0.2s ease; }
         .input-action-button:hover:not(:disabled) { background-color: #dee2e6; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .input-action-button:disabled { opacity: 0.4; cursor: not-allowed; }
         #sendButton { background-color: var(--accent-color); }
         #sendButton .send-icon { stroke: white; }
         #sendButton .stop-icon { stroke: white; }
         #sendButton:hover:not(:disabled) { background-color: #000; }
-        #sendButton:disabled { background-color: #6c757d; opacity: 1; }
         
         #sendButton .stop-icon { display: none; }
         #sendButton.is-loading .send-icon { display: none; }
@@ -365,8 +364,7 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
         }
-
-        /* ✅ Custom Modal Styles */
+        
         #custom-modal-overlay {
             position: fixed;
             top: 0;
@@ -457,7 +455,7 @@
             background-color: #000;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        
+
         @media (max-width: 768px) {
             body { padding: 0; }
             .main-container {
@@ -547,25 +545,25 @@
     </div> 
     
     <div id="sidebar-backdrop"></div>
-</div>
-
-<div id="custom-modal-overlay" class="modal-hidden">
-    <div id="custom-modal">
-        <h3 id="modal-title"></h3>
-        <p id="modal-message"></p>
-        <div id="modal-input-wrapper">
-            <input type="text" id="modal-input" autocomplete="off">
-        </div>
-        <div id="modal-button-wrapper">
-            <button id="modal-cancel-btn" class="modal-btn"></button>
-            <button id="modal-confirm-btn" class="modal-btn"></button>
+    
+    <div id="custom-modal-overlay" class="modal-hidden">
+        <div id="custom-modal">
+            <h3 id="modal-title"></h3>
+            <p id="modal-message"></p>
+            <div id="modal-input-wrapper">
+                <input type="text" id="modal-input" autocomplete="off">
+            </div>
+            <div id="modal-button-wrapper">
+                <button id="modal-cancel-btn" class="modal-btn"></button>
+                <button id="modal-confirm-btn" class="modal-btn"></button>
+            </div>
         </div>
     </div>
 </div>
 
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // ... (All other variable declarations from previous step remain the same)
     const mainContainer = document.getElementById('main-container');
     const menuToggleButton = document.getElementById('menu-toggle-btn');
     const sidebarBackdrop = document.getElementById('sidebar-backdrop');
@@ -595,10 +593,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     marked.setOptions({ breaks: true, sanitize: true });
     
-    // ✅ Custom Modal Logic
     const showCustomModal = (options) => {
         const config = {
-            type: 'alert', // 'alert', 'confirm', or 'prompt'
+            type: 'alert',
             title: '',
             message: '',
             placeholder: '',
@@ -891,6 +888,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastGeminiMsgWrapper = chatOutput.querySelector('.message-wrapper.gemini:last-of-type');
         if (!lastGeminiMsgWrapper) return;
         
+        // ✅ FIX: Show loading indicator before regenerating
+        updateMessage(lastGeminiMsgWrapper, 'loading');
+
         await streamResponse(lastUserPrompt, lastGeminiMsgWrapper, true);
     };
 
@@ -924,6 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
         regenerateButton.style.visibility = showRegenerate ? 'visible' : 'hidden';
     };
     
+    // ... (All other functions from previous step remain the same)
     const appendMessage = (sender, text, messageIndex) => {
         const senderClass = (sender === 'model') ? 'gemini' : sender;
         
@@ -1198,7 +1199,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (abortController) {
                 abortController.abort();
             }
-        } else {
+        } else if(!userInput.disabled) {
             handleSend();
         }
     });
