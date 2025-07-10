@@ -612,7 +612,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (done) break;
                 fullText += decoder.decode(value, { stream: true });
                 messageElement.innerHTML = marked.parse(fullText + '▋');
-                // chatOutput.scrollTop = chatOutput.scrollHeight; // This line has been removed to prevent auto-scrolling during streaming.
             }
             
             chats = getChats();
@@ -665,7 +664,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const chats = getChats();
         const chat = chats.find(c => c.id === currentChatId);
     
-        // FIX: Only show regenerate button if not loading and the last message is from the model.
         let showRegenerate = false;
         if (!isLoading && chat && chat.messages && chat.messages.length > 0) {
             const lastMessage = chat.messages[chat.messages.length - 1];
@@ -677,19 +675,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const appendMessage = (sender, text) => {
+        // FIX: Standardize sender class. 'model' role should use 'gemini' class for consistency.
+        const senderClass = (sender === 'model') ? 'gemini' : sender;
+        
         const messageWrapper = document.createElement('div');
-        messageWrapper.className = `message-wrapper ${sender}`;
-        const iconHTML = sender === 'user' 
+        messageWrapper.className = `message-wrapper ${senderClass}`;
+        
+        const iconHTML = senderClass === 'user' 
             ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
             : '<img src="/01.png" alt="Gemini Avatar">';
+            
         const messageContentHTML = text === 'loading'
             ? `<div class="loading-indicator"><div class="spinner"></div><span>思考中...</span></div>`
             : marked.parse(text);
+            
         messageWrapper.innerHTML = `<div class="message-icon">${iconHTML}</div><div class="message">${messageContentHTML}</div>`;
         chatOutput.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         
-        if (sender === 'gemini' && text !== 'loading') {
+        if (senderClass === 'gemini' && text !== 'loading') {
              const messageIcon = messageWrapper.querySelector('.message-icon');
              addCopyToElement(messageIcon, text);
              addCopyButtonsToCodeBlocks(messageWrapper);
