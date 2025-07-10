@@ -202,6 +202,12 @@
         #sendButton svg { stroke: white; }
         #sendButton:hover:not(:disabled) { background-color: #000; }
         #sendButton:disabled { background-color: #6c757d; opacity: 1; }
+
+        /* ✅ Styles for send/stop icon switching */
+        #sendButton .stop-icon { display: none; }
+        #sendButton.is-loading .send-icon { display: none; }
+        #sendButton.is-loading .stop-icon { display: block; }
+        
         #regenerateButton { visibility: hidden; }
         #sidebar {
             width: 260px; background-color: #212529; color: var(--light-text-color); flex-shrink: 0;
@@ -220,8 +226,14 @@
         .chat-container { flex-grow: 1; height: 100%; max-width: none; max-height: none; box-shadow: none; border-radius: 0; display: flex; flex-direction: column; }
         .history-item {
             display: flex; justify-content: space-between; align-items: center; gap: 10px;
-            padding: 12px 15px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s;
+            padding: 12px 15px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, opacity 0.2s;
         }
+        /* ✅ Style for disabling history items */
+        .history-item.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
         .history-item:hover { background-color: #343a40; }
         .history-item-title {
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;
@@ -431,7 +443,10 @@
             <div class="chat-input">
                 <input type="text" id="userInput" placeholder="问一问Gemini" autocomplete="off">
                 <button id="regenerateButton" class="input-action-button" title="重新生成"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
-                <button id="sendButton" class="input-action-button" title="发送"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
+                <button id="sendButton" class="input-action-button" title="发送">
+                    <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    <svg class="stop-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>
+                </button>
             </div>
         </div>
     </div> 
@@ -458,6 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const historyList = document.getElementById('history-list');
 
     const API_URL = '/api/askGemini';
+    let abortController = null; // ✅ Controller for stopping generation
     let isProUnlocked = false;
     const models = [
         { id: 'gemini-2.5-flash', name: '2.5 Flash', description: '快速提供全方位的帮助', locked: false },
@@ -486,10 +502,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderHistoryList = () => {
         const chats = getChats();
+        const isLoading = sendButton.classList.contains('is-loading');
         historyList.innerHTML = '';
         chats.forEach(chat => {
             const item = document.createElement('div');
             item.className = 'history-item';
+            if (isLoading) item.classList.add('disabled');
             item.dataset.chatId = chat.id;
 
             const title = document.createElement('div');
@@ -593,6 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const streamResponse = async (prompt, messageWrapperElement, isRegeneration = false, historyOverride = null) => {
         setLoading(true);
+        abortController = new AbortController();
         messageWrapperElement.classList.add('gemini-loading');
         const messageElement = messageWrapperElement.querySelector('.message');
         
@@ -612,10 +631,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt, history: historyForAPI, model: currentModel }),
+                signal: abortController.signal
             });
             if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
             
             const fullText = await streamIntoElement(response, messageElement);
+            if(fullText === null) return; // Stream was aborted
             
             chats = getChats();
             chat = chats.find(c => c.id === currentChatId);
@@ -630,10 +651,16 @@ document.addEventListener('DOMContentLoaded', () => {
             addCopyToElement(messageWrapperElement.querySelector('.message-icon'), fullText);
 
         } catch (error) {
-            console.error('Error:', error);
-            updateMessage(messageWrapperElement, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试或暂时使用其他模型。<br></b>如果仍然无法正常使用，请联系反季雪。');
+            if (error.name === 'AbortError') {
+                updateMessage(messageWrapperElement, '已停止生成。');
+                console.log('Generation stopped by user.');
+            } else {
+                console.error('Error:', error);
+                updateMessage(messageWrapperElement, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试或暂时使用其他模型。<br></b>如果仍然无法正常使用，请联系反季雪。');
+            }
         } finally {
             messageWrapperElement.classList.remove('gemini-loading');
+            abortController = null;
             setLoading(false);
         }
     };
@@ -645,10 +672,18 @@ document.addEventListener('DOMContentLoaded', () => {
         element.innerHTML = '';
 
         while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            fullText += decoder.decode(value, { stream: true });
-            element.innerHTML = marked.parse(fullText + '▋');
+            try {
+                const { done, value } = await reader.read();
+                if (done) break;
+                fullText += decoder.decode(value, { stream: true });
+                element.innerHTML = marked.parse(fullText + '▋');
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Stream reading aborted.');
+                    return null;
+                }
+                throw error;
+            }
         }
         element.innerHTML = marked.parse(fullText);
         addCopyButtonsToCodeBlocks(element);
@@ -671,10 +706,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setLoading = (isLoading) => {
+        userInput.disabled = isLoading;
         sendButton.disabled = isLoading;
         regenerateButton.disabled = isLoading;
-        userInput.disabled = isLoading;
         selectedModelDisplay.style.pointerEvents = isLoading ? 'none' : 'auto';
+
+        const historyItems = historyList.querySelectorAll('.history-item');
+        if (isLoading) {
+            sendButton.classList.add('is-loading');
+            sendButton.title = '停止生成';
+            historyItems.forEach(item => item.classList.add('disabled'));
+        } else {
+            sendButton.classList.remove('is-loading');
+            sendButton.title = '发送';
+            historyItems.forEach(item => item.classList.remove('disabled'));
+        }
     
         const chats = getChats();
         const chat = chats.find(c => c.id === currentChatId);
@@ -755,10 +801,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentText = tempDiv.innerText;
 
         const textarea = document.createElement('textarea');
-        textarea.value = currentText.trim(); // ✅ FIX: Trim whitespace
+        textarea.value = currentText.trim();
         textarea.rows = 1;
         
-        let isSaving = false; // ✅ FIX: Flag to prevent blur event conflict
+        let isSaving = false;
 
         const autoResize = () => {
             textarea.style.height = 'auto';
@@ -775,7 +821,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         textarea.addEventListener('blur', () => {
-            if (!isSaving) { // ✅ FIX: Only revert if not saving
+            if (!isSaving) {
                 messageDiv.innerHTML = marked.parse(currentText);
             }
         });
@@ -800,8 +846,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         setLoading(true);
+        abortController = new AbortController();
         updateMessage(geminiWrapper, 'loading');
-        // ✅ FIX: Correctly update the user message bubble with the new text
         messageWrapper.querySelector('.message').innerHTML = marked.parse(newText);
 
         let chats = getChats();
@@ -809,31 +855,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         chat.messages[messageIndex].parts[0].text = newText;
         
-        // ✅ FIX: History should be everything BEFORE the message being edited
         const historyForAPI = chat.messages.slice(0, messageIndex);
 
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // ✅ FIX: Send the correct prompt and history
                 body: JSON.stringify({ prompt: newText, history: historyForAPI, model: currentModel }),
+                signal: abortController.signal
             });
             if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
             
             const fullText = await streamIntoElement(response, geminiWrapper.querySelector('.message'));
+            if(fullText === null) return;
             
             chats = getChats();
             chat = chats.find(c => c.id === currentChatId);
             if(chat.messages[geminiMessageIndex]) {
                 chat.messages[geminiMessageIndex].parts[0].text = fullText;
+            } else {
+                 chat.messages.splice(geminiMessageIndex, 0, { role: 'model', parts: [{ text: fullText }] });
             }
             saveChats(chats);
             addCopyToElement(geminiWrapper.querySelector('.message-icon'), fullText);
         } catch(error) {
-             console.error("Regeneration after edit failed:", error);
-             updateMessage(geminiWrapper, '⚠抱歉，出错了。<br><b>这可能是服务器过载，建议等待后重试或暂时使用其他模型。<br></b>如果仍然无法正常使用，请联系反季雪。');
+            if (error.name === 'AbortError') {
+                updateMessage(geminiWrapper, '已停止生成。');
+                console.log('Generation stopped by user.');
+            } else {
+                 console.error("Regeneration after edit failed:", error);
+                 updateMessage(geminiWrapper, '⚠ 编辑后重新生成失败。');
+            }
         } finally {
+            abortController = null;
             setLoading(false);
         }
     };
@@ -937,10 +991,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // -- Add Event Listeners --
     newChatButton.addEventListener('click', createNewChat);
     authButton.addEventListener('click', handleAuth);
-    sendButton.addEventListener('click', handleSend);
-    userInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter' && !sendButton.disabled) { handleSend(); }
+    
+    sendButton.addEventListener('click', () => {
+        if (sendButton.classList.contains('is-loading')) {
+            if (abortController) {
+                abortController.abort();
+            }
+        } else {
+            handleSend();
+        }
     });
+
+    userInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter' && !sendButton.disabled) {
+             if (!sendButton.classList.contains('is-loading')) {
+                handleSend();
+            }
+        }
+    });
+
     regenerateButton.addEventListener('click', regenerateLastResponse);
     selectedModelDisplay.addEventListener('click', (e) => {
         e.stopPropagation();
