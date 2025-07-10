@@ -98,7 +98,6 @@
         .gemini.streaming-in .message { animation: fadeIn 0.5s ease-out; }
         .gemini .message-icon { background-color: transparent; }
         
-        /* ✅ New: Add cursor pointer and hover effect to Gemini avatar */
         .gemini .message-icon {
             cursor: pointer;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -122,7 +121,6 @@
             padding: 0;
             border-radius: 0;
         }
-        /* ✅ Removed: .copy-message-button styles are gone */
 
         .gemini.message-wrapper { display: inline-flex; }
         .user { align-self: flex-end; flex-direction: row-reverse; }
@@ -555,7 +553,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
     };
 
-    // ✅ New: Function to add copy functionality to an element
     const addCopyToElement = (element, textToCopy) => {
         if (!element) return;
 
@@ -588,7 +585,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageIcon = messageWrapperElement.querySelector('.message-icon');
         messageWrapperElement.classList.add('streaming-in');
         
-        // Disable click while loading
         if (messageIcon) messageIcon.onclick = null;
 
         let chats = getChats();
@@ -616,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (done) break;
                 fullText += decoder.decode(value, { stream: true });
                 messageElement.innerHTML = marked.parse(fullText + '▋');
-                // chatOutput.scrollTop = chatOutput.scrollHeight; // THIS LINE IS COMMENTED OUT TO PREVENT AUTO-SCROLL
+                // chatOutput.scrollTop = chatOutput.scrollHeight; // This line has been removed to prevent auto-scrolling during streaming.
             }
             
             chats = getChats();
@@ -633,7 +629,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             messageElement.innerHTML = marked.parse(fullText);
             addCopyButtonsToCodeBlocks(messageElement);
-            // ✅ Modified: Add copy functionality to the avatar after stream completion
             addCopyToElement(messageIcon, fullText);
 
         } catch (error) {
@@ -666,15 +661,19 @@ document.addEventListener('DOMContentLoaded', () => {
         regenerateButton.disabled = isLoading;
         userInput.disabled = isLoading;
         selectedModelDisplay.style.pointerEvents = isLoading ? 'none' : 'auto';
+    
         const chats = getChats();
         const chat = chats.find(c => c.id === currentChatId);
-        if (isLoading) {
-            regenerateButton.style.visibility = 'hidden';
-        } else if (chat && chat.messages.length > 0) {
-            regenerateButton.style.visibility = 'visible';
-        } else {
-             regenerateButton.style.visibility = 'hidden';
+    
+        // FIX: Only show regenerate button if not loading and the last message is from the model.
+        let showRegenerate = false;
+        if (!isLoading && chat && chat.messages && chat.messages.length > 0) {
+            const lastMessage = chat.messages[chat.messages.length - 1];
+            if (lastMessage && lastMessage.role === 'model') {
+                showRegenerate = true;
+            }
         }
+        regenerateButton.style.visibility = showRegenerate ? 'visible' : 'hidden';
     };
     
     const appendMessage = (sender, text) => {
@@ -690,7 +689,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chatOutput.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         
-        // ✅ Modified: Add copy functionality for non-loading Gemini messages
         if (sender === 'gemini' && text !== 'loading') {
              const messageIcon = messageWrapper.querySelector('.message-icon');
              addCopyToElement(messageIcon, text);
@@ -730,8 +728,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    // ✅ Removed: The old addCopyButtonToMessage function is gone.
-
     const setupModelSelector = () => {
         modelDropdownList.innerHTML = '';
         models.forEach(model => {
