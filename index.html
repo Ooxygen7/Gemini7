@@ -125,6 +125,47 @@
         .gemini.message-wrapper { display: inline-flex; }
         .user { align-self: flex-end; flex-direction: row-reverse; }
         .user .message { background-color: var(--user-msg-bg); color: var(--light-text-color); border-bottom-right-radius: 4px; }
+        /* ✅ Hide user avatar */
+        .user .message-icon { display: none; }
+        
+        /* ✅ Style for edit icon */
+        .edit-icon {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            color: #9ea3a9;
+            margin-top: 12px;
+            margin-right: -5px;
+            transition: color 0.2s;
+        }
+        .edit-icon:hover {
+            color: #f8f9fa;
+        }
+        /* ✅ Show icon only for the latest user message */
+        .message-wrapper.latest-user-message .edit-icon {
+            display: flex;
+        }
+
+        /* ✅ Style for the editing textarea */
+        .message textarea {
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            padding: 0;
+            margin: 0;
+            background-color: transparent;
+            color: var(--light-text-color);
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            resize: none;
+            outline: none;
+            overflow-y: hidden; /* Prevent scrollbar */
+        }
+        
         .user .message-icon { background-color: var(--accent-color); }
         .loading-indicator { display: flex; align-items: center; gap: 10px; font-style: italic; color: #6c757d; }
         .spinner {
@@ -482,8 +523,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const renderChatWindow = (messages) => {
         chatOutput.innerHTML = '';
-        messages.forEach(msg => appendMessage(msg.role, msg.parts[0].text));
+        messages.forEach((msg, index) => appendMessage(msg.role, msg.parts[0].text, index));
         chatOutput.scrollTop = chatOutput.scrollHeight;
+        updateEditIcon();
     };
     
     const loadChat = (chatId) => {
@@ -522,63 +564,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         userInput.value = '';
-        const selectedModel = currentModel;
         let chats = getChats();
         
         let isNewChat = false;
+        let chat;
         if (!currentChatId) {
             isNewChat = true;
             currentChatId = `chat_${Date.now()}`;
-            const newChat = {
+            chat = {
                 id: currentChatId,
                 title: prompt.substring(0, 30),
                 messages: [],
             };
-            chats.push(newChat);
+            chats.push(chat);
+        } else {
+            chat = chats.find(c => c.id === currentChatId);
         }
 
-        const chatIndex = chats.findIndex(c => c.id === currentChatId);
-        if(chatIndex !== -1) {
-            chats[chatIndex].messages.push({ role: 'user', parts: [{ text: prompt }] });
-            saveChats(chats);
-        }
-
-        appendMessage('user', prompt);
+        chat.messages.push({ role: 'user', parts: [{ text: prompt }] });
+        const userMessageIndex = chat.messages.length - 1;
+        saveChats(chats);
+        
+        appendMessage('user', prompt, userMessageIndex);
         const loadingMsgWrapper = appendMessage('gemini', 'loading');
         
         if (isNewChat) {
            renderHistoryList();
         }
         
-        await streamResponse(prompt, loadingMsgWrapper, selectedModel, false);
+        await streamResponse(prompt, loadingMsgWrapper, false);
     };
-
-    const addCopyToElement = (element, textToCopy) => {
-        if (!element) return;
-
-        const originalIconHTML = '<img src="/01.png" alt="Gemini Avatar">';
-        element.title = '点击复制内容';
-
-        element.onclick = (e) => {
-            e.stopPropagation();
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                element.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: #28a745;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                element.title = '已复制!';
-                setTimeout(() => {
-                    element.innerHTML = originalIconHTML;
-                    element.title = '点击复制内容';
-                }, 1500);
-            }).catch(err => {
-                console.error('复制失败: ', err);
-                element.title = '复制失败!';
-                setTimeout(() => {
-                    element.title = '点击复制内容';
-                }, 1500);
-            });
-        };
-    };
-
-    const streamResponse = async (prompt, messageWrapperElement, model, isRegeneration = false) => {
+    
+    const streamResponse = async (prompt, messageWrapperElement, isRegeneration = false) => {
         setLoading(true);
         messageWrapperElement.classList.add('gemini-loading');
         const messageElement = messageWrapperElement.querySelector('.message');
@@ -588,47 +605,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (messageIcon) messageIcon.onclick = null;
 
         let chats = getChats();
-        let currentMessages = [];
-        const chat = chats.find(c => c.id === currentChatId);
-        if (chat) {
-            currentMessages = isRegeneration ? chat.messages.slice(0, -1) : chat.messages;
-        }
+        let chat = chats.find(c => c.id === currentChatId);
+        const historyForAPI = isRegeneration ? chat.messages.slice(0, -1) : chat.messages;
 
         try {
-            const response = await fetch('/api/askGemini', {
+            const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, history: currentMessages, model }),
+                body: JSON.stringify({ prompt, history: historyForAPI, model: currentModel }),
             });
             if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
             
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let fullText = '';
-            messageElement.innerHTML = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                fullText += decoder.decode(value, { stream: true });
-                messageElement.innerHTML = marked.parse(fullText + '▋');
-            }
+            const fullText = await streamIntoElement(response, messageElement);
             
             chats = getChats();
-            const chatIndex = chats.findIndex(c => c.id === currentChatId);
+            chat = chats.find(c => c.id === currentChatId);
             const modelMessage = { role: 'model', parts: [{ text: fullText }] };
-            if (chatIndex !== -1) {
-                if (isRegeneration) {
-                    chats[chatIndex].messages[chats[chatIndex].messages.length - 1] = modelMessage;
-                } else {
-                    chats[chatIndex].messages.push(modelMessage);
-                }
+            if (isRegeneration) {
+                chat.messages[chat.messages.length - 1] = modelMessage;
+            } else {
+                chat.messages.push(modelMessage);
             }
             saveChats(chats);
 
-            messageElement.innerHTML = marked.parse(fullText);
-            addCopyButtonsToCodeBlocks(messageElement);
-            addCopyToElement(messageIcon, fullText);
+            addCopyToElement(messageWrapperElement.querySelector('.message-icon'), fullText);
 
         } catch (error) {
             console.error('Error:', error);
@@ -638,9 +638,26 @@ document.addEventListener('DOMContentLoaded', () => {
             setLoading(false);
         }
     };
+    
+    const streamIntoElement = async (response, element) => {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        element.innerHTML = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            fullText += decoder.decode(value, { stream: true });
+            element.innerHTML = marked.parse(fullText + '▋');
+        }
+        element.innerHTML = marked.parse(fullText);
+        addCopyButtonsToCodeBlocks(element);
+        return fullText;
+    };
 
     const regenerateLastResponse = async () => {
-        const chats = getChats();
+        let chats = getChats();
         const chat = chats.find(c => c.id === currentChatId);
         if (!chat || chat.messages.length < 2) return;
 
@@ -651,8 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastGeminiMsgWrapper = chatOutput.querySelector('.message-wrapper.gemini:last-of-type');
         if (!lastGeminiMsgWrapper) return;
         
-        updateMessage(lastGeminiMsgWrapper, 'loading');
-        await streamResponse(lastUserPrompt, lastGeminiMsgWrapper, currentModel, true);
+        await streamResponse(lastUserPrompt, lastGeminiMsgWrapper, true);
     };
 
     const setLoading = (isLoading) => {
@@ -674,31 +690,167 @@ document.addEventListener('DOMContentLoaded', () => {
         regenerateButton.style.visibility = showRegenerate ? 'visible' : 'hidden';
     };
     
-    const appendMessage = (sender, text) => {
-        // FIX: Standardize sender class. 'model' role should use 'gemini' class for consistency.
+    const appendMessage = (sender, text, messageIndex) => {
         const senderClass = (sender === 'model') ? 'gemini' : sender;
         
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message-wrapper ${senderClass}`;
-        
+        if(messageIndex !== undefined) {
+             messageWrapper.dataset.messageIndex = messageIndex;
+        }
+
         const iconHTML = senderClass === 'user' 
-            ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
-            : '<img src="/01.png" alt="Gemini Avatar">';
+            ? `<div class="edit-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>`
+            : `<div class="message-icon"><img src="/01.png" alt="Gemini Avatar"></div>`;
             
         const messageContentHTML = text === 'loading'
             ? `<div class="loading-indicator"><div class="spinner"></div><span>思考中...</span></div>`
             : marked.parse(text);
             
-        messageWrapper.innerHTML = `<div class="message-icon">${iconHTML}</div><div class="message">${messageContentHTML}</div>`;
+        messageWrapper.innerHTML = `${iconHTML}<div class="message">${messageContentHTML}</div>`;
+        
+        // User messages are reversed, so the edit icon should be first in the DOM order
+        if(senderClass === 'user'){
+            messageWrapper.insertBefore(messageWrapper.querySelector('.message'), messageWrapper.firstChild);
+        }
+        
         chatOutput.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         
         if (senderClass === 'gemini' && text !== 'loading') {
-             const messageIcon = messageWrapper.querySelector('.message-icon');
-             addCopyToElement(messageIcon, text);
+             addCopyToElement(messageWrapper.querySelector('.message-icon'), text);
              addCopyButtonsToCodeBlocks(messageWrapper);
+        } else if (senderClass === 'user'){
+            updateEditIcon();
         }
+        
         return messageWrapper;
+    };
+    
+    const updateEditIcon = () => {
+        const currentLatest = chatOutput.querySelector('.latest-user-message');
+        if (currentLatest) {
+            currentLatest.classList.remove('latest-user-message');
+        }
+
+        const userMessages = chatOutput.querySelectorAll('.message-wrapper.user');
+        if (userMessages.length > 0) {
+            const lastUserMessage = userMessages[userMessages.length - 1];
+            lastUserMessage.classList.add('latest-user-message');
+
+            const editIcon = lastUserMessage.querySelector('.edit-icon');
+            if (editIcon && !editIcon.dataset.listener) {
+                editIcon.addEventListener('click', () => makeMessageEditable(lastUserMessage));
+                editIcon.dataset.listener = 'true';
+            }
+        }
+    };
+
+    const makeMessageEditable = (messageWrapper) => {
+        const messageDiv = messageWrapper.querySelector('.message');
+        if(messageDiv.querySelector('textarea')) return; // Already in edit mode
+
+        // Extract plain text from the potentially rich HTML content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = messageDiv.innerHTML;
+        const currentText = tempDiv.innerText;
+
+        const textarea = document.createElement('textarea');
+        textarea.value = currentText;
+        textarea.rows = 1;
+
+        const autoResize = () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        };
+        textarea.addEventListener('input', autoResize);
+
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                saveAndRegenerate(messageWrapper, textarea.value);
+            }
+        });
+        
+        textarea.addEventListener('blur', () => { // Revert if user clicks away
+            messageDiv.innerHTML = marked.parse(currentText);
+        });
+
+        messageDiv.innerHTML = '';
+        messageDiv.appendChild(textarea);
+        textarea.focus();
+        autoResize();
+    };
+    
+    const saveAndRegenerate = async (messageWrapper, newText) => {
+        newText = newText.trim();
+        if(!newText) return;
+
+        const messageIndex = parseInt(messageWrapper.dataset.messageIndex, 10);
+        const geminiWrapper = messageWrapper.nextElementSibling;
+        const geminiMessageIndex = messageIndex + 1;
+
+        if (!geminiWrapper || !geminiWrapper.classList.contains('gemini')) {
+            messageWrapper.querySelector('.message').innerHTML = marked.parse(newText);
+            return; // No Gemini message to regenerate
+        }
+        
+        setLoading(true);
+        updateMessage(geminiWrapper, 'loading');
+        messageWrapper.querySelector('.message').innerHTML = marked.parse(newText);
+
+        let chats = getChats();
+        let chat = chats.find(c => c.id === currentChatId);
+
+        // Update user message in storage
+        chat.messages[messageIndex].parts[0].text = newText;
+        
+        const historyForAPI = chat.messages.slice(0, messageIndex + 1);
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: newText, history: historyForAPI, model: currentModel }),
+            });
+            if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
+            
+            const fullText = await streamIntoElement(response, geminiWrapper.querySelector('.message'));
+            
+            // Update Gemini message in storage
+            chats = getChats();
+            chat = chats.find(c => c.id === currentChatId);
+            if(chat.messages[geminiMessageIndex]) {
+                chat.messages[geminiMessageIndex].parts[0].text = fullText;
+            }
+            saveChats(chats);
+            addCopyToElement(geminiWrapper.querySelector('.message-icon'), fullText);
+        } catch(error) {
+             updateMessage(geminiWrapper, '⚠ 编辑后重新生成失败。');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const addCopyToElement = (element, textToCopy) => {
+        if (!element) return;
+        const originalIconHTML = '<img src="/01.png" alt="Gemini Avatar">';
+        element.title = '点击复制内容';
+        element.onclick = (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                element.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: #28a745;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                element.title = '已复制!';
+                setTimeout(() => {
+                    element.innerHTML = originalIconHTML;
+                    element.title = '点击复制内容';
+                }, 1500);
+            }).catch(err => {
+                console.error('复制失败: ', err);
+                element.title = '复制失败!';
+                setTimeout(() => { element.title = '点击复制内容'; }, 1500);
+            });
+        };
     };
 
     const updateMessage = (messageWrapperElement, newContent) => {
