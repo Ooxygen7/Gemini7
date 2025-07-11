@@ -745,11 +745,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let abortController = null;
     let isProUnlocked = false;
     const models = [
-        { id: 'gemini-2.5-flash', name: '2.5 Flash', description: '快速提供全方位的帮助', locked: false },
+        { id: 'gemini-2.5-flash', name: '2.5 Flash（日配额耗尽）', description: '快速提供全方位的帮助', locked: true },
         { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码', locked: true },
         { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '以最快速度提供帮助', locked: false }
     ];
-    let currentModel = 'gemini-2.5-flash';
+    let currentModel = 'gemini-2.0-flash';
     let currentChatId = null;
 
     // REMOVED: Old presetPrompts array is no longer needed.
