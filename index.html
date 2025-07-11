@@ -6,6 +6,9 @@
     <title>GeminiSnow</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
+        html {
+            height: 100%;
+        }
         :root {
             --body-bg: #f4f6f8;
             --chat-bg: #ffffff;
@@ -20,7 +23,7 @@
         }
         body {
             font-family: var(--font-family); background-color: var(--body-bg); margin: 0; display: flex;
-            justify-content: center; align-items: center; height: 100vh; padding: 1rem; box-sizing: border-box;
+            justify-content: center; align-items: center; height: 100%; padding: 1rem; box-sizing: border-box;
             overflow: hidden;
         }
         .main-container {
@@ -577,6 +580,55 @@
                 opacity: 1;
                 pointer-events: auto;
             }
+        }
+                /* --- 新增：用于编辑消息的按钮和动画 --- */
+        .edit-actions {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .edit-actions.visible {
+            opacity: 1;
+        }
+
+        .save-edit-btn {
+            background-color: #28a745; /* 绿色背景 */
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s, opacity 0.3s ease;
+        }
+
+        .save-edit-btn:hover {
+            background-color: #218838;
+            transform: scale(1.1);
+        }
+
+        .save-edit-btn.fading-out {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .save-edit-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* 确保编辑时的文本区域占满宽度 */
+        .user .message.editing {
+            padding: 12px 18px; /* 恢复内边距 */
+        }
+        .user .message.editing textarea {
+            padding: 0; /* 移除内部 textarea 的内边距 */
         }
         @media (max-width: 480px) {
             html { font-size: 87.5%; }
@@ -1200,136 +1252,177 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const makeMessageEditable = (messageWrapper) => {
+const makeMessageEditable = (messageWrapper) => {
         const messageDiv = messageWrapper.querySelector('.message');
-        if(messageDiv.querySelector('textarea')) return;
+        // 如果已在编辑，则直接返回
+        if(messageDiv.classList.contains('editing')) return;
 
+        messageDiv.classList.add('editing');
+
+        // 从渲染后的HTML中提取纯文本
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = messageDiv.innerHTML;
-        const currentText = tempDiv.innerText;
+        const currentText = tempDiv.innerText || tempDiv.textContent;
+
+        messageDiv.innerHTML = ''; // 清空原内容
 
         const textarea = document.createElement('textarea');
         textarea.value = currentText.trim();
         textarea.rows = 1;
-        
-        let isSaving = false;
 
+        // 自动调整文本区域高度
         const autoResize = () => {
             textarea.style.height = 'auto';
             textarea.style.height = `${textarea.scrollHeight}px`;
         };
         textarea.addEventListener('input', autoResize);
-
-        textarea.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                isSaving = true;
-                saveAndRegenerate(messageWrapper, textarea.value);
-            }
-        });
         
-        textarea.addEventListener('blur', () => {
-            if (!isSaving) {
+        // 【重要】移除回车键发送逻辑，现在回车仅用于换行
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                // 按下ESC取消编辑
                 messageDiv.innerHTML = marked.parse(currentText);
+                messageDiv.classList.remove('editing');
+                const actions = messageWrapper.querySelector('.edit-actions');
+                if (actions) actions.remove();
             }
         });
 
-        messageDiv.innerHTML = '';
+        // 创建操作按钮容器
+        const actionsWrapper = document.createElement('div');
+        actionsWrapper.className = 'edit-actions';
+
+        // 创建对号按钮
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'save-edit-btn';
+        saveBtn.title = '保存并重新生成';
+        saveBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        
+        actionsWrapper.appendChild(saveBtn);
+        
+        // 将文本区域和按钮容器添加到消息DIV中
         messageDiv.appendChild(textarea);
+        messageWrapper.appendChild(actionsWrapper);
+
+        // 触发一次尺寸调整并聚焦
         textarea.focus();
         autoResize();
+
+        // 延时添加 'visible' 类以触发CSS淡入动画
+        setTimeout(() => {
+            actionsWrapper.classList.add('visible');
+        }, 10);
+
+        // 为保存按钮添加点击事件
+        saveBtn.addEventListener('click', () => {
+            const newText = textarea.value;
+            // 触发淡出动画
+            saveBtn.classList.add('fading-out');
+            
+            // 在动画结束后执行保存操作
+            setTimeout(() => {
+                messageDiv.classList.remove('editing');
+                actionsWrapper.remove(); // 移除按钮容器
+                saveAndRegenerate(messageWrapper, newText);
+            }, 300); // 动画时长为300ms
+        });
     };
     
-    const saveAndRegenerate = async (messageWrapper, newText) => {
-    newText = newText.trim();
-    if (!newText) return;
+const saveAndRegenerate = async (messageWrapper, newText) => {
+        newText = newText.trim();
+        if (!newText) {
+            // 如果新内容为空，则恢复原状
+            loadChat(currentChatId); // 简单地重新加载当前对话
+            return;
+        }
 
-    const messageIndex = parseInt(messageWrapper.dataset.messageIndex, 10);
-    const geminiWrapper = messageWrapper.nextElementSibling;
-    const geminiMessageIndex = messageIndex + 1;
+        const messageDiv = messageWrapper.querySelector('.message');
+        const messageIndex = parseInt(messageWrapper.dataset.messageIndex, 10);
+        const geminiWrapper = messageWrapper.nextElementSibling;
+        const geminiMessageIndex = messageIndex + 1;
 
-    if (!geminiWrapper || !geminiWrapper.classList.contains('gemini')) {
-        messageWrapper.querySelector('.message').innerHTML = marked.parse(newText);
-        return;
-    }
+        // 立即用新文本更新UI，移除textarea
+        messageDiv.innerHTML = marked.parse(newText);
 
-    setLoading(true);
-    abortController = new AbortController();
-    updateMessage(geminiWrapper, 'loading');
-    messageWrapper.querySelector('.message').innerHTML = marked.parse(newText);
+        if (!geminiWrapper || !geminiWrapper.classList.contains('gemini')) {
+            // 如果后面没有Gemini消息，则无需重新生成，仅保存即可
+            let chats = getChats();
+            let chat = chats.find(c => c.id === currentChatId);
+            chat.messages[messageIndex].parts[0].text = newText;
+            saveChats(chats);
+            return;
+        }
 
-    let chats = getChats();
-    let chat = chats.find(c => c.id === currentChatId);
+        setLoading(true);
+        abortController = new AbortController();
+        updateMessage(geminiWrapper, 'loading');
 
-    chat.messages[messageIndex].parts[0].text = newText;
+        let chats = getChats();
+        let chat = chats.find(c => c.id === currentChatId);
 
-    const historyForAPI = buildHistoryWithPresets(chat.messages.slice(0, messageIndex));
+        chat.messages[messageIndex].parts[0].text = newText;
 
-    const isStreamingEnabled = getStreamingState();
+        const historyForAPI = buildHistoryWithPresets(chat.messages.slice(0, messageIndex + 1)); // Regenerate based on history *up to and including* the edit
 
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prompt: newText,
-                history: historyForAPI,
-                model: currentModel,
-                stream: isStreamingEnabled
-            }),
-            signal: abortController.signal
-        });
-        if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
+        const isStreamingEnabled = getStreamingState();
 
-        let fullText;
-        const messageElementForEdit = geminiWrapper.querySelector('.message');
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: newText,
+                    history: historyForAPI, // 使用截断后的历史记录
+                    model: currentModel,
+                    stream: isStreamingEnabled
+                }),
+                signal: abortController.signal
+            });
+            if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
 
-        if (isStreamingEnabled) {
-            fullText = await streamIntoElement(response, messageElementForEdit);
-        } else {
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                const data = await response.json();
-                fullText = data.text;
+            let fullText;
+            const messageElementForEdit = geminiWrapper.querySelector('.message');
+
+            if (isStreamingEnabled) {
+                fullText = await streamIntoElement(response, messageElementForEdit);
             } else {
-                fullText = await response.text();
+                 const data = await response.json();
+                 fullText = data.text;
+                 if (fullText) {
+                    messageElementForEdit.innerHTML = marked.parse(fullText);
+                    addCopyButtonsToCodeBlocks(messageElementForEdit);
+                } else {
+                    throw new Error("Non-streaming response did not contain text.");
+                }
             }
 
-            if (fullText) {
-                messageElementForEdit.innerHTML = marked.parse(fullText);
-                messageElementForEdit.classList.add('fade-in-effect');
-                messageElementForEdit.addEventListener('animationend', () => {
-                    messageElementForEdit.classList.remove('fade-in-effect');
-                }, { once: true });
-                addCopyButtonsToCodeBlocks(messageElementForEdit);
+            if (fullText === null) return; // 用户中止
+
+            // 更新数据模型并保存
+            chats = getChats();
+            chat = chats.find(c => c.id === currentChatId);
+            if (chat.messages[geminiMessageIndex]) {
+                chat.messages[geminiMessageIndex].parts[0].text = fullText;
             } else {
-                throw new Error("Non-streaming response did not contain text.");
+                // 如果Gemini消息不知何故丢失了，则追加它
+                chat.messages.splice(geminiMessageIndex, 0, { role: 'model', parts: [{ text: fullText }] });
             }
-        }
+            saveChats(chats);
+            addCopyToElement(geminiWrapper.querySelector('.message-icon'), fullText);
 
-        if (fullText === null) return;
-
-        chats = getChats();
-        chat = chats.find(c => c.id === currentChatId);
-        if (chat.messages[geminiMessageIndex]) {
-            chat.messages[geminiMessageIndex].parts[0].text = fullText;
-        } else {
-            chat.messages.splice(geminiMessageIndex, 0, { role: 'model', parts: [{ text: fullText }] });
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                updateMessage(geminiWrapper, '已停止生成。');
+            } else {
+                console.error("Regeneration after edit failed:", error);
+                updateMessage(geminiWrapper, '<b>重新生成失败。</b><br>这可能是模型载荷过大或是超时：<br>建议暂时更换其他模型或检查你的网络设置并在偏好中打开流式传输；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
+            }
+        } finally {
+            abortController = null;
+            setLoading(false);
+            updateEditIcon(); // 重新评估哪个消息旁应该显示编辑图标
         }
-        saveChats(chats);
-        addCopyToElement(geminiWrapper.querySelector('.message-icon'), fullText);
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            updateMessage(geminiWrapper, '已停止生成。');
-        } else {
-            console.error("Regeneration after edit failed:", error);
-            updateMessage(geminiWrapper, '<b>重新生成失败。</b><br>这可能是模型载荷过大或是超时：<br>建议暂时更换其他模型或检查你的网络设置并在偏好中打开流式传输；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
-        }
-    } finally {
-        abortController = null;
-        setLoading(false);
-    }
-};
+    };
     const addCopyToElement = (element, textToCopy) => {
         if (!element) return;
         const originalIconHTML = '<img src="/01.png" alt="Gemini Avatar">';
@@ -1481,12 +1574,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     userInput.addEventListener('keydown', (event) => {
-        // 当用户按下 Enter 键，并且没有同时按下 Shift 键时，发送消息
-        if (event.key === 'Enter' && !event.shiftKey && !userInput.disabled) {
+        // 通过 User Agent 检测是否为移动设备
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // 如果不是移动设备（即桌面端），并且用户按下了Enter键（没有同时按Shift），则发送消息
+        if (event.key === 'Enter' && !isMobile && !event.shiftKey && !userInput.disabled) {
             event.preventDefault(); // 阻止默认的换行行为
             handleSend();
         }
-        // 当用户按下 Shift + Enter 时，textarea 会执行默认的换行操作
     });
     userInput.addEventListener('input', () => {
         userInput.style.height = 'auto'; // 先重置高度
