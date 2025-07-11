@@ -630,6 +630,97 @@
         .user .message.editing textarea {
             padding: 0; /* 移除内部 textarea 的内边距 */
         }
+
+        body.night-mode {
+            --body-bg: #1a1a1a;
+            --chat-bg: #212529;
+            --user-msg-bg: #343a40;
+            --gemini-msg-bg: #2c3034;
+            --text-color: #e9ecef;
+            --border-color: #495057;
+            --accent-color: #0d6efd; /* 夜晚模式用蓝色点缀 */
+            --code-bg: #1c1e21;
+        }
+
+        /* 覆盖一些元素的特定样式 */
+        body.night-mode .chat-input,
+        body.night-mode .message th,
+        body.night-mode .option-item,
+        body.night-mode .custom-preset-toggle-wrapper,
+        body.night-mode #settings-button:hover,
+        body.night-mode .history-item:hover:not(.disabled) {
+            background-color: #343a40;
+        }
+
+        body.night-mode .history-item.active {
+            background-color: #495057;
+        }
+
+        body.night-mode #sidebar {
+            background-color: #1c1e21;
+        }
+
+        body.night-mode #custom-modal,
+        body.night-mode #presets-modal,
+        body.night-mode #preferences-modal {
+            background-color: #2c3034;
+        }
+
+        body.night-mode #modal-message,
+        body.night-mode .jieshao,
+        body.night-mode .delete-chat-btn {
+            color: #adb5bd;
+        }
+
+        body.night-mode input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+
+        body.night-mode .welcome-screen h2,
+        body.night-mode .welcome-screen {
+            color: #6c757d;
+        }
+
+        body.night-mode #history-list {
+            scrollbar-color: #495057 #1c1e21;
+        }
+
+        body.night-mode #history-list::-webkit-scrollbar-track {
+            background: #1c1e21;
+        }
+
+        body.night-mode .chat-output {
+            scrollbar-color: #495057 var(--chat-bg);
+        }
+
+        body.night-mode .selected-model,
+        body.night-mode #menu-toggle-btn svg {
+            color: var(--text-color);
+            stroke: var(--text-color);
+        }
+
+        /* 修正所有弹窗中的输入框样式 */
+        body.night-mode #modal-input,
+        body.night-mode #custom-preset-input {
+            background-color: #3b4045;
+            color: var(--text-color);
+            border: 1px solid #5a6268;
+        }
+
+        /* 修正输入框的占位文字颜色 */
+        body.night-mode #modal-input::placeholder,
+        body.night-mode #custom-preset-input::placeholder {
+            color: #9ea3a9;
+        }
+
+        /* 修正弹窗中“取消”按钮的颜色 */
+        body.night-mode #modal-cancel-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        body.night-mode #modal-cancel-btn:hover {
+            background-color: #5a6268;
+        }
         @media (max-width: 480px) {
             html { font-size: 87.5%; }
             .chat-container { border-radius: 0; }
@@ -747,15 +838,24 @@
             </div>
             <p class="modal-intro">管理应用的基本行为和偏好。</p>
             <div class="options-list">
-                <div class="option-item">
-                    <label for="streaming-toggle">启用流式传输</label>
-                    <p class="jieshao">不建议关闭：非流式传输可能导致超时</p>
-                    <label class="switch">
-                        <input type="checkbox" id="streaming-toggle">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
+    <div class="option-item">
+        <label for="streaming-toggle">流式传输</label>
+        <p class="jieshao">建议保持开启</p>
+        <label class="switch">
+            <input type="checkbox" id="streaming-toggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="option-item">
+        <label for="night-mode-toggle">夜间模式</label>
+        <p class="jieshao">使用暗系配色</p>
+        <label class="switch">
+            <input type="checkbox" id="night-mode-toggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+</div>
         </div>
     </div>
 
@@ -791,6 +891,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const preferencesButton = document.getElementById('preferences-button');
     const preferencesModalOverlay = document.getElementById('preferences-modal-overlay');
     const streamingToggle = document.getElementById('streaming-toggle');
+    const nightModeToggle = document.getElementById('night-mode-toggle');
+    const body = document.body;
 
 
     const API_URL = '/api/askGemini';
@@ -894,6 +996,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return state === null ? true : JSON.parse(state); // Default to true
     };
     const saveStreamingState = (isEnabled) => localStorage.setItem('geminiSnowStreaming', JSON.stringify(isEnabled));
+    const getNightModeState = () => {
+        const state = localStorage.getItem('geminiSnowNightMode');
+        return state === null ? false : JSON.parse(state); // 默认关闭
+    };
+    const saveNightModeState = (isEnabled) => localStorage.setItem('geminiSnowNightMode', JSON.stringify(isEnabled));
+
+    const applyNightMode = (isEnabled) => {
+        body.classList.toggle('night-mode', isEnabled);
+    };
 
     // MODIFIED: buildHistoryWithPresets now uses the single custom preset
     const buildHistoryWithPresets = (history) => {
@@ -1557,6 +1668,13 @@ const saveAndRegenerate = async (messageWrapper, newText) => {
         streamingToggle.addEventListener('change', () => {
             saveStreamingState(streamingToggle.checked);
         });
+        nightModeToggle.checked = getNightModeState();
+        nightModeToggle.addEventListener('change', () => {
+            const isEnabled = nightModeToggle.checked;
+            saveNightModeState(isEnabled);
+            applyNightMode(isEnabled);
+        });
+
     };
 
     // -- Add Event Listeners --
@@ -1648,6 +1766,7 @@ const saveAndRegenerate = async (messageWrapper, newText) => {
     setupModelSelector();
     setupPresetsModal();
     setupPreferencesModal();
+    applyNightMode(getNightModeState());
     createNewChat();
 });
 </script>
