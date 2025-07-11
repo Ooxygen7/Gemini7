@@ -747,9 +747,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const models = [
         { id: 'gemini-2.5-flash', name: '2.5 Flash（日配额耗尽）', description: '快速提供全方位的帮助', locked: true },
         { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码', locked: true },
-        { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '以最快速度提供帮助', locked: false }
+        { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '以最快速度提供帮助', locked: false },
+        { id: 'gemini-2.5-flash-lite-preview-06-17', name: '2.5 Flash Lite', description: '最具成本效益且支持高吞吐量', locked: false },
+        { id: 'gemini-2.0-flash-lite', name: '2.0 Flash Lite', description: '成本效益和低延迟', locked: false }
     ];
-    let currentModel = 'gemini-2.0-flash';
+    let currentModel = 'gemini-2.5-flash-lite-preview-06-17';
     let currentChatId = null;
 
     // REMOVED: Old presetPrompts array is no longer needed.
@@ -1417,7 +1419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const enteredCode = await showCustomModal({
             type: 'prompt',
             title: '升级到 UltraSnow',
-            message: '目前UltraSnow处于内部测试阶段，请输入测试代码以解锁高级模型。',
+            message: '升级到Ultra以解锁限制模型。',
             placeholder: '请输入测试代码',
             confirmText: '升级'
         });
