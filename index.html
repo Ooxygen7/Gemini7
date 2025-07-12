@@ -21,18 +21,17 @@
         :root {
             --font-family-sans: 'Google Sans', 'Noto Sans SC', sans-serif;
             
-            /* Refined SummerVIBES Palette */
+            /* Refined Palette */
             --bg-main: #f0f4f9;
             --bg-sidebar: #e6eaf1;
             --bg-content: #ffffff;
-            --bg-content-subtle-gradient: radial-gradient(circle at 50% 50%, #f7f9fc, #ffffff);
             --bg-input: #f0f4f9;
             --bg-input-focus: #e8eef4;
             --bg-hover-light: #d3e3fd;
             --bg-hover-dark: #dde3ea;
             --bg-active-item: #c2e7ff;
             --bg-ultra-badge: #e8e8e8;
-            --bg-send-button: #297FE5; /* New, friendly blue */
+            --bg-send-button: #297FE5; 
             --bg-send-button-hover: #1A73E8;
             --bg-modal-backdrop: rgba(0, 0, 0, 0.4);
 
@@ -45,12 +44,6 @@
 
             --border-color: #d8dde3;
             --border-active: #0b57d0;
-
-            --gradient-start: #4b89e8;
-            --gradient-end: #9b72cb;
-            --gradient-thinking-start: #89cff0;
-            --gradient-thinking-mid: #c8a2c8;
-            --gradient-thinking-end: #f0e68c;
 
             --sidebar-width: 256px;
             --header-height: 64px;
@@ -176,7 +169,6 @@
 
         @media (max-width: 768px) {
             body {
-                /* Applying zoom as requested for mobile view */
                 zoom: 0.85;
             }
             .main-content-area {
@@ -229,7 +221,6 @@
             overflow-y: auto;
             padding-right: 4px;
         }
-        /* Custom Scrollbar */
         #history-list::-webkit-scrollbar {
             width: 6px;
         }
@@ -350,7 +341,8 @@
         .chat-area {
             width: 100%;
             height: 100%;
-            background: var(--bg-content-subtle-gradient);
+            /* MODIFIED: Changed background to a seamless gradient */
+            background: linear-gradient(to bottom, var(--bg-content) 80%, #f7f9fc 100%);
             display: grid;
             grid-template-rows: var(--header-height) 1fr auto;
             position: relative;
@@ -364,6 +356,7 @@
             align-items: center;
             padding: 0 24px;
             flex-shrink: 0;
+            background: transparent; /* Ensure header is transparent */
         }
 
         .header-left, .header-right {
@@ -449,8 +442,7 @@
             overflow: hidden;
             position: relative;
         }
-        /* ADDED: Fade-out effect for chat content */
-        .chat-output-wrapper::before, .chat-output-wrapper::after {
+        .chat-output-wrapper::before {
             content: '';
             position: absolute;
             left: 0;
@@ -458,14 +450,12 @@
             height: 30px;
             pointer-events: none;
             z-index: 2;
-        }
-        .chat-output-wrapper::before {
             top: 0;
             background: linear-gradient(to bottom, var(--bg-content), transparent);
         }
+        /* MODIFIED: Removed bottom fade for seamless transition */
         .chat-output-wrapper::after {
-            bottom: 0;
-            background: linear-gradient(to top, var(--bg-content), transparent);
+            display: none;
         }
 
         #chatOutput {
@@ -473,13 +463,12 @@
             overflow-y: auto;
             padding: 0 24px 16px 24px;
         }
-        /* Custom Scrollbar for Chat */
         #chatOutput::-webkit-scrollbar { width: 8px; }
         #chatOutput::-webkit-scrollbar-track { background: transparent; }
         #chatOutput::-webkit-scrollbar-thumb {
             background-color: #d6d6d6;
             border-radius: 10px;
-            border: 2px solid var(--bg-content);
+            border: 2px solid transparent; /* Make border transparent */
         }
 
         .chat-content-container {
@@ -491,11 +480,7 @@
             height: 100%;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
+        /* MODIFIED: Using floatIn for all messages */
         @keyframes floatIn {
             from {
                 opacity: 0;
@@ -507,7 +492,7 @@
             }
         }
 
-        /* ADDED: Keyframes for the thinking animation */
+        /* MODIFIED: Keyframes for the new thinking animation */
         @keyframes thinking-gradient {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -515,7 +500,8 @@
         }
 
         .message-wrapper {
-            animation: fadeIn 0.5s var(--transition-easing);
+            /* MODIFIED: Changed animation to floatIn */
+            animation: floatIn 0.5s var(--transition-easing);
             display: flex;
             flex-direction: column;
         }
@@ -545,9 +531,8 @@
         .welcome-message h2 {
             font-size: 3.5rem; /* 56px */
             font-weight: 500;
-            background: -webkit-linear-gradient(45deg, var(--gradient-start), var(--gradient-end));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            /* MODIFIED: Removed gradient text for a cleaner look */
+            color: #3c4043;
         }
 
         .message {
@@ -556,30 +541,34 @@
             border-radius: 20px;
             line-height: 1.6;
             word-wrap: break-word;
-            background-color: var(--bg-main);
             position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .message.is-editing {
             border: 2px solid var(--border-active);
             box-shadow: 0 0 0 4px var(--bg-hover-light);
             padding: 0;
-            background-color: var(--bg-send-button);
+            background: #e9e9e9; /* Match new user bubble color */
         }
-        /* ADDED: Style for the thinking animation bubble */
+        /* MODIFIED: Style for the new thinking animation bubble */
         .message.thinking-animation {
             color: var(--text-secondary);
             font-style: italic;
-            background: linear-gradient(90deg, var(--gradient-thinking-start), var(--gradient-thinking-mid), var(--gradient-thinking-end), var(--gradient-thinking-mid), var(--gradient-thinking-start));
-            background-size: 400% 400%;
-            animation: thinking-gradient 5s ease infinite;
+            background: linear-gradient(90deg, #e9e9e9, #f7f7f7, #e9e9e9);
+            background-size: 200% 200%;
+            animation: thinking-gradient 2.5s ease infinite;
         }
 
+        /* MODIFIED: Model message bubble with grey-white gradient */
         .message-wrapper.model .message {
             border-top-left-radius: 4px;
+            background: linear-gradient(135deg, #f5f5f5, #ffffff);
+            color: var(--text-primary);
         }
+        /* MODIFIED: User message bubble with grey gradient */
         .message-wrapper.user .message {
-            background-color: var(--bg-send-button);
-            color: var(--text-on-dark-bg);
+            background: linear-gradient(135deg, #e9e9e9, #f7f7f7);
+            color: var(--text-primary);
             border-bottom-right-radius: 4px;
         }
         .message p:not(:last-child) {
@@ -623,7 +612,7 @@
             display: flex;
             align-items: center;
             gap: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
          .action-button:hover {
             background-color: var(--bg-input);
@@ -641,6 +630,8 @@
             align-items: center;
             padding: 0 24px 0 24px;
             flex-direction: column;
+            /* MODIFIED: Transparent background to show gradient */
+            background: transparent;
         }
         .chat-input-container {
             width: 100%;
@@ -657,6 +648,7 @@
             border-radius: 28px;
             padding: 8px 12px 8px 24px;
             transition: background-color var(--transition-speed-fast) ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         .chat-input:focus-within {
             background-color: var(--bg-input-focus);
@@ -673,11 +665,11 @@
             resize: none;
             overflow-y: hidden;
             padding: 8px 0;
-            max-height: 125px; /* Approx 5 lines */
-            scrollbar-width: none; /* Firefox */
+            max-height: 125px; 
+            scrollbar-width: none; 
         }
         #userInput::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
+            display: none; 
         }
         #userInput::placeholder {
             color: var(--text-placeholder);
@@ -724,8 +716,10 @@
             padding-top: 12px;
             display: flex;
             justify-content: center;
-            height: 44px; /* Reserve space to prevent layout shift */
+            height: 44px; 
             margin-bottom: 8px;
+            /* MODIFIED: Ensure transparent background */
+            background-color: transparent;
         }
 
         #regenerateButton {
@@ -762,6 +756,7 @@
             font-size: 0.75rem;
             color: var(--text-secondary);
             padding: 12px 1rem;
+            background: transparent;
         }
 
         /* --- 7. Modals --- */
@@ -813,7 +808,6 @@
         #modal-cancel-btn { background-color: transparent; color: var(--text-link); }
         #modal-cancel-btn:hover { background-color: var(--bg-hover-light); }
 
-        /* Switch toggle style */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
@@ -837,7 +831,6 @@
             #chatOutput { padding: 16px; }
             .header-right { gap: 4px; }
 
-            /* Make action buttons always visible on mobile */
             .message-actions {
                 opacity: 1;
                 transform: translateY(0);
@@ -853,7 +846,6 @@
 <div class="app-container" id="app-container">
     <div id="sidebar-backdrop"></div>
     
-    <!-- Sidebar (Left Panel) -->
     <aside id="sidebar">
         <div class="sidebar-header">
             <button id="new-chat-btn">
@@ -887,7 +879,6 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
     <div class="main-content-area">
         <main class="chat-area">
             <header class="chat-header">
@@ -1218,10 +1209,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const prompt = userInput.value.trim();
         if (!prompt) return;
         
-        setLoading(true); // MODIFIED: Set loading immediately
+        setLoading(true);
         userInput.value = '';
         userInput.style.height = 'auto';
-        // sendButton visibility is now handled by setLoading
 
         let chatContentContainer = chatOutput.querySelector('.chat-content-container');
         if (!chatContentContainer || chatContentContainer.querySelector('.welcome-container')) {
@@ -1282,7 +1272,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 addCopyButtonsToCodeBlocks(messageElement);
             }
             
-            if(fullText === null) return; // Aborted
+            if(fullText === null) return;
             
             let chats = getChats();
             let chat = chats.find(c => c.id === currentChatId);
@@ -1327,7 +1317,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (isFirstChunk) {
                     element.classList.remove('thinking-animation');
-                    element.innerHTML = ''; // Clear "思考中..." text
+                    element.innerHTML = '';
                     isFirstChunk = false;
                 }
 
@@ -1356,7 +1346,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             sendButton.classList.remove('is-loading');
             sendButton.title = '发送';
-            // Hide button only if input is empty
             if (userInput.value.trim().length === 0) {
                 sendButton.classList.remove('visible');
             }
@@ -1499,9 +1488,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageIndex = Array.from(messageWrapper.parentElement.children).indexOf(messageWrapper);
         const originalText = chat.messages[messageIndex].parts[0].text;
 
-        messageDiv.innerHTML = ''; // Clear existing content
+        messageDiv.innerHTML = '';
         const editTextArea = document.createElement('textarea');
-        editTextArea.style.cssText = `width: 100%; height: auto; background: transparent; border: none; color: white; resize: none; outline: none; font-size: inherit; line-height: inherit; padding: 1rem 1.25rem;`;
+        // MODIFIED: Changed text color from white to primary text color for readability on light background
+        editTextArea.style.cssText = `width: 100%; height: auto; background: transparent; border: none; color: var(--text-primary); resize: none; outline: none; font-size: inherit; line-height: inherit; padding: 1rem 1.25rem;`;
         editTextArea.value = originalText;
         messageDiv.appendChild(editTextArea);
         
@@ -1511,7 +1501,7 @@ document.addEventListener('DOMContentLoaded', () => {
             editTextArea.style.height = 'auto';
             editTextArea.style.height = `${editTextArea.scrollHeight}px`;
         };
-        setTimeout(setHeight, 0); // Ensure it runs after render
+        setTimeout(setHeight, 0);
         editTextArea.addEventListener('input', setHeight);
         editTextArea.focus();
         editTextArea.setSelectionRange(originalText.length, originalText.length);
@@ -1538,7 +1528,7 @@ document.addEventListener('DOMContentLoaded', () => {
         actionWrapper.querySelector('.save-edit-button').addEventListener('click', async () => {
             const newText = editTextArea.value.trim();
             if (newText && newText !== originalText) {
-                setLoading(true); // Keep loading state
+                setLoading(true);
                 let currentChats = getChats();
                 let currentChat = currentChats.find(c => c.id === currentChatId);
                 
@@ -1560,7 +1550,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 cleanupEdit();
             }
             isEditing = false;
-            // setLoading(false) is handled in streamResponse's finally block
         });
 
         actionWrapper.querySelector('.cancel-edit-button').addEventListener('click', cleanupEdit);
