@@ -3,815 +3,824 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeminiSnow</title>
+    <title>Geminisnow</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        html {
-            height: 100%;
-        }
+        /*
+        ============================================
+        World CSS Beautification Competition Entry
+        Project: Geminisnow Revamp (AI-Powered)
+        Author: Gemini
+        ============================================
+        */
+
+        /* --- 1. Root Variables & Global Styles --- */
         :root {
-            --body-bg: #f4f6f8;
-            --chat-bg: #ffffff;
-            --user-msg-bg: #212529;
-            --gemini-msg-bg: #e9ecef;
-            --text-color: #212529;
-            --light-text-color: #f8f9fa;
-            --border-color: #dee2e6;
-            --accent-color: #212529;
-            --code-bg: #282c34;
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-family-sans: 'Google Sans', 'Noto Sans SC', sans-serif;
+            
+            /* Light Theme Palette (as per image) */
+            --bg-main: #f0f4f9;
+            --bg-sidebar: #e6eaf1;
+            --bg-content: #ffffff;
+            --bg-input: #e6eaf1;
+            --bg-input-focus: #dde3ea;
+            --bg-hover-light: #d3e3fd;
+            --bg-hover-dark: #dde3ea;
+            --bg-active-item: #c2e7ff;
+            --bg-ultra-badge: #e8e8e8;
+            --bg-send-button: #1f1f1f;
+            --bg-send-button-hover: #000000;
+            --bg-modal-backdrop: rgba(0, 0, 0, 0.4);
+
+            --text-primary: #1f1f1f;
+            --text-secondary: #444746;
+            --text-placeholder: #5f6368;
+            --text-on-dark-bg: #ffffff;
+            --text-ultra-badge: #1f1f1f;
+            --text-link: #0b57d0;
+
+            --border-color: #d8dde3;
+            --border-active: #0b57d0;
+
+            --gradient-start: #4b89e8;
+            --gradient-end: #9b72cb;
+
+            --sidebar-width: 256px;
+            --sidebar-width-collapsed: 0px;
+            --header-height: 64px;
+            --input-area-height: 96px;
+
+            --transition-speed-fast: 0.2s;
+            --transition-speed-normal: 0.3s;
+            --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
         }
-        body {
-            font-family: var(--font-family); background-color: var(--body-bg); margin: 0; display: flex;
-            justify-content: center; align-items: center; height: 100%; padding: 1rem; box-sizing: border-box;
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
             overflow: hidden;
+            background-color: var(--bg-main);
         }
-        .main-container {
-            position: relative;
-            display: flex; width: 100%; height: 100%; max-width: 1200px; max-height: 90vh;
-            background: var(--chat-bg); border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); overflow: hidden;
-        }
-        .chat-container {
-            width: 100%; height: 100%; background: var(--chat-bg);
-            border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); display: flex;
-            flex-direction: column; overflow: hidden;
-        }
-        .chat-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 20px; flex-shrink: 0;
-        }
-        
-        .header-left {
+
+        body {
+            font-family: var(--font-family-sans);
+            color: var(--text-primary);
             display: flex;
-            align-items: center;
         }
 
-        #menu-toggle-btn {
-            display: none;
-            background: none; border: none; padding: 8px; margin-left: -8px; cursor: pointer;
-        }
-        #menu-toggle-btn svg {
-            width: 24px; height: 24px; stroke: var(--text-color);
-        }
-        .header-controls { display: flex; align-items: center; gap: 10px; }
-        .model-selector-wrapper { position: relative; }
-        .selected-model {
-            background-color: var(--gemini-msg-bg); border-radius: 8px; padding: 8px 12px;
-            font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px;
-        }
-        .selected-model::after { content: '▼'; font-size: 10px; transform: scaleY(0.8); }
-        
-        .model-dropdown {
-            position: absolute; top: 105%; right: 0; background-color: #333;
-            color: white; border-radius: 8px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 10; width: 250px;
-            visibility: hidden;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
-        }
-        .model-dropdown.active {
-            visibility: visible;
-            opacity: 1;
-            transform: translateY(0);
+        button, input, textarea {
+            font-family: inherit;
         }
 
-        .model-option {
-            padding: 12px; border-radius: 6px; cursor: pointer; display: flex;
-            justify-content: space-between; align-items: center; transition: background-color 0.2s;
-        }
-        .model-option:not(.disabled):hover { background-color: #444; }
-        .model-option.selected { background-color: #555; }
-        .model-option.disabled { opacity: 0.5; cursor: not-allowed; background-color: #383838; }
-        .model-option-text h4 { margin: 0 0 4px; font-size: 14px; }
-        .model-option-text p { margin: 0; font-size: 12px; color: #ccc; }
-        .model-option .checkmark { font-size: 18px; color: white; visibility: hidden; }
-        .model-option.selected .checkmark { visibility: visible; }
-        .chat-output {
-            flex-grow: 1; padding: 20px; overflow-y: auto; display: flex;
-            flex-direction: column; gap: 20px;
-        }
-        .message-wrapper { display: flex; align-items: flex-start; gap: 10px; max-width: 90%; position: relative; }
-        .message-icon {
-            width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center;
-            align-items: center; flex-shrink: 0; margin-top: 5px;
-        }
-        .message { padding: 12px 18px; border-radius: 18px; line-height: 1.6; word-wrap: break-word; word-break: break-word; min-width: 0; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in-effect {
-            animation: fadeIn 0.5s ease-out;
-        }
-        .gemini.streaming-in .message { animation: fadeIn 0.5s ease-out; }
-        .gemini .message-icon { background-color: transparent; }
-        
-        .gemini .message-icon {
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .gemini .message-icon:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 8px rgba(0,0,0,0.15);
-        }
-
-        .gemini .message {
-            background-color: transparent;
-            color: var(--text-color);
-            padding: 0;
-            border-radius: 0;
-        }
-        
-        .message-icon img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        
-        .gemini-loading .message {
-            background-color: transparent;
-            padding: 0;
-            border-radius: 0;
-        }
-
-        .gemini.message-wrapper { display: inline-flex; }
-        .user { align-self: flex-end; flex-direction: row-reverse; }
-        .user .message { background-color: var(--user-msg-bg); color: var(--light-text-color); border-bottom-right-radius: 4px; }
-        .user .message-icon { display: none; }
-        
-        .edit-icon {
-            display: none;
-            align-items: center;
-            justify-content: center;
+        svg {
             width: 24px;
             height: 24px;
-            cursor: pointer;
-            color: #9ea3a9;
-            margin-top: 12px;
-            margin-right: -5px;
-            transition: color 0.2s;
-        }
-        .edit-icon:hover {
-            color: #f8f9fa;
-        }
-        .message-wrapper.latest-user-message .edit-icon {
-            display: flex;
-        }
-
-        .message textarea {
-            width: 100%;
-            box-sizing: border-box;
-            border: none;
-            padding: 0;
-            margin: 0;
-            background-color: transparent;
-            color: var(--light-text-color);
-            font-family: inherit;
-            font-size: inherit;
-            line-height: inherit;
-            resize: none;
-            outline: none;
-            overflow-y: hidden;
+            flex-shrink: 0;
+            color: var(--text-secondary);
         }
         
-        .user .message-icon { background-color: var(--accent-color); }
-        .loading-indicator { display: flex; align-items: center; gap: 10px; font-style: italic; color: #6c757d; }
-        .spinner {
-            width: 18px; height: 18px; border: 3px solid rgba(0, 0, 0, 0.1);
-            border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .message p { margin: 0 0 10px; }
-        .message p:last-child { margin-bottom: 0; }
-        .message ul, .message ol { padding-left: 20px; }
-        .message pre {
-            background-color: var(--code-bg); color: var(--light-text-color); padding: 15px;
-            border-radius: 8px; overflow-x: auto; position: relative;
-        }
-        .message code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; font-size: 14px; }
-        .copy-code-button {
-            position: absolute; top: 10px; right: 10px; background-color: #555; color: white;
-            border: none; padding: 5px 8px; border-radius: 5px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;
-        }
-        .message pre:hover .copy-code-button { opacity: 1; }
-        .message table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        .message th, .message td { border: 1px solid var(--border-color); padding: 8px 12px; text-align: left; }
-        .message th { background-color: #f2f2f2; }
-        .chat-input-area { padding: 20px; }
-        .chat-input { display: flex; align-items: center; background-color: var(--gemini-msg-bg); border-radius: 12px; padding: 5px; }
-        #userInput {
-            flex-grow: 1; border: none; background: transparent; padding: 10px 15px;
-            font-size: 16px; outline: none; color: var(--text-color); min-width: 0;
-            resize: none;
-            overflow-y: hidden;
-            line-height: 1; 
-            max-height: 120px;
-            box-sizing: border-box; /* 新增：这是解决问题的关键 */
-        }
-        .input-action-button {
-            display: flex; justify-content: center; align-items: center; border: none; background: transparent;
-            width: 40px; height: 40px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; margin-left: 5px;
-        }
-        .input-action-button svg { width: 20px; height: 20px; transition: stroke 0.2s ease; }
-        .input-action-button:hover:not(:disabled) { background-color: #dee2e6; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .input-action-button:disabled { opacity: 0.4; cursor: not-allowed; }
-        #sendButton { background-color: var(--accent-color); }
-        #sendButton .send-icon { stroke: white; }
-        #sendButton .stop-icon { stroke: white; }
-        #sendButton:hover:not(:disabled) { background-color: #000; }
-        
-        #sendButton .stop-icon { display: none; }
-        #sendButton.is-loading .send-icon { display: none; }
-        #sendButton.is-loading .stop-icon { display: block; }
-        #sendButton.is-loading { background-color: #dc3545; }
-        #sendButton.is-loading:hover { background-color: #c82333; }
-        
-        #regenerateButton { visibility: hidden; }
-        #sidebar {
-            width: 260px; background-color: #212529; color: var(--light-text-color); flex-shrink: 0;
-            display: flex; flex-direction: column; position: relative;
-        }
-        .sidebar-header { padding: 15px; }
-        #new-chat-btn {
-            width: 100%; padding: 10px; background-color: transparent; color: var(--light-text-color);
-            border: 1px solid #6c757d; border-radius: 8px; font-size: 14px; cursor: pointer; transition: background-color 0.2s, color 0.2s, opacity 0.2s;
-        }
-        #new-chat-btn:hover:not(:disabled) { background-color: #343a40; }
-        #new-chat-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        #history-list {
-            flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px;
-        }
-        .history-item.active { background-color: #495057; }
-        .chat-container { flex-grow: 1; height: 100%; max-width: none; max-height: none; box-shadow: none; border-radius: 0; display: flex; flex-direction: column; }
-        .history-item {
-            display: flex; justify-content: space-between; align-items: center; gap: 10px;
-            padding: 12px 15px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, opacity 0.2s;
-        }
-        .history-item.disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .history-item:hover:not(.disabled) { background-color: #343a40; }
-        .history-item-title {
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;
-        }
-        .delete-chat-btn {
-            background: none; border: none; color: #8a9199; cursor: pointer; padding: 5px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-            transition: background-color 0.2s, color 0.2s;
-        }
-        .delete-chat-btn:hover { background-color: #495057; color: #f8f9fa; }
-        .delete-chat-btn svg { width: 16px; height: 16px; }
-        
-        #sidebar-footer {
-            padding: 15px;
-        }
-        #settings-button {
+        .icon-button {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px;
-            border-radius: 8px;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: none;
+            border: none;
+            border-radius: 50%;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color var(--transition-speed-fast) ease;
         }
-        #settings-button:hover {
-            background-color: #343a40;
+        .icon-button:hover {
+            background-color: var(--bg-input);
         }
-        #settings-button svg {
-            width: 20px;
-            height: 20px;
-            stroke: #dee2e6;
+        .icon-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: transparent;
+        }
+
+        /* --- 2. Main Layout & Sidebar --- */
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        #sidebar {
+            width: var(--sidebar-width);
+            height: 100%;
+            background-color: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 12px;
             flex-shrink: 0;
+            transform: translateX(0);
+            transition: transform var(--transition-speed-normal) var(--transition-easing), 
+                        width var(--transition-speed-normal) var(--transition-easing);
+            z-index: 200;
         }
-        .settings-button-text {
+
+        .app-container.sidebar-collapsed #sidebar {
+            transform: translateX(calc(-1 * var(--sidebar-width)));
+            width: var(--sidebar-width-collapsed);
+            padding: 16px 0;
+        }
+
+        .sidebar-header {
+            margin-bottom: 16px;
+        }
+
+        #new-chat-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: auto;
+            min-width: 52px;
+            height: 52px;
+            padding: 0 16px;
+            background-color: var(--bg-main);
+            border: none;
+            border-radius: 26px;
+            font-size: 1rem;
             font-weight: 500;
-            color: #dee2e6;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all var(--transition-speed-fast) ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        #new-chat-btn:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            background-color: #f8fafd;
+        }
+        .app-container.sidebar-collapsed #new-chat-btn span {
+            display: none;
+        }
+
+        #history-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            scrollbar-width: none; /* Firefox */
+        }
+        #history-list::-webkit-scrollbar {
+            display: none; /* Chrome, Safari */
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background-color var(--transition-speed-fast) ease;
+            margin-bottom: 4px;
+        }
+        .history-item:hover {
+            background-color: var(--bg-hover-dark);
+        }
+        .history-item.active {
+            background-color: var(--bg-active-item);
+            font-weight: 500;
+        }
+        .history-item-title {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-size: 0.9rem;
         }
-        .settings-button-text .hover-text {
-            display: none;
+        .delete-chat-btn {
+            background: none; border: none; cursor: pointer;
+            opacity: 0; transition: opacity var(--transition-speed-fast) ease;
+            display: flex; align-items: center; justify-content: center;
+            padding: 4px;
+            border-radius: 50%;
         }
-        #settings-button:hover .hover-text {
-            display: inline;
+        .history-item:hover .delete-chat-btn {
+            opacity: 0.7;
         }
-        #settings-button:hover .default-text {
-            display: none;
+        .delete-chat-btn:hover {
+            opacity: 1;
+            background-color: rgba(0,0,0,0.1);
         }
+
+
+        #sidebar-footer {
+            position: relative;
+        }
+        
+        #settings-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color var(--transition-speed-fast) ease, transform var(--transition-speed-normal) ease;
+        }
+        #settings-button:hover {
+            background-color: var(--bg-hover-dark);
+            transform: rotate(90deg);
+        }
+        .app-container.sidebar-collapsed #settings-button {
+            margin: 0 auto;
+        }
+
         #settings-menu {
             position: absolute;
-            bottom: 75px; 
-            left: 15px;
-            right: 15px;
-            background-color: #333;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
-            z-index: 10;
+            bottom: 100%;
+            left: 0;
+            width: 100%;
+            margin-bottom: 8px;
+            background-color: var(--bg-content);
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
             visibility: hidden;
             opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+            transform: translateY(10px) scale(0.95);
+            transition: all var(--transition-speed-fast) ease;
         }
         #settings-menu.active {
             visibility: visible;
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
         .settings-menu-item {
-            padding: 12px;
-            border-radius: 6px;
-            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 10px;
-            transition: background-color 0.2s;
-            color: var(--light-text-color);
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color var(--transition-speed-fast) ease;
         }
         .settings-menu-item:hover {
-            background-color: #444;
-        }
-        .settings-menu-item svg {
-            width: 18px;
-            height: 18px;
+            background-color: var(--bg-hover-dark);
         }
 
-        .welcome-screen {
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            height: 100%; text-align: center; color: #6c757d; flex-grow: 1;
-        }
-        .welcome-screen img {
-            width: 80px; height: 80px; margin-bottom: 24px; border-radius: 50%;
-        }
-        .welcome-screen h2 {
-            font-size: 28px; font-weight: 240;
-        }
-        #history-list {
-            scrollbar-width: thin;
-            scrollbar-color: #495057 #212529;
-        }
-        .chat-output {
-            scrollbar-width: thin;
-            scrollbar-color: #c1c1c1 var(--chat-bg);
-        }
-        #history-list::-webkit-scrollbar { width: 8px; }
-        #history-list::-webkit-scrollbar-track { background: #212529; }
-        #history-list::-webkit-scrollbar-thumb {
-            background-color: #495057; border-radius: 10px; border: 2px solid #212529;
-        }
-        #history-list::-webkit-scrollbar-thumb:hover { background-color: #6c757d; }
-        .chat-output::-webkit-scrollbar { width: 8px; }
-        .chat-output::-webkit-scrollbar-track { background: var(--chat-bg); }
-        .chat-output::-webkit-scrollbar-thumb {
-            background-color: #d6d6d6; border-radius: 10px; border: 2px solid var(--chat-bg);
-        }
-        .chat-output::-webkit-scrollbar-thumb:hover { background-color: #a8a8a8; }
-        
-        #sidebar-backdrop {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 99;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        
-        #custom-modal-overlay, #presets-modal-overlay, #preferences-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
+
+        /* --- 3. Main Content Area --- */
+        .chat-area {
+            flex-grow: 1;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            z-index: 1000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        #custom-modal-overlay:not(.modal-hidden),
-        #presets-modal-overlay:not(.modal-hidden),
-        #preferences-modal-overlay:not(.modal-hidden)
-         {
-            opacity: 1;
-            visibility: visible;
-        }
-        #custom-modal, #presets-modal, #preferences-modal {
-            background-color: white;
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
-            width: 90%;
-            max-width: 450px;
-            transform: scale(0.95);
-            transition: transform 0.3s;
-        }
-        #custom-modal-overlay:not(.modal-hidden) #custom-modal,
-        #presets-modal-overlay:not(.modal-hidden) #presets-modal,
-        #preferences-modal-overlay:not(.modal-hidden) #preferences-modal
-        {
-            transform: scale(1);
-        }
-        #modal-title {
-            margin-top: 0;
-            margin-bottom: 8px;
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-color);
-        }
-        #modal-message {
-            margin-top: 0;
-            margin-bottom: 24px;
-            color: #6c757d;
-            line-height: 1.6;
-        }
-        #modal-input-wrapper {
-            margin-bottom: 24px;
-        }
-        #modal-input {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-        #modal-input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(33, 37, 41, 0.1);
-        }
-        #modal-button-wrapper {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-        .modal-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s, box-shadow 0.2s;
-        }
-        #modal-cancel-btn {
-            background-color: #e9ecef;
-            color: var(--text-color);
-        }
-        #modal-cancel-btn:hover {
-            background-color: #dee2e6;
-        }
-        #modal-confirm-btn {
-            background-color: var(--accent-color);
-            color: white;
-        }
-        #modal-confirm-btn:hover {
-            background-color: #000;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        #presets-modal, #preferences-modal {
-             max-width: 500px;
-        }
-
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 16px;
-        }
-        .modal-title {
-            margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--text-color);
-        }
-        .modal-close-btn {
-            background: none; border: none; font-size: 24px; color: #6c757d;
-            cursor: pointer; padding: 5px; line-height: 1;
-        }
-        .modal-intro {
-            margin-top: 0; margin-bottom: 24px; color: #6c757d; line-height: 1.6;
-        }
-        .jieshao {
-            display: flex; justify-content: space-between; align-items: center; color: #6c757d; line-height: 1.6;
-        }
-        
-        /* MODIFIED/NEW Styles for Custom Preset */
-        .custom-preset-container {
+            background-color: var(--bg-content);
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            position: relative;
         }
-        .custom-preset-toggle-wrapper {
+
+        /* --- 4. Header --- */
+        .chat-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-        .custom-preset-toggle-wrapper label {
-            color: var(--text-color);
-            font-size: 1rem;
-            user-select: none;
-            cursor: pointer;
-        }
-        #custom-preset-input {
-            width: 100%;
-            height: 120px;
-            box-sizing: border-box;
-            padding: 10px 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-family: inherit;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            resize: vertical;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        #custom-preset-input:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(33, 37, 41, 0.1);
-        }
-        /* END MODIFIED/NEW Styles */
-        
-        .options-list { display: flex; flex-direction: column; gap: 15px; }
-        .option-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px; background-color: #f8f9fa; border-radius: 8px;
-        }
-        .option-item label { color: var(--text-color); font-size: 1rem; user-select: none; cursor: pointer;}
-        .switch {
-            position: relative; display: inline-block; width: 44px; height: 24px;
-        }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 18px; width: 18px;
-            left: 3px; bottom: 3px; background-color: white;
-            transition: .4s; border-radius: 50%;
-        }
-        input:checked + .slider { background-color: var(--accent-color); }
-        input:focus + .slider { box-shadow: 0 0 1px var(--accent-color); }
-        input:checked + .slider:before { transform: translateX(20px); }
-
-        @media (max-width: 768px) {
-            body { padding: 0; }
-            .main-container {
-                max-height: 100vh; height: 100%; border-radius: 0;
-            }
-            #menu-toggle-btn { display: block; }
-            #sidebar {
-                position: absolute;
-                top: 0; left: 0; height: 100%;
-                z-index: 100;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease-in-out;
-                border-right: 1px solid #495057;
-            }
-            .sidebar-open #sidebar {
-                transform: translateX(0);
-            }
-            .sidebar-open #sidebar-backdrop {
-                display: block;
-                opacity: 1;
-                pointer-events: auto;
-            }
-        }
-                /* --- 新增：用于编辑消息的按钮和动画 --- */
-        .edit-actions {
-            display: flex;
-            justify-content: flex-end;
-            padding-top: 8px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            height: var(--header-height);
+            padding: 0 24px;
+            flex-shrink: 0;
         }
 
-        .edit-actions.visible {
-            opacity: 1;
-        }
-
-        .save-edit-btn {
-            background-color: #28a745; /* 绿色背景 */
-            color: white;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+        .header-left, .header-right {
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 16px;
+        }
+        .header-right {
+             gap: 8px;
+        }
+
+        #menu-toggle-btn {
+            /* extends .icon-button */
+        }
+
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-title-group h1 {
+            font-size: 1.375rem; /* 22px */
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .model-selector-wrapper {
+            position: relative;
+        }
+
+        .selected-model {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s, opacity 0.3s ease;
+            transition: background-color var(--transition-speed-fast) ease;
         }
-
-        .save-edit-btn:hover {
-            background-color: #218838;
-            transform: scale(1.1);
+        .selected-model:hover {
+            background-color: var(--bg-input);
         }
-
-        .save-edit-btn.fading-out {
-            opacity: 0;
-            transform: scale(0.8);
+        #selected-model-display {
+            font-size: 1.375rem;
+            font-weight: 400;
+            color: var(--text-secondary);
         }
-
-        .save-edit-btn svg {
+        .selected-model svg {
             width: 20px;
             height: 20px;
         }
 
-        /* 确保编辑时的文本区域占满宽度 */
-        .user .message.editing {
-            padding: 12px 18px; /* 恢复内边距 */
+        .model-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            background-color: var(--bg-content);
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            z-index: 1000;
+            width: 320px;
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+            transition: all var(--transition-speed-fast) ease;
         }
-        .user .message.editing textarea {
-            padding: 0; /* 移除内部 textarea 的内边距 */
+        .model-dropdown.active {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        .model-option h4 { font-weight: 500; }
+        .model-option p { font-size: 0.8rem; color: var(--text-secondary); }
+        .checkmark { color: var(--text-link); }
+
+        .ultra-badge {
+            background-color: var(--bg-ultra-badge);
+            color: var(--text-ultra-badge);
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 8px;
+            letter-spacing: 0.5px;
         }
 
-        body.night-mode {
-            --body-bg: #1a1a1a;
-            --chat-bg: #212529;
-            --user-msg-bg: #343a40;
-            --gemini-msg-bg: #2c3034;
-            --text-color: #e9ecef;
-            --border-color: #495057;
-            --accent-color: #0d6efd; /* 夜晚模式用蓝色点缀 */
-            --code-bg: #1c1e21;
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color var(--transition-speed-fast) ease;
+        }
+        .user-avatar:hover {
+            border-color: var(--gradient-start);
+        }
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        /* 覆盖一些元素的特定样式 */
-        body.night-mode .chat-input,
-        body.night-mode .message th,
-        body.night-mode .option-item,
-        body.night-mode .custom-preset-toggle-wrapper,
-        body.night-mode #settings-button:hover,
-        body.night-mode .history-item:hover:not(.disabled) {
-            background-color: #343a40;
+        /* --- 5. Chat Output --- */
+        .chat-output-wrapper {
+            flex-grow: 1;
+            overflow: hidden;
+            position: relative;
         }
 
-        body.night-mode .history-item.active {
-            background-color: #495057;
+        #chatOutput {
+            height: 100%;
+            overflow-y: auto;
+            padding: 24px;
+            scrollbar-width: thin;
+            scrollbar-color: #c1c1c1 var(--bg-content);
+        }
+        #chatOutput::-webkit-scrollbar { width: 8px; }
+        #chatOutput::-webkit-scrollbar-track { background: transparent; }
+        #chatOutput::-webkit-scrollbar-thumb {
+            background-color: #d6d6d6;
+            border-radius: 10px;
+            border: 2px solid var(--bg-content);
         }
 
-        body.night-mode #sidebar {
-            background-color: #1c1e21;
+        .chat-content-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message-wrapper {
+            animation: fadeIn 0.5s var(--transition-easing);
         }
 
-        body.night-mode #custom-modal,
-        body.night-mode #presets-modal,
-        body.night-mode #preferences-modal {
-            background-color: #2c3034;
+        .welcome-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: calc(100vh - var(--header-height) - var(--input-area-height));
+            min-height: 300px;
+        }
+        .welcome-message {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+        .welcome-message h2 {
+            font-size: 3.5rem; /* 56px */
+            font-weight: 500;
+            background: -webkit-linear-gradient(45deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        body.night-mode #modal-message,
-        body.night-mode .jieshao,
-        body.night-mode .delete-chat-btn {
-            color: #adb5bd;
+        .message-wrapper {
+            display: flex;
+            gap: 16px;
+        }
+        .message-wrapper.user {
+            justify-content: flex-end;
+        }
+        .message-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        .message-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .message-wrapper.user .message-icon {
+            display: none;
+        }
+        .message {
+            max-width: 100%;
+            padding: 1rem 1.25rem;
+            border-radius: 20px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            background-color: var(--bg-main);
+        }
+        .message-wrapper.model .message {
+            border-top-left-radius: 4px;
+        }
+        .message-wrapper.user .message {
+            background-color: var(--bg-send-button);
+            color: var(--text-on-dark-bg);
+            border-bottom-right-radius: 4px;
+        }
+        .message p:not(:last-child) {
+            margin-bottom: 1em;
+        }
+        .message pre {
+            background-color: #1e1e1e; color: #d4d4d4; padding: 16px;
+            border-radius: 8px; overflow-x: auto; position: relative;
+            margin: 1em 0;
+        }
+        .message code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; font-size: 14px; }
+        .copy-code-button {
+            position: absolute; top: 10px; right: 10px; background-color: #555; color: white;
+            border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; opacity: 0;
+            transition: opacity var(--transition-speed-fast);
+        }
+        .message pre:hover .copy-code-button { opacity: 1; }
+        .copy-code-button:hover { background-color: #666; }
+
+        /* --- 6. Chat Input Area --- */
+        .chat-input-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px 24px;
+            height: var(--input-area-height);
+            flex-shrink: 0;
+        }
+        .chat-input-container {
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+        }
+        .chat-input {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            width: 100%;
+            min-height: 56px;
+            background-color: var(--bg-input);
+            border-radius: 28px;
+            padding: 8px 12px 8px 24px;
+            transition: background-color var(--transition-speed-fast) ease;
+        }
+        .chat-input:focus-within {
+            background-color: var(--bg-input-focus);
         }
 
-        body.night-mode input:checked + .slider {
-            background-color: var(--accent-color);
+        #inspiration-btn {
+            /* extends .icon-button */
+            width: 40px;
+            height: 40px;
+            align-self: flex-end;
+            margin-bottom: -4px; /* Align with textarea */
+            margin-right: 4px;
         }
 
-        body.night-mode .welcome-screen h2,
-        body.night-mode .welcome-screen {
-            color: #6c757d;
+        #userInput {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            line-height: 1.5;
+            outline: none;
+            color: var(--text-primary);
+            resize: none;
+            overflow-y: hidden;
+            padding-top: 8px;
+            max-height: 200px;
+        }
+        #userInput::placeholder {
+            color: var(--text-placeholder);
         }
 
-        body.night-mode #history-list {
-            scrollbar-color: #495057 #1c1e21;
+        #sendButton {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--bg-send-button);
+            cursor: pointer;
+            transition: all var(--transition-speed-fast) ease;
+            transform: scale(0);
+            opacity: 0;
         }
+        #sendButton:hover:not(:disabled) {
+            background-color: var(--bg-send-button-hover);
+            transform: scale(1.05);
+        }
+        #sendButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #sendButton.visible {
+            transform: scale(1);
+            opacity: 1;
+        }
+        #sendButton svg {
+            color: var(--text-on-dark-bg);
+        }
+        #sendButton .stop-icon { display: none; }
+        #sendButton.is-loading .send-icon { display: none; }
+        #sendButton.is-loading .stop-icon { display: block; }
+        #sendButton.is-loading { background-color: #dc3545; }
 
-        body.night-mode #history-list::-webkit-scrollbar-track {
-            background: #1c1e21;
-        }
+        /* Hidden functional buttons */
+        #regenerateButton, #settings-button-wrapper { display: none; }
 
-        body.night-mode .chat-output {
-            scrollbar-color: #495057 var(--chat-bg);
+        /* --- 7. Modals --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-modal-backdrop);
+            z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden;
+            transition: opacity var(--transition-speed-normal) ease;
         }
+        .modal-overlay:not(.modal-hidden) {
+            opacity: 1; visibility: visible;
+        }
+        .modal-content {
+            background-color: var(--bg-content);
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            transform: scale(0.95);
+            transition: transform var(--transition-speed-normal) var(--transition-easing);
+        }
+        .modal-overlay:not(.modal-hidden) .modal-content {
+            transform: scale(1);
+        }
+        .modal-hidden { display: none !important; }
 
-        body.night-mode .selected-model,
-        body.night-mode #menu-toggle-btn svg {
-            color: var(--text-color);
-            stroke: var(--text-color);
-        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-title { font-size: 1.25rem; font-weight: 500; }
+        .modal-close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
+        .modal-intro { color: var(--text-secondary); margin-bottom: 24px; font-size: 0.9rem; line-height: 1.5; }
+        .modal-intro b { color: var(--text-primary); font-weight: 500; }
+        
+        #modal-title { margin-bottom: 8px; }
+        #modal-message { margin-bottom: 16px; color: var(--text-secondary); white-space: pre-wrap; max-height: 60vh; overflow-y: auto;}
+        #modal-input-wrapper { margin-bottom: 24px; }
+        #modal-input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; }
+        #modal-input:focus { border-color: var(--border-active); outline: none; box-shadow: 0 0 0 2px var(--bg-hover-light); }
+        #modal-button-wrapper { display: flex; justify-content: flex-end; gap: 8px; }
+        .modal-btn { padding: 10px 24px; border-radius: 20px; border: none; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: background-color var(--transition-speed-fast) ease; }
+        #modal-confirm-btn { background-color: var(--text-link); color: white; }
+        #modal-confirm-btn:hover { background-color: #0a4cb0; }
+        #modal-cancel-btn { background-color: transparent; color: var(--text-link); }
+        #modal-cancel-btn:hover { background-color: var(--bg-hover-light); }
 
-        /* 修正所有弹窗中的输入框样式 */
-        body.night-mode #modal-input,
-        body.night-mode #custom-preset-input {
-            background-color: #3b4045;
-            color: var(--text-color);
-            border: 1px solid #5a6268;
-        }
+        /* Switch toggle style */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--text-link); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-        /* 修正输入框的占位文字颜色 */
-        body.night-mode #modal-input::placeholder,
-        body.night-mode #custom-preset-input::placeholder {
-            color: #9ea3a9;
-        }
+        .custom-preset-container { margin-top: 16px; }
+        .custom-preset-toggle-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        #custom-preset-input { width: 100%; min-height: 100px; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); resize: vertical; }
+        .options-list { display: flex; flex-direction: column; gap: 16px; }
+        .option-item { display: flex; justify-content: space-between; align-items: center; }
+        .option-item p.jieshao { color: var(--text-secondary); font-size: 0.8rem; }
 
-        /* 修正弹窗中“取消”按钮的颜色 */
-        body.night-mode #modal-cancel-btn {
-            background-color: #6c757d;
-            color: white;
-        }
-        body.night-mode #modal-cancel-btn:hover {
-            background-color: #5a6268;
-        }
-        @media (max-width: 480px) {
-            html { font-size: 87.5%; }
-            .chat-container { border-radius: 0; }
-            .chat-header { padding: 8px 15px; }
-            .chat-input-area { padding: 15px 10px; }
-            .chat-output { padding: 15px 10px; gap: 15px; }
-            .message-wrapper { max-width: 95%; }
+        /* --- 8. Responsiveness --- */
+        @media (max-width: 768px) {
+            #sidebar {
+                position: fixed;
+                height: 100%;
+                top: 0;
+                left: 0;
+                transform: translateX(calc(-1 * var(--sidebar-width)));
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            }
+            .app-container.sidebar-open #sidebar {
+                transform: translateX(0);
+            }
+            .app-container:not(.sidebar-collapsed) #sidebar {
+                 width: 85%;
+            }
+            .app-container.sidebar-collapsed #sidebar {
+                transform: translateX(calc(-1 * var(--sidebar-width)));
+                width: 0;
+            }
+            #sidebar-backdrop {
+                display: block;
+                position: fixed;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background-color: var(--bg-modal-backdrop);
+                z-index: 199;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity var(--transition-speed-normal) ease;
+            }
+            .app-container.sidebar-open #sidebar-backdrop {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .chat-header { padding: 0 16px; }
+            .header-title-group h1, #selected-model-display { font-size: 1.25rem; }
+            .welcome-message h2 { font-size: 2.5rem; }
+            .chat-input-area { padding: 8px 16px; height: auto; min-height: 80px; }
+            #chatOutput { padding: 16px; }
+            .header-right { gap: 4px; }
         }
     </style>
 </head>
 <body>
 
-<div class="main-container" id="main-container">
-    <div id="sidebar">
+<div class="app-container sidebar-collapsed" id="app-container">
+
+    <!-- Sidebar (Left Panel) -->
+    <aside id="sidebar">
         <div class="sidebar-header">
-            <button id="new-chat-btn">＋ 发起新对话</button>
+            <button id="new-chat-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>New chat</span>
+            </button>
         </div>
-        <div id="history-list"></div>
         
-        <div id="settings-menu">
-             <div class="settings-menu-item" id="preferences-button">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                <span>偏好设置</span>
-             </div>
-             <div class="settings-menu-item" id="advanced-presets-button">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3z"></path><polyline points="15 3 15 8 20 8"></polyline></svg>
-                <span>预设指令</span>
-             </div>
-             <div class="settings-menu-item" id="auth-button">
-                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                 <span>升级到UltraSnow</span>
-             </div>
-        </div>
+        <div id="history-list"></div>
 
         <div id="sidebar-footer">
-            <div id="settings-button">
-                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                 <div class="settings-button-text">
-                     <span class="default-text">Gemini Snow Pro</span>
-                     <span class="hover-text">设置</span>
+            <div id="settings-menu">
+                 <div class="settings-menu-item" id="preferences-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                    <span>Preferences</span>
+                 </div>
+                 <div class="settings-menu-item" id="advanced-presets-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3z"></path><polyline points="15 3 15 8 20 8"></polyline></svg>
+                    <span>Presets</span>
+                 </div>
+                 <div class="settings-menu-item" id="auth-button">
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                     <span>Upgrade to UltraSnow</span>
                  </div>
             </div>
-        </div>
-    </div>
-
-    <div class="chat-container">
-        <div class="chat-header">
-            <div class="header-left">
-                <button id="menu-toggle-btn">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                </button>
+            <div id="settings-button" title="Settings">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </div>
-            
-            <div class="header-controls">
-                <div class="model-selector-wrapper">
-                    <div class="selected-model" id="selected-model-display"></div>
-                    <div class="model-dropdown" id="model-dropdown-list"></div>
+        </div>
+    </aside>
+    <div id="sidebar-backdrop"></div>
+
+    <!-- Main Content -->
+    <main class="chat-area">
+        <header class="chat-header">
+            <div class="header-left">
+                <button id="menu-toggle-btn" class="icon-button" title="菜单">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+                <div class="header-title-group">
+                    <h1>Geminisnow</h1>
+                    <div class="model-selector-wrapper">
+                        <div class="selected-model" id="selected-model-container">
+                            <span id="selected-model-display">1.5 Pro</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <div class="model-dropdown" id="model-dropdown-list"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="summarize-btn" class="icon-button" title="✨ 总结对话">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18"></path><path d="M16 7H8m8 4H8m8 4H8"></path></svg>
+                </button>
+                <div class="ultra-badge" id="ultra-badge">ULTRA</div>
+                <div class="user-avatar" title="用户账户">
+                    <img src="https://lh3.googleusercontent.com/a/ACg8ocK_S6nC2xjd5iT1i902b9S65X6NRJ5_u1ZAbZ00FnU=s96-c" alt="User Avatar">
+                </div>
+            </div>
+        </header>
+        
+        <div class="chat-output-wrapper">
+            <div id="chatOutput">
+                <div class="chat-content-container">
+                    <div class="welcome-container">
+                        <div class="welcome-message">
+                            <h2>SummerVIBES, 你好</h2>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="chat-output" id="chatOutput"></div>
+        
+        <div id="settings-button-wrapper"></div>
+
         <div class="chat-input-area">
-            <div class="chat-input">
-                <textarea id="userInput" placeholder="问一问Gemini" autocomplete="off" rows="1"></textarea>
-                <button id="regenerateButton" class="input-action-button" title="重新生成"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
-                <button id="sendButton" class="input-action-button" title="发送">
-                    <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                    <svg class="stop-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="white" fill="white"></rect></svg>
-                </button>
+            <div class="chat-input-container">
+                <div class="chat-input">
+                    <button id="inspiration-btn" class="icon-button" title="✨ 创意启发">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><path d="M12 2v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 6.34 1.41-1.41"></path><path d="M22 12h-2"></path><path d="M4 12H2"></path></svg>
+                    </button>
+                    <textarea id="userInput" placeholder="在此处输入提示" autocomplete="off" rows="1"></textarea>
+                    <button id="sendButton" title="发送">
+                        <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                        <svg class="stop-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" fill="currentColor"></rect></svg>
+                    </button>
+                </div>
             </div>
         </div>
-    </div> 
-    
-    <div id="sidebar-backdrop"></div>
-    
-    <div id="custom-modal-overlay" class="modal-hidden">
-        <div id="custom-modal">
-            <h3 id="modal-title"></h3>
-            <p id="modal-message"></p>
-            <div id="modal-input-wrapper">
-                <input type="text" id="modal-input" autocomplete="off">
+    </main> 
+
+    <!-- Modals -->
+    <div id="custom-modal-overlay" class="modal-overlay modal-hidden">
+        <div id="custom-modal" class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title"></h3>
+                <button id="modal-close-custom" class="modal-close-btn">&times;</button>
             </div>
+            <p id="modal-message"></p>
+            <div id="modal-input-wrapper"><input type="text" id="modal-input" autocomplete="off"></div>
             <div id="modal-button-wrapper">
                 <button id="modal-cancel-btn" class="modal-btn"></button>
                 <button id="modal-confirm-btn" class="modal-btn"></button>
             </div>
         </div>
     </div>
-
-    <div id="presets-modal-overlay" class="modal-hidden">
-        <div id="presets-modal">
+    <div id="presets-modal-overlay" class="modal-overlay modal-hidden">
+        <div id="presets-modal" class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">预设指令</h3>
                 <button class="modal-close-btn" data-target="presets-modal-overlay">&times;</button>
@@ -820,86 +829,81 @@
             <div class="custom-preset-container">
                 <div class="custom-preset-toggle-wrapper">
                     <label for="custom-preset-toggle">启用自定义预设指令</label>
-                    <label class="switch">
-                        <input type="checkbox" id="custom-preset-toggle">
-                        <span class="slider"></span>
-                    </label>
+                    <label class="switch"><input type="checkbox" id="custom-preset-toggle"><span class="slider"></span></label>
                 </div>
                 <textarea id="custom-preset-input" placeholder="例：你是一位专业翻译，请将我的所有输入都翻译成英文。"></textarea>
             </div>
-            </div>
+        </div>
     </div>
-
-    <div id="preferences-modal-overlay" class="modal-hidden">
-        <div id="preferences-modal">
+    <div id="preferences-modal-overlay" class="modal-overlay modal-hidden">
+        <div id="preferences-modal" class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">偏好设置</h3>
                 <button class="modal-close-btn" data-target="preferences-modal-overlay">&times;</button>
             </div>
             <p class="modal-intro">管理应用的基本行为和偏好。</p>
             <div class="options-list">
-    <div class="option-item">
-        <label for="streaming-toggle">流式传输</label>
-        <p class="jieshao">建议保持开启</p>
-        <label class="switch">
-            <input type="checkbox" id="streaming-toggle">
-            <span class="slider"></span>
-        </label>
-    </div>
-
-    <div class="option-item">
-        <label for="night-mode-toggle">夜间模式</label>
-        <p class="jieshao">使用暗系配色</p>
-        <label class="switch">
-            <input type="checkbox" id="night-mode-toggle">
-            <span class="slider"></span>
-        </label>
-    </div>
-</div>
+                <div class="option-item">
+                    <div>
+                        <label for="streaming-toggle">流式传输</label>
+                        <p class="jieshao">建议保持开启</p>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="streaming-toggle"><span class="slider"></span></label>
+                </div>
+                <div class="option-item">
+                    <div>
+                        <label for="night-mode-toggle">夜间模式</label>
+                        <p class="jieshao">使用暗系配色 (暂未实现)</p>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="night-mode-toggle"><span class="slider"></span></label>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Hidden functional button from original code -->
+    <button id="regenerateButton" style="display:none;"></button>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // ... (All other variable declarations from previous step remain the same)
-    const mainContainer = document.getElementById('main-container');
+    // --- Element References ---
+    const appContainer = document.getElementById('app-container');
     const menuToggleButton = document.getElementById('menu-toggle-btn');
     const sidebarBackdrop = document.getElementById('sidebar-backdrop');
     const settingsButton = document.getElementById('settings-button');
     const settingsMenu = document.getElementById('settings-menu');
-
     const userInput = document.getElementById('userInput');
-    const initialHeight = userInput.offsetHeight;
     const sendButton = document.getElementById('sendButton');
     const chatOutput = document.getElementById('chatOutput');
-    const regenerateButton = document.getElementById('regenerateButton');
+    const selectedModelContainer = document.getElementById('selected-model-container');
     const selectedModelDisplay = document.getElementById('selected-model-display');
     const modelDropdownList = document.getElementById('model-dropdown-list');
     const authButton = document.getElementById('auth-button');
     const newChatButton = document.getElementById('new-chat-btn');
     const historyList = document.getElementById('history-list');
-    
-    // MODIFIED: References for new custom preset elements
     const advancedPresetsButton = document.getElementById('advanced-presets-button');
     const presetsModalOverlay = document.getElementById('presets-modal-overlay');
     const customPresetToggle = document.getElementById('custom-preset-toggle');
     const customPresetInput = document.getElementById('custom-preset-input');
-
-    // Element References for Preferences Modal
     const preferencesButton = document.getElementById('preferences-button');
     const preferencesModalOverlay = document.getElementById('preferences-modal-overlay');
     const streamingToggle = document.getElementById('streaming-toggle');
     const nightModeToggle = document.getElementById('night-mode-toggle');
-    const body = document.body;
-
-
-    const API_URL = '/api/askGemini';
+    const ultraBadge = document.getElementById('ultra-badge');
+    const customModalOverlay = document.getElementById('custom-modal-overlay');
+    const modalCloseCustomBtn = document.getElementById('modal-close-custom');
+    
+    // ✨ Gemini API Feature Elements
+    const summarizeBtn = document.getElementById('summarize-btn');
+    const inspirationBtn = document.getElementById('inspiration-btn');
+    
+    // --- State & Config ---
+    const API_URL = '/api/askGemini'; // Main backend for streaming chat
     let abortController = null;
     let isProUnlocked = false;
     const models = [
-        { id: 'gemini-2.5-flash', name: '2.5 Flash（日配额耗尽）', description: '快速提供全方位的帮助', locked: true },
+        { id: 'gemini-2.5-flash', name: '2.5 Flash', description: '快速提供全方位的帮助', locked: true },
         { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码', locked: true },
         { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '以最快速度提供帮助', locked: false },
         { id: 'gemini-2.5-flash-lite-preview-06-17', name: '2.5 Flash Lite', description: '最具成本效益且支持高吞吐量', locked: false },
@@ -908,124 +912,114 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentModel = 'gemini-2.5-flash-lite-preview-06-17';
     let currentChatId = null;
 
-    // REMOVED: Old presetPrompts array is no longer needed.
-
     marked.setOptions({ breaks: true, sanitize: true });
-    
-    const showCustomModal = (options) => {
-        const config = {
-            type: 'alert',
-            title: '',
-            message: '',
-            placeholder: '',
-            confirmText: '确定',
-            cancelText: '取消'
-        };
-        Object.assign(config, options);
 
-        const overlay = document.getElementById('custom-modal-overlay');
-        const titleEl = document.getElementById('modal-title');
-        const messageEl = document.getElementById('modal-message');
+    // --- ✨ Gemini API Direct Call Function ---
+    /**
+     * A generic function to call the Gemini API for non-streaming tasks.
+     * Uses gemini-2.0-flash for speed and efficiency on auxiliary tasks.
+     * @param {string} prompt The prompt to send to the API.
+     * @returns {Promise<string>} The text response from the model.
+     */
+    async function callGemini(prompt) {
+        // IMPORTANT: In a real application, the API key should be handled securely
+        // and not exposed on the client-side. This is a placeholder.
+        const apiKey = ""; // This will be handled by the execution environment.
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{ role: "user", parts: [{ text: prompt }] }]
+        };
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.json();
+                console.error("API Error Response:", errorBody);
+                throw new Error(`API 调用失败，状态码: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                console.error("无法预料的API响应结构:", result);
+                return "无法获取有效的回复。";
+            }
+        } catch (error) {
+            console.error("调用Gemini API时出错:", error);
+            return `调用API时出错: ${error.message}`;
+        }
+    }
+
+
+    // --- Core Functions (adapted for new UI and features) ---
+
+    const showCustomModal = (options) => {
+        const config = { type: 'alert', title: '', message: '', placeholder: '', confirmText: '确定', cancelText: '取消', showCancel: true };
+        Object.assign(config, options);
+        
+        customModalOverlay.classList.remove('modal-hidden');
+        document.getElementById('modal-title').textContent = config.title;
+        document.getElementById('modal-message').textContent = config.message;
         const inputWrapper = document.getElementById('modal-input-wrapper');
         const inputEl = document.getElementById('modal-input');
         const confirmBtn = document.getElementById('modal-confirm-btn');
         const cancelBtn = document.getElementById('modal-cancel-btn');
-
-        titleEl.textContent = config.title;
-        messageEl.textContent = config.message;
+        
         confirmBtn.textContent = config.confirmText;
         cancelBtn.textContent = config.cancelText;
         inputEl.placeholder = config.placeholder;
         inputEl.value = '';
-
+        
         inputWrapper.style.display = config.type === 'prompt' ? 'block' : 'none';
-        cancelBtn.style.display = config.type === 'alert' ? 'none' : 'inline-block';
-
-        overlay.classList.remove('modal-hidden');
-        if (config.type === 'prompt') {
-            inputEl.focus();
-        }
+        cancelBtn.style.display = (config.type === 'alert' || !config.showCancel) ? 'none' : 'inline-block';
+        
+        if (config.type === 'prompt') inputEl.focus();
 
         return new Promise((resolve) => {
             let isResolved = false;
-
             const close = (value) => {
                 if (isResolved) return;
                 isResolved = true;
-                overlay.classList.add('modal-hidden');
+                customModalOverlay.classList.add('modal-hidden');
+                // Clean up listeners
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+                customModalOverlay.onclick = null;
+                inputEl.onkeydown = null;
+                modalCloseCustomBtn.onclick = null;
                 resolve(value);
             };
-
-            confirmBtn.onclick = () => {
-                close(config.type === 'prompt' ? inputEl.value : true);
-            };
-
-            cancelBtn.onclick = () => {
-                close(config.type === 'prompt' ? null : false);
-            };
-
-            overlay.onclick = (e) => {
-                if (e.target === overlay) {
-                    cancelBtn.click();
-                }
-            };
-
-            inputEl.onkeydown = (e) => {
-                if (e.key === 'Enter') {
-                    confirmBtn.click();
-                } else if (e.key === 'Escape') {
-                    cancelBtn.click();
-                }
-            }
+            
+            confirmBtn.onclick = () => close(config.type === 'prompt' ? inputEl.value : true);
+            cancelBtn.onclick = () => close(config.type === 'prompt' ? null : false);
+            modalCloseCustomBtn.onclick = () => cancelBtn.onclick();
+            customModalOverlay.onclick = (e) => { if (e.target === customModalOverlay) cancelBtn.onclick(); };
+            inputEl.onkeydown = (e) => { if (e.key === 'Enter') confirmBtn.click(); else if (e.key === 'Escape') cancelBtn.click(); }
         });
     };
 
-    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats') || '[]');
-    const saveChats = (chats) => localStorage.setItem('geminiSnowChats', JSON.stringify(chats));
-    
-    // NEW: Functions to manage the new custom preset state in localStorage
-    const getCustomPreset = () => {
-        const preset = localStorage.getItem('geminiSnowCustomPreset');
-        return preset ? JSON.parse(preset) : { enabled: false, prompt: '' };
-    };
-    const saveCustomPreset = (settings) => localStorage.setItem('geminiSnowCustomPreset', JSON.stringify(settings));
-
-    // Streaming State Management
-    const getStreamingState = () => {
-        const state = localStorage.getItem('geminiSnowStreaming');
-        return state === null ? true : JSON.parse(state); // Default to true
-    };
-    const saveStreamingState = (isEnabled) => localStorage.setItem('geminiSnowStreaming', JSON.stringify(isEnabled));
-    const getNightModeState = () => {
-        const state = localStorage.getItem('geminiSnowNightMode');
-        return state === null ? false : JSON.parse(state); // 默认关闭
-    };
-    const saveNightModeState = (isEnabled) => localStorage.setItem('geminiSnowNightMode', JSON.stringify(isEnabled));
-
-    const applyNightMode = (isEnabled) => {
-        body.classList.toggle('night-mode', isEnabled);
-    };
-
-    // MODIFIED: buildHistoryWithPresets now uses the single custom preset
-    const buildHistoryWithPresets = (history) => {
-        const customPreset = getCustomPreset();
-
-        if (customPreset.enabled && customPreset.prompt && customPreset.prompt.trim() !== '') {
-            const presetMessages = [
-                { role: 'user', parts: [{ text: `System instruction: ${customPreset.prompt.trim()}` }] },
-                { role: 'model', parts: [{ text: 'OK, I will follow that instruction.' }] }
-            ];
-            return [...presetMessages, ...history];
-        }
-        
-        return history;
-    };
+    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats_v3') || '[]');
+    const saveChats = (chats) => localStorage.setItem('geminiSnowChats_v3', JSON.stringify(chats));
+    const getCustomPreset = () => JSON.parse(localStorage.getItem('geminiSnowCustomPreset_v3') || '{ "enabled": false, "prompt": "" }');
+    const saveCustomPreset = (settings) => localStorage.setItem('geminiSnowCustomPreset_v3', JSON.stringify(settings));
+    const getStreamingState = () => localStorage.getItem('geminiSnowStreaming_v3') === null ? true : JSON.parse(localStorage.getItem('geminiSnowStreaming_v3'));
+    const saveStreamingState = (isEnabled) => localStorage.setItem('geminiSnowStreaming_v3', JSON.stringify(isEnabled));
 
     const deleteChat = async (chatIdToDelete) => {
         let chats = getChats();
         const chatToDelete = chats.find(chat => chat.id === chatIdToDelete);
         if (!chatToDelete) return;
-        
+
         const confirmed = await showCustomModal({
             type: 'confirm',
             title: '删除对话',
@@ -1047,31 +1041,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderHistoryList = () => {
         const chats = getChats();
-        const isLoading = sendButton.classList.contains('is-loading');
         historyList.innerHTML = '';
         chats.forEach(chat => {
             const item = document.createElement('div');
             item.className = 'history-item';
-            if (isLoading) item.classList.add('disabled');
             item.dataset.chatId = chat.id;
 
             const title = document.createElement('div');
             title.className = 'history-item-title';
             title.textContent = chat.title;
-            title.addEventListener('click', () => loadChat(chat.id));
+            item.addEventListener('click', () => {
+                if (sendButton.classList.contains('is-loading')) return;
+                loadChat(chat.id);
+            });
             
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-chat-btn';
-            deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
+            deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 deleteChat(chat.id);
             });
 
-            if (chat.id === currentChatId) {
-                item.classList.add('active');
-            }
-
+            if (chat.id === currentChatId) item.classList.add('active');
             item.appendChild(title);
             item.appendChild(deleteBtn);
             historyList.prepend(item);
@@ -1079,8 +1071,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const renderChatWindow = (messages) => {
+        const container = document.createElement('div');
+        container.className = 'chat-content-container';
+        messages.forEach((msg) => appendMessage(msg.role, msg.parts[0].text, container));
         chatOutput.innerHTML = '';
-        messages.forEach((msg, index) => appendMessage(msg.role, msg.parts[0].text, index));
+        chatOutput.appendChild(container);
         chatOutput.scrollTop = chatOutput.scrollHeight;
     };
     
@@ -1092,47 +1087,55 @@ document.addEventListener('DOMContentLoaded', () => {
             renderChatWindow(chat.messages);
             renderHistoryList();
             setLoading(false);
-            mainContainer.classList.remove('sidebar-open');
+            if(window.innerWidth <= 768) {
+                appContainer.classList.add('sidebar-collapsed');
+            }
         }
     };
 
     const createNewChat = () => {
         currentChatId = null;
         chatOutput.innerHTML = `
-            <div class="welcome-screen">
-                <img src="/01.png" alt="Logo">
-                <h2>学 无 止 境</h2>
-            </div>
-        `;
+            <div class="chat-content-container">
+                <div class="welcome-container">
+                    <div class="welcome-message">
+                        <h2>SummerVIBES, 你好</h2>
+                    </div>
+                </div>
+            </div>`;
         renderHistoryList();
         userInput.value = '';
+        userInput.style.height = 'auto';
+        sendButton.classList.remove('visible');
         setLoading(false);
-        mainContainer.classList.remove('sidebar-open');
+        if(window.innerWidth <= 768) {
+            appContainer.classList.add('sidebar-collapsed');
+        }
     };
 
     const handleSend = async () => {
-        userInput.style.height = 'auto'; 
         const prompt = userInput.value.trim();
         if (!prompt) return;
 
-        const welcomeScreen = chatOutput.querySelector('.welcome-screen');
-        if (welcomeScreen) {
+        userInput.value = '';
+        userInput.style.height = 'auto';
+        sendButton.classList.remove('visible');
+
+        let chatContentContainer = chatOutput.querySelector('.chat-content-container');
+        if (!chatContentContainer || chatContentContainer.querySelector('.welcome-container')) {
+            chatContentContainer = document.createElement('div');
+            chatContentContainer.className = 'chat-content-container';
             chatOutput.innerHTML = '';
+            chatOutput.appendChild(chatContentContainer);
         }
 
-        userInput.value = '';
         let chats = getChats();
-        
         let isNewChat = false;
         let chat;
         if (!currentChatId) {
             isNewChat = true;
             currentChatId = `chat_${Date.now()}`;
-            chat = {
-                id: currentChatId,
-                title: prompt.substring(0, 30),
-                messages: [],
-            };
+            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [] };
             chats.push(chat);
         } else {
             chat = chats.find(c => c.id === currentChatId);
@@ -1140,36 +1143,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const historyForAPI = buildHistoryWithPresets([...chat.messages]);
         chat.messages.push({ role: 'user', parts: [{ text: prompt }] });
-        const userMessageIndex = chat.messages.length - 1;
         saveChats(chats);
         
-        appendMessage('user', prompt, userMessageIndex);
-        const loadingMsgWrapper = appendMessage('gemini', 'loading');
+        appendMessage('user', prompt, chatContentContainer);
+        const loadingMsgWrapper = appendMessage('model', 'loading', chatContentContainer);
         
-        if (isNewChat) {
-           renderHistoryList();
-        }
+        if (isNewChat) renderHistoryList();
         
-        await streamResponse(prompt, loadingMsgWrapper, false, historyForAPI);
+        await streamResponse(prompt, loadingMsgWrapper, false, historyForAPI, isNewChat);
     };
     
-    const streamResponse = async (prompt, messageWrapperElement, isRegeneration = false, historyOverride = null) => {
+    const streamResponse = async (prompt, messageWrapperElement, isRegeneration = false, historyOverride = null, isNewChat = false) => {
         setLoading(true);
         abortController = new AbortController();
-        messageWrapperElement.classList.add('gemini-loading');
         const messageElement = messageWrapperElement.querySelector('.message');
         
         let chats = getChats();
         let chat = chats.find(c => c.id === currentChatId);
         
-        let historyForAPI;
-        if (historyOverride) {
-            historyForAPI = historyOverride;
-        } else if (isRegeneration) {
-            const lastUserMsgIndex = chat.messages.map(m => m.role).lastIndexOf('user');
-            const baseHistory = chat.messages.slice(0, lastUserMsgIndex);
-            historyForAPI = buildHistoryWithPresets(baseHistory);
-        }
+        let historyForAPI = historyOverride || (isRegeneration ? buildHistoryWithPresets(chat.messages.slice(0, -1)) : buildHistoryWithPresets(chat.messages.slice(0, -1)));
 
         const isStreamingEnabled = getStreamingState();
 
@@ -1177,35 +1169,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    prompt, 
-                    history: historyForAPI, 
-                    model: currentModel,
-                    stream: isStreamingEnabled
-                }),
+                body: JSON.stringify({ prompt, history: historyForAPI, model: currentModel, stream: isStreamingEnabled }),
                 signal: abortController.signal
             });
             if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
             
             let fullText;
-            if (isStreamingEnabled) {
+            if (isStreamingEnabled && response.body) {
                 fullText = await streamIntoElement(response, messageElement);
             } else {
                 const data = await response.json();
                 fullText = data.text; 
-                if (fullText) {
-                    messageElement.innerHTML = marked.parse(fullText);
-                    messageElement.classList.add('fade-in-effect');
-                    messageElement.addEventListener('animationend', () => {
-                        messageElement.classList.remove('fade-in-effect');
-                    }, { once: true });
-                    addCopyButtonsToCodeBlocks(messageElement);
-                } else {
-                    throw new Error("Non-streaming response did not contain text.");
-                }
+                messageElement.innerHTML = marked.parse(fullText);
+                addCopyButtonsToCodeBlocks(messageElement);
             }
             
-            if(fullText === null) return;
+            if(fullText === null) return; // Aborted
             
             chats = getChats();
             chat = chats.find(c => c.id === currentChatId);
@@ -1217,18 +1196,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             saveChats(chats);
 
-            addCopyToElement(messageWrapperElement.querySelector('.message-icon'), fullText);
+            // ✨ Automatically generate title for new chats
+            if (isNewChat) {
+                generateAndSetTitle(prompt, fullText);
+            }
 
         } catch (error) {
             if (error.name === 'AbortError') {
                 updateMessage(messageWrapperElement, '已停止生成。');
-                console.log('Generation stopped by user.');
             } else {
-                console.error('Error:', error);
-                updateMessage(messageWrapperElement, '<b>抱歉，出错了。</b><br>这可能是模型载荷过大或是超时：<br>建议暂时更换其他模型或检查你的网络设置并在偏好中打开流式传输；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
+                console.error("Fetch error:", error);
+                updateMessage(messageWrapperElement, `<b>抱歉，出错了。</b><br>${error.message}`);
             }
         } finally {
-            messageWrapperElement.classList.remove('gemini-loading');
             abortController = null;
             setLoading(false);
         }
@@ -1239,362 +1219,187 @@ document.addEventListener('DOMContentLoaded', () => {
         const decoder = new TextDecoder();
         let fullText = '';
         element.innerHTML = '';
-
         while (true) {
             try {
                 const { done, value } = await reader.read();
                 if (done) break;
                 fullText += decoder.decode(value, { stream: true });
                 element.innerHTML = marked.parse(fullText + '▋');
+                chatOutput.scrollTop = chatOutput.scrollHeight;
             } catch (error) {
-                if (error.name === 'AbortError') {
-                    console.log('Stream reading aborted.');
-                    return null;
-                }
+                if (error.name === 'AbortError') return null;
                 throw error;
             }
         }
         element.innerHTML = marked.parse(fullText);
         addCopyButtonsToCodeBlocks(element);
+        chatOutput.scrollTop = chatOutput.scrollHeight;
         return fullText;
     };
-
-    const regenerateLastResponse = async () => {
-        let chats = getChats();
-        const chat = chats.find(c => c.id === currentChatId);
-        if (!chat || chat.messages.length < 2) return;
-
-        const lastUserMessage = chat.messages.slice().reverse().find(m => m.role === 'user');
-        if (!lastUserMessage) return;
-        const lastUserPrompt = lastUserMessage.parts[0].text;
-        
-        const lastGeminiMsgWrapper = chatOutput.querySelector('.message-wrapper.gemini:last-of-type');
-        if (!lastGeminiMsgWrapper) return;
-        
-        updateMessage(lastGeminiMsgWrapper, 'loading');
-
-        await streamResponse(lastUserPrompt, lastGeminiMsgWrapper, true);
-    };
-
+    
     const setLoading = (isLoading) => {
         userInput.disabled = isLoading;
         newChatButton.disabled = isLoading;
-        regenerateButton.disabled = isLoading;
-        selectedModelDisplay.style.pointerEvents = isLoading ? 'none' : 'auto';
+        inspirationBtn.disabled = isLoading;
+        summarizeBtn.disabled = isLoading;
 
-        const historyItems = historyList.querySelectorAll('.history-item');
         if (isLoading) {
             sendButton.classList.add('is-loading');
-            sendButton.title = '停止生成';
-            historyItems.forEach(item => item.classList.add('disabled'));
+            sendButton.title = '停止';
         } else {
             sendButton.classList.remove('is-loading');
             sendButton.title = '发送';
-            historyItems.forEach(item => item.classList.remove('disabled'));
         }
-    
-        const chats = getChats();
-        const chat = chats.find(c => c.id === currentChatId);
-    
-        let showRegenerate = false;
-        if (!isLoading && chat && chat.messages && chat.messages.length > 0) {
-            const lastMessage = chat.messages[chat.messages.length - 1];
-            if (lastMessage && lastMessage.role === 'model') {
-                showRegenerate = true;
-            }
-        }
-        regenerateButton.style.visibility = showRegenerate ? 'visible' : 'hidden';
     };
     
-    const appendMessage = (sender, text, messageIndex) => {
-        const senderClass = (sender === 'model') ? 'gemini' : sender;
-        
+    const appendMessage = (sender, text, container) => {
         const messageWrapper = document.createElement('div');
-        messageWrapper.className = `message-wrapper ${senderClass}`;
-        if(messageIndex !== undefined) {
-             messageWrapper.dataset.messageIndex = messageIndex;
-        }
+        messageWrapper.className = `message-wrapper ${sender}`;
 
-        const iconHTML = senderClass === 'user' 
-            ? `<div class="edit-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>`
-            : `<div class="message-icon"><img src="/01.png" alt="Gemini Avatar"></div>`;
+        const iconHTML = sender === 'user' 
+            ? ''
+            : `<div class="message-icon"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d473533a3dc29220547d.gif" alt="Gemini Avatar"></div>`;
             
         const messageContentHTML = text === 'loading'
-            ? `<div class="loading-indicator"><div class="spinner"></div><span>思考中...</span></div>`
-            : marked.parse(text);
+            ? `<div class="message"><span class="blinking-cursor">▋</span></div>`
+            : `<div class="message">${marked.parse(text)}</div>`;
             
-        messageWrapper.innerHTML = `${iconHTML}<div class="message">${messageContentHTML}</div>`;
+        messageWrapper.innerHTML = `${iconHTML}${messageContentHTML}`;
         
-        if(senderClass === 'user'){
-            messageWrapper.insertBefore(messageWrapper.querySelector('.message'), messageWrapper.firstChild);
-        }
-        
-        chatOutput.appendChild(messageWrapper);
+        container.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         
-        if (senderClass === 'gemini' && text !== 'loading') {
-             addCopyToElement(messageWrapper.querySelector('.message-icon'), text);
+        if (sender === 'model' && text !== 'loading') {
              addCopyButtonsToCodeBlocks(messageWrapper);
         }
-        updateEditIcon();
         
         return messageWrapper;
-    };
-    
-    const updateEditIcon = () => {
-        const currentLatest = chatOutput.querySelector('.latest-user-message');
-        if (currentLatest) {
-            currentLatest.classList.remove('latest-user-message');
-        }
-
-        const userMessages = chatOutput.querySelectorAll('.message-wrapper.user');
-        if (userMessages.length > 0) {
-            const lastUserMessage = userMessages[userMessages.length - 1];
-            const geminiMessageAfter = lastUserMessage.nextElementSibling;
-            
-            if (geminiMessageAfter && geminiMessageAfter.classList.contains('gemini')) {
-                lastUserMessage.classList.add('latest-user-message');
-                const editIcon = lastUserMessage.querySelector('.edit-icon');
-                if (editIcon && !editIcon.dataset.listener) {
-                    editIcon.addEventListener('click', () => makeMessageEditable(lastUserMessage));
-                    editIcon.dataset.listener = 'true';
-                }
-            }
-        }
-    };
-
-const makeMessageEditable = (messageWrapper) => {
-        const messageDiv = messageWrapper.querySelector('.message');
-        // 如果已在编辑，则直接返回
-        if(messageDiv.classList.contains('editing')) return;
-
-        messageDiv.classList.add('editing');
-
-        // 从渲染后的HTML中提取纯文本
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = messageDiv.innerHTML;
-        const currentText = tempDiv.innerText || tempDiv.textContent;
-
-        messageDiv.innerHTML = ''; // 清空原内容
-
-        const textarea = document.createElement('textarea');
-        textarea.value = currentText.trim();
-        textarea.rows = 1;
-
-        // 自动调整文本区域高度
-        const autoResize = () => {
-            textarea.style.height = 'auto';
-            textarea.style.height = `${textarea.scrollHeight}px`;
-        };
-        textarea.addEventListener('input', autoResize);
-        
-        // 【重要】移除回车键发送逻辑，现在回车仅用于换行
-        textarea.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                // 按下ESC取消编辑
-                messageDiv.innerHTML = marked.parse(currentText);
-                messageDiv.classList.remove('editing');
-                const actions = messageWrapper.querySelector('.edit-actions');
-                if (actions) actions.remove();
-            }
-        });
-
-        // 创建操作按钮容器
-        const actionsWrapper = document.createElement('div');
-        actionsWrapper.className = 'edit-actions';
-
-        // 创建对号按钮
-        const saveBtn = document.createElement('button');
-        saveBtn.className = 'save-edit-btn';
-        saveBtn.title = '保存并重新生成';
-        saveBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-        
-        actionsWrapper.appendChild(saveBtn);
-        
-        // 将文本区域和按钮容器添加到消息DIV中
-        messageDiv.appendChild(textarea);
-        messageWrapper.appendChild(actionsWrapper);
-
-        // 触发一次尺寸调整并聚焦
-        textarea.focus();
-        autoResize();
-
-        // 延时添加 'visible' 类以触发CSS淡入动画
-        setTimeout(() => {
-            actionsWrapper.classList.add('visible');
-        }, 10);
-
-        // 为保存按钮添加点击事件
-        saveBtn.addEventListener('click', () => {
-            const newText = textarea.value;
-            // 触发淡出动画
-            saveBtn.classList.add('fading-out');
-            
-            // 在动画结束后执行保存操作
-            setTimeout(() => {
-                messageDiv.classList.remove('editing');
-                actionsWrapper.remove(); // 移除按钮容器
-                saveAndRegenerate(messageWrapper, newText);
-            }, 300); // 动画时长为300ms
-        });
-    };
-    
-const saveAndRegenerate = async (messageWrapper, newText) => {
-        newText = newText.trim();
-        if (!newText) {
-            // 如果新内容为空，则恢复原状
-            loadChat(currentChatId); // 简单地重新加载当前对话
-            return;
-        }
-
-        const messageDiv = messageWrapper.querySelector('.message');
-        const messageIndex = parseInt(messageWrapper.dataset.messageIndex, 10);
-        const geminiWrapper = messageWrapper.nextElementSibling;
-        const geminiMessageIndex = messageIndex + 1;
-
-        // 立即用新文本更新UI，移除textarea
-        messageDiv.innerHTML = marked.parse(newText);
-
-        if (!geminiWrapper || !geminiWrapper.classList.contains('gemini')) {
-            // 如果后面没有Gemini消息，则无需重新生成，仅保存即可
-            let chats = getChats();
-            let chat = chats.find(c => c.id === currentChatId);
-            chat.messages[messageIndex].parts[0].text = newText;
-            saveChats(chats);
-            return;
-        }
-
-        setLoading(true);
-        abortController = new AbortController();
-        updateMessage(geminiWrapper, 'loading');
-
-        let chats = getChats();
-        let chat = chats.find(c => c.id === currentChatId);
-
-        chat.messages[messageIndex].parts[0].text = newText;
-
-        const historyForAPI = buildHistoryWithPresets(chat.messages.slice(0, messageIndex + 1)); // Regenerate based on history *up to and including* the edit
-
-        const isStreamingEnabled = getStreamingState();
-
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    prompt: newText,
-                    history: historyForAPI, // 使用截断后的历史记录
-                    model: currentModel,
-                    stream: isStreamingEnabled
-                }),
-                signal: abortController.signal
-            });
-            if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
-
-            let fullText;
-            const messageElementForEdit = geminiWrapper.querySelector('.message');
-
-            if (isStreamingEnabled) {
-                fullText = await streamIntoElement(response, messageElementForEdit);
-            } else {
-                 const data = await response.json();
-                 fullText = data.text;
-                 if (fullText) {
-                    messageElementForEdit.innerHTML = marked.parse(fullText);
-                    addCopyButtonsToCodeBlocks(messageElementForEdit);
-                } else {
-                    throw new Error("Non-streaming response did not contain text.");
-                }
-            }
-
-            if (fullText === null) return; // 用户中止
-
-            // 更新数据模型并保存
-            chats = getChats();
-            chat = chats.find(c => c.id === currentChatId);
-            if (chat.messages[geminiMessageIndex]) {
-                chat.messages[geminiMessageIndex].parts[0].text = fullText;
-            } else {
-                // 如果Gemini消息不知何故丢失了，则追加它
-                chat.messages.splice(geminiMessageIndex, 0, { role: 'model', parts: [{ text: fullText }] });
-            }
-            saveChats(chats);
-            addCopyToElement(geminiWrapper.querySelector('.message-icon'), fullText);
-
-        } catch (error) {
-            if (error.name === 'AbortError') {
-                updateMessage(geminiWrapper, '已停止生成。');
-            } else {
-                console.error("Regeneration after edit failed:", error);
-                updateMessage(geminiWrapper, '<b>重新生成失败。</b><br>这可能是模型载荷过大或是超时：<br>建议暂时更换其他模型或检查你的网络设置并在偏好中打开流式传输；<br><b>如果多次重试仍然处于错误状态，请汇报信息。</b>');
-            }
-        } finally {
-            abortController = null;
-            setLoading(false);
-            updateEditIcon(); // 重新评估哪个消息旁应该显示编辑图标
-        }
-    };
-    const addCopyToElement = (element, textToCopy) => {
-        if (!element) return;
-        const originalIconHTML = '<img src="/01.png" alt="Gemini Avatar">';
-        element.title = '点击复制内容';
-        element.onclick = (e) => {
-            e.stopPropagation();
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                element.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: #28a745;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                element.title = '已复制!';
-                setTimeout(() => {
-                    element.innerHTML = originalIconHTML;
-                    element.title = '点击复制内容';
-                }, 1500);
-            }).catch(err => {
-                console.error('复制失败: ', err);
-                element.title = '复制失败!';
-                setTimeout(() => { element.title = '点击复制内容'; }, 1500);
-            });
-        };
     };
 
     const updateMessage = (messageWrapperElement, newContent) => {
         const messageElement = messageWrapperElement.querySelector('.message');
         if (messageElement) {
-            if (newContent === 'loading') {
-                messageElement.innerHTML = `<div class="loading-indicator"><div class="spinner"></div><span>重新生成中...</span></div>`;
-            } else {
-                messageElement.innerHTML = marked.parse(newContent);
-                addCopyButtonsToCodeBlocks(messageElement);
-            }
+            messageElement.innerHTML = marked.parse(newContent);
+            if(newContent !== 'loading') addCopyButtonsToCodeBlocks(messageElement);
         }
-        chatOutput.scrollTop = chatOutput.scrollHeight;
     };
-    
+
     const addCopyButtonsToCodeBlocks = (container) => {
         const codeBlocks = container.querySelectorAll('pre');
         codeBlocks.forEach(block => {
             if (block.querySelector('.copy-code-button')) return;
             const button = document.createElement('button');
             button.className = 'copy-code-button';
-            button.textContent = '复制';
+            button.textContent = 'Copy';
             button.onclick = () => {
                 const code = block.querySelector('code').innerText;
                 navigator.clipboard.writeText(code).then(() => {
-                    button.textContent = '已复制!';
-                    setTimeout(() => { button.textContent = '复制'; }, 2000);
+                    button.textContent = 'Copied!';
+                    setTimeout(() => { button.textContent = 'Copy'; }, 2000);
                 });
             };
             block.appendChild(button);
         });
     };
     
-    const setupModelSelector = async () => {
+    const buildHistoryWithPresets = (history) => {
+        const customPreset = getCustomPreset();
+        if (customPreset.enabled && customPreset.prompt && customPreset.prompt.trim() !== '') {
+            const presetMessages = [
+                { role: 'user', parts: [{ text: `System instruction: ${customPreset.prompt.trim()}` }] },
+                { role: 'model', parts: [{ text: 'OK, I will follow that instruction.' }] }
+            ];
+            return [...presetMessages, ...history];
+        }
+        return history;
+    };
+
+    // --- ✨ Gemini Feature Handlers ---
+
+    const handleSummarize = async () => {
+        if (!currentChatId) {
+            showCustomModal({ type: 'alert', title: '无法总结', message: '当前没有对话可供总结。', showCancel: false });
+            return;
+        }
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        if (!chat || chat.messages.length < 2) {
+            showCustomModal({ type: 'alert', title: '无法总结', message: '对话内容过短，无法生成总结。', showCancel: false });
+            return;
+        }
+
+        summarizeBtn.disabled = true;
+        const originalIcon = summarizeBtn.innerHTML;
+        summarizeBtn.innerHTML = `<div class="spinner-sm"></div>`;
+
+        const conversationText = chat.messages.map(m => `${m.role === 'user' ? '用户' : '模型'}: ${m.parts[0].text}`).join('\n');
+        const prompt = `请用中文精炼地总结以下对话的核心内容，保持简洁明了，直接输出总结即可:\n\n---\n${conversationText}\n---`;
+        
+        const summary = await callGemini(prompt);
+
+        summarizeBtn.disabled = false;
+        summarizeBtn.innerHTML = originalIcon;
+
+        showCustomModal({
+            type: 'alert',
+            title: '✨ 对话总结',
+            message: summary,
+            confirmText: '关闭',
+            showCancel: false
+        });
+    };
+
+    const handleInspiration = async () => {
+        inspirationBtn.disabled = true;
+        const originalIcon = inspirationBtn.innerHTML;
+        inspirationBtn.innerHTML = `<div class="spinner-sm"></div>`;
+
+        const prompt = "给我一个有趣、富有创意或引人深思的问题，请直接输出问题本身，不要包含任何额外的前缀或解释。";
+        const question = await callGemini(prompt);
+
+        userInput.value = question.replace(/["“”]/g, ''); // Remove quotes
+        userInput.focus();
+        userInput.dispatchEvent(new Event('input', { bubbles: true })); // Trigger input event to show send button
+
+        inspirationBtn.disabled = false;
+        inspirationBtn.innerHTML = originalIcon;
+    };
+
+    const generateAndSetTitle = async (userPrompt, modelResponse) => {
+        const prompt = `根据下面的对话，用中文生成一个非常简短的、适合用作聊天记录标题的短语（5-10个字）。请直接输出标题，不要任何多余的文字。\n\n用户: "${userPrompt}"\n模型: "${modelResponse.substring(0, 100)}..."`;
+        
+        const title = await callGemini(prompt);
+
+        if (title && !title.includes("无法")) {
+            let chats = getChats();
+            let chat = chats.find(c => c.id === currentChatId);
+            if (chat) {
+                chat.title = title.replace(/["“”]/g, ''); // Clean up quotes
+                saveChats(chats);
+                renderHistoryList(); // Refresh the list with the new title
+            }
+        }
+    };
+
+
+    // --- Setup and Init Functions ---
+
+    const setupModelSelector = () => {
         modelDropdownList.innerHTML = '';
         models.forEach(model => {
             const option = document.createElement('div');
-            option.className = 'model-option';
+            option.className = 'settings-menu-item model-option';
             option.dataset.value = model.id;
             const isLocked = model.locked && !isProUnlocked;
             if (isLocked) option.classList.add('disabled');
-            option.innerHTML = `<div class="model-option-text"><h4>${model.name} ${isLocked ? '🔒' : ''}</h4><p>${model.description}</p></div><span class="checkmark">✓</span>`;
+            
+            option.innerHTML = `
+                <div class="model-option-text" style="flex-grow: 1;">
+                    <h4>${model.name} ${isLocked ? '🔒' : ''}</h4>
+                    <p>${model.description}</p>
+                </div>
+                <span class="checkmark" style="visibility:hidden;">✓</span>`;
+                
             if (!isLocked) {
                 option.addEventListener('click', () => {
                     currentModel = model.id;
@@ -1602,10 +1407,8 @@ const saveAndRegenerate = async (messageWrapper, newText) => {
                     modelDropdownList.classList.remove('active');
                 });
             } else {
-                option.addEventListener('click', () => showCustomModal({
-                    type: 'alert',
-                    title: '模型已锁定',
-                    message: '此高级模型需要升级到UltraSnow才能使用。请点击侧栏中的设置进行升级。',
+                 option.addEventListener('click', () => showCustomModal({
+                    type: 'alert', title: '模型已锁定', message: '升级到 Ultra 即可使用此模型。'
                 }));
             }
             modelDropdownList.appendChild(option);
@@ -1615,98 +1418,87 @@ const saveAndRegenerate = async (messageWrapper, newText) => {
 
     const updateSelectorDisplay = () => {
         const selectedModel = models.find(m => m.id === currentModel);
-        if (selectedModel) selectedModelDisplay.textContent = selectedModel.name;
-        document.querySelectorAll('.model-option').forEach(opt => opt.classList.toggle('selected', opt.dataset.value === currentModel));
+        if (selectedModel) {
+            selectedModelDisplay.textContent = selectedModel.name;
+        }
+        ultraBadge.style.display = isProUnlocked ? 'block' : 'none';
+        
+        document.querySelectorAll('.model-option').forEach(opt => {
+            const checkmark = opt.querySelector('.checkmark');
+            if(opt.dataset.value === currentModel){
+                opt.style.backgroundColor = 'var(--bg-hover-light)';
+                if(checkmark) checkmark.style.visibility = 'visible';
+            } else {
+                opt.style.backgroundColor = 'transparent';
+                if(checkmark) checkmark.style.visibility = 'hidden';
+            }
+        });
     };
     
     const handleAuth = async () => {
         const enteredCode = await showCustomModal({
-            type: 'prompt',
-            title: '升级到 UltraSnow',
-            message: '升级到Ultra以解锁限制模型。',
-            placeholder: '请输入测试代码',
-            confirmText: '升级'
+            type: 'prompt', title: '升级到 UltraSnow', message: '升级到Ultra以解锁限制模型。',
+            placeholder: '请输入测试代码', confirmText: '升级'
         });
-
-        if (enteredCode === null) return;
-        
-        if (enteredCode.trim() === "703777") {
+        if (enteredCode === "703777") {
             isProUnlocked = true;
-            await showCustomModal({type: 'alert', title: '操作成功', message: '已成功升级到UltraSnow！所有模型已解锁。'});
+            await showCustomModal({type: 'alert', title: '操作成功', message: '已成功升级到UltraSnow！'});
             authButton.style.display = 'none';
-            currentModel = 'gemini-2.5-pro';
+            currentModel = 'gemini-ultra';
             setupModelSelector();
-        } else {
-            await showCustomModal({type: 'alert', title: '操作失败', message: '代码错误，升级失败。'});
+        } else if (enteredCode !== null) {
+            await showCustomModal({type: 'alert', title: '操作失败', message: '代码错误。'});
         }
         settingsMenu.classList.remove('active');
     };
 
-    // MODIFIED: setupPresetsModal now configures the new custom preset elements
     const setupPresetsModal = () => {
         const currentPreset = getCustomPreset();
-        
         customPresetToggle.checked = currentPreset.enabled;
         customPresetInput.value = currentPreset.prompt;
-
-        customPresetToggle.addEventListener('change', () => {
-            const preset = getCustomPreset();
-            preset.enabled = customPresetToggle.checked;
-            saveCustomPreset(preset);
-        });
-
-        customPresetInput.addEventListener('input', () => {
-            const preset = getCustomPreset();
-            preset.prompt = customPresetInput.value;
-            saveCustomPreset(preset);
-        });
+        customPresetToggle.addEventListener('change', () => saveCustomPreset({ enabled: customPresetToggle.checked, prompt: customPresetInput.value }));
+        customPresetInput.addEventListener('input', () => saveCustomPreset({ enabled: customPresetToggle.checked, prompt: customPresetInput.value }));
     };
 
-    // Setup for Preferences Modal
     const setupPreferencesModal = () => {
         streamingToggle.checked = getStreamingState();
-        streamingToggle.addEventListener('change', () => {
-            saveStreamingState(streamingToggle.checked);
-        });
-        nightModeToggle.checked = getNightModeState();
-        nightModeToggle.addEventListener('change', () => {
-            const isEnabled = nightModeToggle.checked;
-            saveNightModeState(isEnabled);
-            applyNightMode(isEnabled);
-        });
-
+        streamingToggle.addEventListener('change', () => saveStreamingState(streamingToggle.checked));
     };
 
-    // -- Add Event Listeners --
+    // --- Event Listeners ---
+    menuToggleButton.addEventListener('click', () => {
+        appContainer.classList.toggle('sidebar-collapsed');
+        appContainer.classList.toggle('sidebar-open', !appContainer.classList.contains('sidebar-collapsed'));
+    });
+    sidebarBackdrop.addEventListener('click', () => {
+        appContainer.classList.add('sidebar-collapsed');
+        appContainer.classList.remove('sidebar-open');
+    });
+
     newChatButton.addEventListener('click', createNewChat);
     authButton.addEventListener('click', handleAuth);
     
     sendButton.addEventListener('click', () => {
         if (sendButton.classList.contains('is-loading')) {
-            if (abortController) {
-                abortController.abort();
-            }
+            if (abortController) abortController.abort();
         } else if(!userInput.disabled) {
             handleSend();
         }
     });
 
-    userInput.addEventListener('keydown', (event) => {
-        // 通过 User Agent 检测是否为移动设备
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        // 如果不是移动设备（即桌面端），并且用户按下了Enter键（没有同时按Shift），则发送消息
-        if (event.key === 'Enter' && !isMobile && !event.shiftKey && !userInput.disabled) {
-            event.preventDefault(); // 阻止默认的换行行为
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && !userInput.disabled) {
+            e.preventDefault();
             handleSend();
         }
     });
     userInput.addEventListener('input', () => {
-        userInput.style.height = 'auto'; // 先重置高度
-        userInput.style.height = `${userInput.scrollHeight}px`; // 再设置为内容的实际高度
+        userInput.style.height = 'auto';
+        userInput.style.height = `${userInput.scrollHeight}px`;
+        sendButton.classList.toggle('visible', userInput.value.trim().length > 0);
     });
-    regenerateButton.addEventListener('click', regenerateLastResponse);
-    selectedModelDisplay.addEventListener('click', (e) => {
+    
+    selectedModelContainer.addEventListener('click', (e) => {
         e.stopPropagation();
         modelDropdownList.classList.toggle('active');
     });
@@ -1726,27 +1518,23 @@ const saveAndRegenerate = async (messageWrapper, newText) => {
         settingsMenu.classList.remove('active');
     });
 
-    // Generic modal close logic
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetId = btn.dataset.target;
-            if(targetId) {
-                document.getElementById(targetId).classList.add('modal-hidden');
-            }
+        btn.addEventListener('click', (e) => {
+            const targetId = e.currentTarget.dataset.target;
+            if(targetId) document.getElementById(targetId).classList.add('modal-hidden');
         });
     });
     
-    [presetsModalOverlay, preferencesModalOverlay].forEach(overlay => {
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
-                 overlay.classList.add('modal-hidden');
+                overlay.classList.add('modal-hidden');
             }
         });
     });
 
-
     document.addEventListener('click', (e) => {
-        if (!modelDropdownList.contains(e.target) && !selectedModelDisplay.contains(e.target)) {
+        if (!modelDropdownList.contains(e.target) && !selectedModelContainer.contains(e.target)) {
             modelDropdownList.classList.remove('active');
         }
         if (!settingsMenu.contains(e.target) && !settingsButton.contains(e.target)) {
@@ -1754,20 +1542,24 @@ const saveAndRegenerate = async (messageWrapper, newText) => {
         }
     });
 
-    menuToggleButton.addEventListener('click', () => {
-        mainContainer.classList.toggle('sidebar-open');
-    });
+    // ✨ Gemini Feature Event Listeners
+    summarizeBtn.addEventListener('click', handleSummarize);
+    inspirationBtn.addEventListener('click', handleInspiration);
 
-    sidebarBackdrop.addEventListener('click', () => {
-        mainContainer.classList.remove('sidebar-open');
-    });
-
-    // -- App Initialization --
+    // --- App Initialization ---
     setupModelSelector();
     setupPresetsModal();
     setupPreferencesModal();
-    applyNightMode(getNightModeState());
     createNewChat();
+
+    // Initial sidebar state for mobile
+    if (window.innerWidth <= 768) {
+        appContainer.classList.add('sidebar-collapsed');
+        appContainer.classList.remove('sidebar-open');
+    } else {
+        appContainer.classList.remove('sidebar-collapsed');
+        appContainer.classList.remove('sidebar-open');
+    }
 });
 </script>
 </body>
