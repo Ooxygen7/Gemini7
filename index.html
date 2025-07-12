@@ -12,7 +12,7 @@
         /*
         ============================================
         World CSS Beautification Competition Entry
-        Project: Geminisnow Revamp (AI-Powered)
+        Project: Geminisnow - Full Feature Edition (Polished)
         Author: Gemini
         ============================================
         */
@@ -21,18 +21,19 @@
         :root {
             --font-family-sans: 'Google Sans', 'Noto Sans SC', sans-serif;
             
-            /* Light Theme Palette (as per image) */
+            /* Refined SummerVIBES Palette */
             --bg-main: #f0f4f9;
             --bg-sidebar: #e6eaf1;
             --bg-content: #ffffff;
-            --bg-input: #e6eaf1;
-            --bg-input-focus: #dde3ea;
+            --bg-content-subtle-gradient: radial-gradient(circle at 50% 50%, #f7f9fc, #ffffff);
+            --bg-input: #f0f4f9;
+            --bg-input-focus: #e8eef4;
             --bg-hover-light: #d3e3fd;
             --bg-hover-dark: #dde3ea;
             --bg-active-item: #c2e7ff;
             --bg-ultra-badge: #e8e8e8;
-            --bg-send-button: #1f1f1f;
-            --bg-send-button-hover: #000000;
+            --bg-send-button: #297FE5; /* New, friendly blue */
+            --bg-send-button-hover: #1A73E8;
             --bg-modal-backdrop: rgba(0, 0, 0, 0.4);
 
             --text-primary: #1f1f1f;
@@ -49,9 +50,7 @@
             --gradient-end: #9b72cb;
 
             --sidebar-width: 256px;
-            --sidebar-width-collapsed: 0px;
             --header-height: 64px;
-            --input-area-height: 96px;
 
             --transition-speed-fast: 0.2s;
             --transition-speed-normal: 0.3s;
@@ -114,6 +113,22 @@
             display: flex;
             width: 100%;
             height: 100%;
+            position: relative;
+        }
+
+        #sidebar-backdrop {
+            display: block;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-modal-backdrop);
+            z-index: 199;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-speed-normal) ease;
+        }
+        .app-container:not(.sidebar-collapsed) #sidebar-backdrop {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         #sidebar {
@@ -124,31 +139,68 @@
             flex-direction: column;
             padding: 16px 12px;
             flex-shrink: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
             transform: translateX(0);
-            transition: transform var(--transition-speed-normal) var(--transition-easing), 
-                        width var(--transition-speed-normal) var(--transition-easing);
+            transition: transform var(--transition-speed-normal) var(--transition-easing);
             z-index: 200;
+            box-shadow: 4px 0 15px -5px rgba(0,0,0,0.1);
         }
 
         .app-container.sidebar-collapsed #sidebar {
             transform: translateX(calc(-1 * var(--sidebar-width)));
-            width: var(--sidebar-width-collapsed);
-            padding: 16px 0;
+            box-shadow: none;
         }
+        
+        .main-content-area {
+            flex-grow: 1;
+            height: 100%;
+            transition: margin-left var(--transition-speed-normal) var(--transition-easing);
+            margin-left: var(--sidebar-width);
+        }
+
+        .app-container.sidebar-collapsed .main-content-area {
+            margin-left: 0;
+        }
+        
+        @media (max-width: 1024px) { /* Adjust breakpoint for default collapsed state */
+             #sidebar {
+                width: 280px; /* Give more space on tablets */
+             }
+             .app-container.sidebar-default-collapsed #sidebar {
+                transform: translateX(-280px);
+             }
+             .app-container.sidebar-default-collapsed .main-content-area {
+                margin-left: 0;
+             }
+        }
+
+        @media (max-width: 768px) {
+            .main-content-area {
+                margin-left: 0 !important;
+            }
+            #sidebar {
+                width: 85%;
+            }
+            .app-container.sidebar-default-collapsed #sidebar {
+                 transform: translateX(-85vw);
+            }
+        }
+
 
         .sidebar-header {
             margin-bottom: 16px;
+            padding: 0 4px;
         }
 
         #new-chat-btn {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 12px;
-            width: auto;
-            min-width: 52px;
+            justify-content: space-between;
+            width: 100%;
             height: 52px;
-            padding: 0 16px;
+            padding: 0 24px 0 4px;
             background-color: var(--bg-main);
             border: none;
             border-radius: 26px;
@@ -158,24 +210,40 @@
             cursor: pointer;
             transition: all var(--transition-speed-fast) ease;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            white-space: nowrap;
-            overflow: hidden;
         }
         #new-chat-btn:hover {
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             background-color: #f8fafd;
         }
-        .app-container.sidebar-collapsed #new-chat-btn span {
-            display: none;
+        
+        #new-chat-btn .icon-placeholder {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #history-list {
             flex-grow: 1;
             overflow-y: auto;
-            scrollbar-width: none; /* Firefox */
+            padding-right: 4px;
         }
+        /* Custom Scrollbar */
         #history-list::-webkit-scrollbar {
-            display: none; /* Chrome, Safari */
+            width: 6px;
+        }
+        #history-list::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 4px 0;
+        }
+        #history-list::-webkit-scrollbar-thumb {
+            background-color: #a0a8b3;
+            border-radius: 6px;
+            border: 1px solid var(--bg-sidebar);
+        }
+        #history-list::-webkit-scrollbar-thumb:hover {
+            background-color: #858e9c;
         }
 
         .history-item {
@@ -206,8 +274,13 @@
             background: none; border: none; cursor: pointer;
             opacity: 0; transition: opacity var(--transition-speed-fast) ease;
             display: flex; align-items: center; justify-content: center;
-            padding: 4px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
+        }
+        .delete-chat-btn svg {
+            width: 18px;
+            height: 18px;
         }
         .history-item:hover .delete-chat-btn {
             opacity: 0.7;
@@ -217,17 +290,17 @@
             background-color: rgba(0,0,0,0.1);
         }
 
-
         #sidebar-footer {
             position: relative;
+            padding: 0 4px;
         }
         
         #settings-button {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 52px;
-            height: 52px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             cursor: pointer;
             transition: background-color var(--transition-speed-fast) ease, transform var(--transition-speed-normal) ease;
@@ -236,10 +309,7 @@
             background-color: var(--bg-hover-dark);
             transform: rotate(90deg);
         }
-        .app-container.sidebar-collapsed #settings-button {
-            margin: 0 auto;
-        }
-
+        
         #settings-menu {
             position: absolute;
             bottom: 100%;
@@ -278,20 +348,20 @@
 
         /* --- 3. Main Content Area --- */
         .chat-area {
-            flex-grow: 1;
+            width: 100%;
             height: 100%;
-            background-color: var(--bg-content);
-            display: flex;
-            flex-direction: column;
+            background: var(--bg-content-subtle-gradient);
+            display: grid;
+            grid-template-rows: var(--header-height) 1fr auto;
             position: relative;
         }
 
         /* --- 4. Header --- */
         .chat-header {
+            grid-row: 1;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: var(--header-height);
             padding: 0 24px;
             flex-shrink: 0;
         }
@@ -300,13 +370,6 @@
             display: flex;
             align-items: center;
             gap: 16px;
-        }
-        .header-right {
-             gap: 8px;
-        }
-
-        #menu-toggle-btn {
-            /* extends .icon-button */
         }
 
         .header-title-group {
@@ -380,27 +443,9 @@
             letter-spacing: 0.5px;
         }
 
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            overflow: hidden;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: border-color var(--transition-speed-fast) ease;
-        }
-        .user-avatar:hover {
-            border-color: var(--gradient-start);
-        }
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
         /* --- 5. Chat Output --- */
         .chat-output-wrapper {
-            flex-grow: 1;
+            grid-row: 2;
             overflow: hidden;
             position: relative;
         }
@@ -408,10 +453,9 @@
         #chatOutput {
             height: 100%;
             overflow-y: auto;
-            padding: 24px;
-            scrollbar-width: thin;
-            scrollbar-color: #c1c1c1 var(--bg-content);
+            padding: 0 24px 24px 24px;
         }
+        /* Custom Scrollbar for Chat */
         #chatOutput::-webkit-scrollbar { width: 8px; }
         #chatOutput::-webkit-scrollbar-track { background: transparent; }
         #chatOutput::-webkit-scrollbar-thumb {
@@ -426,27 +470,52 @@
             display: flex;
             flex-direction: column;
             gap: 24px;
+            height: 100%; /* Ensure it fills the parent */
         }
         
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
+        
+        @keyframes floatIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .message-wrapper {
             animation: fadeIn 0.5s var(--transition-easing);
+            display: flex;
+            flex-direction: column;
+        }
+        .message-wrapper.user {
+            align-items: flex-end;
+        }
+        .message-wrapper.model {
+            align-items: flex-start;
+        }
+        .message-wrapper:hover .message-actions {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .welcome-container {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            height: calc(100vh - var(--header-height) - var(--input-area-height));
-            min-height: 300px;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
         }
         .welcome-message {
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
+            flex-grow: 0;
+            animation: floatIn 0.7s var(--transition-easing) forwards;
         }
         .welcome-message h2 {
             font-size: 3.5rem; /* 56px */
@@ -456,29 +525,6 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .message-wrapper {
-            display: flex;
-            gap: 16px;
-        }
-        .message-wrapper.user {
-            justify-content: flex-end;
-        }
-        .message-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            overflow: hidden;
-            flex-shrink: 0;
-            margin-top: 4px;
-        }
-        .message-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .message-wrapper.user .message-icon {
-            display: none;
-        }
         .message {
             max-width: 100%;
             padding: 1rem 1.25rem;
@@ -486,6 +532,13 @@
             line-height: 1.6;
             word-wrap: break-word;
             background-color: var(--bg-main);
+            position: relative;
+        }
+        .message.is-editing {
+            border: 2px solid var(--border-active);
+            box-shadow: 0 0 0 4px var(--bg-hover-light);
+            padding: 0;
+            background-color: var(--bg-send-button);
         }
         .message-wrapper.model .message {
             border-top-left-radius: 4px;
@@ -511,15 +564,44 @@
         }
         .message pre:hover .copy-code-button { opacity: 1; }
         .copy-code-button:hover { background-color: #666; }
+        
+        .message-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: opacity var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
+        }
+        
+        .action-button {
+            background-color: var(--bg-content);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+         .action-button:hover {
+            background-color: var(--bg-input);
+         }
+         .action-button svg {
+            width: 16px; height: 16px;
+         }
+
 
         /* --- 6. Chat Input Area --- */
         .chat-input-area {
+            grid-row: 3;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 16px 24px;
-            height: var(--input-area-height);
-            flex-shrink: 0;
+            padding: 0 24px 0 24px; /* Move up */
+            flex-direction: column;
         }
         .chat-input-container {
             width: 100%;
@@ -528,7 +610,7 @@
         }
         .chat-input {
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             gap: 8px;
             width: 100%;
             min-height: 56px;
@@ -541,15 +623,6 @@
             background-color: var(--bg-input-focus);
         }
 
-        #inspiration-btn {
-            /* extends .icon-button */
-            width: 40px;
-            height: 40px;
-            align-self: flex-end;
-            margin-bottom: -4px; /* Align with textarea */
-            margin-right: 4px;
-        }
-
         #userInput {
             flex-grow: 1;
             border: none;
@@ -560,8 +633,12 @@
             color: var(--text-primary);
             resize: none;
             overflow-y: hidden;
-            padding-top: 8px;
-            max-height: 200px;
+            padding: 8px 0;
+            max-height: 125px; /* Approx 5 lines */
+            scrollbar-width: none; /* Firefox */
+        }
+        #userInput::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
         #userInput::placeholder {
             color: var(--text-placeholder);
@@ -580,6 +657,7 @@
             transition: all var(--transition-speed-fast) ease;
             transform: scale(0);
             opacity: 0;
+            flex-shrink: 0;
         }
         #sendButton:hover:not(:disabled) {
             background-color: var(--bg-send-button-hover);
@@ -601,8 +679,50 @@
         #sendButton.is-loading .stop-icon { display: block; }
         #sendButton.is-loading { background-color: #dc3545; }
 
-        /* Hidden functional buttons */
-        #regenerateButton, #settings-button-wrapper { display: none; }
+        #chat-actions-container {
+            width: 100%;
+            max-width: 800px;
+            padding-top: 12px;
+            display: flex;
+            justify-content: center;
+            height: 44px; /* Reserve space to prevent layout shift */
+        }
+
+        #regenerateButton {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all var(--transition-speed-normal) ease;
+            pointer-events: none;
+        }
+        #regenerateButton.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        #regenerateButton:hover {
+            background-color: var(--bg-input-focus);
+            border-color: #ccc;
+        }
+        #regenerateButton svg {
+            width: 18px; height: 18px;
+        }
+
+
+        .disclaimer-text {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            padding: 12px 1rem;
+        }
 
         /* --- 7. Modals --- */
         .modal-overlay {
@@ -610,11 +730,14 @@
             background-color: var(--bg-modal-backdrop);
             z-index: 2000;
             display: flex; justify-content: center; align-items: center;
-            opacity: 0; visibility: hidden;
-            transition: opacity var(--transition-speed-normal) ease;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed-normal) ease, visibility 0s var(--transition-speed-normal);
         }
-        .modal-overlay:not(.modal-hidden) {
-            opacity: 1; visibility: visible;
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity var(--transition-speed-normal) ease;
         }
         .modal-content {
             background-color: var(--bg-content);
@@ -624,12 +747,13 @@
             max-width: 500px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.1);
             transform: scale(0.95);
-            transition: transform var(--transition-speed-normal) var(--transition-easing);
+            opacity: 0;
+            transition: transform var(--transition-speed-normal) var(--transition-easing), opacity var(--transition-speed-normal) ease;
         }
-        .modal-overlay:not(.modal-hidden) .modal-content {
+        .modal-overlay.active .modal-content {
             transform: scale(1);
+            opacity: 1;
         }
-        .modal-hidden { display: none !important; }
 
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .modal-title { font-size: 1.25rem; font-weight: 500; }
@@ -666,43 +790,10 @@
 
         /* --- 8. Responsiveness --- */
         @media (max-width: 768px) {
-            #sidebar {
-                position: fixed;
-                height: 100%;
-                top: 0;
-                left: 0;
-                transform: translateX(calc(-1 * var(--sidebar-width)));
-                box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            }
-            .app-container.sidebar-open #sidebar {
-                transform: translateX(0);
-            }
-            .app-container:not(.sidebar-collapsed) #sidebar {
-                 width: 85%;
-            }
-            .app-container.sidebar-collapsed #sidebar {
-                transform: translateX(calc(-1 * var(--sidebar-width)));
-                width: 0;
-            }
-            #sidebar-backdrop {
-                display: block;
-                position: fixed;
-                top: 0; left: 0; width: 100%; height: 100%;
-                background-color: var(--bg-modal-backdrop);
-                z-index: 199;
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity var(--transition-speed-normal) ease;
-            }
-            .app-container.sidebar-open #sidebar-backdrop {
-                opacity: 1;
-                pointer-events: auto;
-            }
-
             .chat-header { padding: 0 16px; }
             .header-title-group h1, #selected-model-display { font-size: 1.25rem; }
-            .welcome-message h2 { font-size: 2.5rem; }
-            .chat-input-area { padding: 8px 16px; height: auto; min-height: 80px; }
+            .welcome-message h2 { font-size: 2.5rem; text-align: center; }
+            .chat-input-area { padding: 8px 16px 12px 16px; }
             #chatOutput { padding: 16px; }
             .header-right { gap: 4px; }
         }
@@ -710,13 +801,16 @@
 </head>
 <body>
 
-<div class="app-container sidebar-collapsed" id="app-container">
-
+<div class="app-container" id="app-container">
+    <div id="sidebar-backdrop"></div>
+    
     <!-- Sidebar (Left Panel) -->
     <aside id="sidebar">
         <div class="sidebar-header">
             <button id="new-chat-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span class="icon-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </span>
                 <span>New chat</span>
             </button>
         </div>
@@ -743,69 +837,66 @@
             </div>
         </div>
     </aside>
-    <div id="sidebar-backdrop"></div>
 
     <!-- Main Content -->
-    <main class="chat-area">
-        <header class="chat-header">
-            <div class="header-left">
-                <button id="menu-toggle-btn" class="icon-button" title="菜单">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                </button>
-                <div class="header-title-group">
-                    <h1>Geminisnow</h1>
-                    <div class="model-selector-wrapper">
-                        <div class="selected-model" id="selected-model-container">
-                            <span id="selected-model-display">1.5 Pro</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    <div class="main-content-area">
+        <main class="chat-area">
+            <header class="chat-header">
+                <div class="header-left">
+                    <button id="menu-toggle-btn" class="icon-button" title="菜单">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    </button>
+                    <div class="header-title-group">
+                        <h1>Geminisnow</h1>
+                        <div class="model-selector-wrapper">
+                            <div class="selected-model" id="selected-model-container">
+                                <span id="selected-model-display"></span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            <div class="model-dropdown" id="model-dropdown-list"></div>
                         </div>
-                        <div class="model-dropdown" id="model-dropdown-list"></div>
                     </div>
                 </div>
-            </div>
-            <div class="header-right">
-                <button id="summarize-btn" class="icon-button" title="✨ 总结对话">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18"></path><path d="M16 7H8m8 4H8m8 4H8"></path></svg>
-                </button>
-                <div class="ultra-badge" id="ultra-badge">ULTRA</div>
-                <div class="user-avatar" title="用户账户">
-                    <img src="https://lh3.googleusercontent.com/a/ACg8ocK_S6nC2xjd5iT1i902b9S65X6NRJ5_u1ZAbZ00FnU=s96-c" alt="User Avatar">
+                <div class="header-right">
+                    <div class="ultra-badge" id="ultra-badge">ULTRA</div>
                 </div>
-            </div>
-        </header>
-        
-        <div class="chat-output-wrapper">
-            <div id="chatOutput">
-                <div class="chat-content-container">
-                    <div class="welcome-container">
-                        <div class="welcome-message">
-                            <h2>SummerVIBES, 你好</h2>
+            </header>
+            
+            <div class="chat-output-wrapper">
+                <div id="chatOutput">
+                    <div class="chat-content-container">
+                        <div class="welcome-container">
+                            <div class="welcome-message">
+                                <h2>SummerVIBES, 你好</h2>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div id="settings-button-wrapper"></div>
-
-        <div class="chat-input-area">
-            <div class="chat-input-container">
-                <div class="chat-input">
-                    <button id="inspiration-btn" class="icon-button" title="✨ 创意启发">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><path d="M12 2v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 6.34 1.41-1.41"></path><path d="M22 12h-2"></path><path d="M4 12H2"></path></svg>
-                    </button>
-                    <textarea id="userInput" placeholder="在此处输入提示" autocomplete="off" rows="1"></textarea>
-                    <button id="sendButton" title="发送">
-                        <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                        <svg class="stop-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" fill="currentColor"></rect></svg>
+            
+            <div class="chat-input-area">
+                <div id="chat-actions-container">
+                    <button id="regenerateButton">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+                        重新生成
                     </button>
                 </div>
+                <div class="chat-input-container">
+                    <div class="chat-input">
+                        <textarea id="userInput" placeholder="在此处输入提示" autocomplete="off" rows="1"></textarea>
+                        <button id="sendButton" title="发送">
+                            <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                            <svg class="stop-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" fill="currentColor"></rect></svg>
+                        </button>
+                    </div>
+                </div>
+                 <p class="disclaimer-text">Gemini 的回答未必正确无误，请仔细核查</p>
             </div>
-        </div>
-    </main> 
+        </main> 
+    </div>
 
     <!-- Modals -->
-    <div id="custom-modal-overlay" class="modal-overlay modal-hidden">
+    <div id="custom-modal-overlay" class="modal-overlay">
         <div id="custom-modal" class="modal-content">
             <div class="modal-header">
                 <h3 id="modal-title"></h3>
@@ -819,7 +910,7 @@
             </div>
         </div>
     </div>
-    <div id="presets-modal-overlay" class="modal-overlay modal-hidden">
+    <div id="presets-modal-overlay" class="modal-overlay">
         <div id="presets-modal" class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">预设指令</h3>
@@ -835,7 +926,7 @@
             </div>
         </div>
     </div>
-    <div id="preferences-modal-overlay" class="modal-overlay modal-hidden">
+    <div id="preferences-modal-overlay" class="modal-overlay">
         <div id="preferences-modal" class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">偏好设置</h3>
@@ -861,8 +952,6 @@
         </div>
     </div>
 
-    <!-- Hidden functional button from original code -->
-    <button id="regenerateButton" style="display:none;"></button>
 </div>
 
 <script>
@@ -893,13 +982,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const ultraBadge = document.getElementById('ultra-badge');
     const customModalOverlay = document.getElementById('custom-modal-overlay');
     const modalCloseCustomBtn = document.getElementById('modal-close-custom');
-    
-    // ✨ Gemini API Feature Elements
-    const summarizeBtn = document.getElementById('summarize-btn');
-    const inspirationBtn = document.getElementById('inspiration-btn');
+    const regenerateButton = document.getElementById('regenerateButton');
     
     // --- State & Config ---
-    const API_URL = '/api/askGemini'; // Main backend for streaming chat
+    const API_URL = '/api/askGemini';
     let abortController = null;
     let isProUnlocked = false;
     const models = [
@@ -911,63 +997,25 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     let currentModel = 'gemini-2.5-flash-lite-preview-06-17';
     let currentChatId = null;
+    let isEditing = false;
 
     marked.setOptions({ breaks: true, sanitize: true });
 
-    // --- ✨ Gemini API Direct Call Function ---
-    /**
-     * A generic function to call the Gemini API for non-streaming tasks.
-     * Uses gemini-2.0-flash for speed and efficiency on auxiliary tasks.
-     * @param {string} prompt The prompt to send to the API.
-     * @returns {Promise<string>} The text response from the model.
-     */
-    async function callGemini(prompt) {
-        // IMPORTANT: In a real application, the API key should be handled securely
-        // and not exposed on the client-side. This is a placeholder.
-        const apiKey = ""; // This will be handled by the execution environment.
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-        const payload = {
-            contents: [{ role: "user", parts: [{ text: prompt }] }]
-        };
-
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.json();
-                console.error("API Error Response:", errorBody);
-                throw new Error(`API 调用失败，状态码: ${response.status}`);
-            }
-
-            const result = await response.json();
-            
-            if (result.candidates && result.candidates.length > 0 &&
-                result.candidates[0].content && result.candidates[0].content.parts &&
-                result.candidates[0].content.parts.length > 0) {
-                return result.candidates[0].content.parts[0].text;
-            } else {
-                console.error("无法预料的API响应结构:", result);
-                return "无法获取有效的回复。";
-            }
-        } catch (error) {
-            console.error("调用Gemini API时出错:", error);
-            return `调用API时出错: ${error.message}`;
+    // --- Core Functions ---
+    
+    const toggleModal = (modalOverlay, show) => {
+        if (show) {
+            modalOverlay.classList.add('active');
+        } else {
+            modalOverlay.classList.remove('active');
         }
-    }
-
-
-    // --- Core Functions (adapted for new UI and features) ---
+    };
 
     const showCustomModal = (options) => {
         const config = { type: 'alert', title: '', message: '', placeholder: '', confirmText: '确定', cancelText: '取消', showCancel: true };
         Object.assign(config, options);
         
-        customModalOverlay.classList.remove('modal-hidden');
+        toggleModal(customModalOverlay, true);
         document.getElementById('modal-title').textContent = config.title;
         document.getElementById('modal-message').textContent = config.message;
         const inputWrapper = document.getElementById('modal-input-wrapper');
@@ -990,8 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const close = (value) => {
                 if (isResolved) return;
                 isResolved = true;
-                customModalOverlay.classList.add('modal-hidden');
-                // Clean up listeners
+                toggleModal(customModalOverlay, false);
                 confirmBtn.onclick = null;
                 cancelBtn.onclick = null;
                 customModalOverlay.onclick = null;
@@ -1008,12 +1055,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats_v3') || '[]');
-    const saveChats = (chats) => localStorage.setItem('geminiSnowChats_v3', JSON.stringify(chats));
-    const getCustomPreset = () => JSON.parse(localStorage.getItem('geminiSnowCustomPreset_v3') || '{ "enabled": false, "prompt": "" }');
-    const saveCustomPreset = (settings) => localStorage.setItem('geminiSnowCustomPreset_v3', JSON.stringify(settings));
-    const getStreamingState = () => localStorage.getItem('geminiSnowStreaming_v3') === null ? true : JSON.parse(localStorage.getItem('geminiSnowStreaming_v3'));
-    const saveStreamingState = (isEnabled) => localStorage.setItem('geminiSnowStreaming_v3', JSON.stringify(isEnabled));
+    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats_v6') || '[]');
+    const saveChats = (chats) => localStorage.setItem('geminiSnowChats_v6', JSON.stringify(chats));
+    const getCustomPreset = () => JSON.parse(localStorage.getItem('geminiSnowCustomPreset_v6') || '{ "enabled": false, "prompt": "" }');
+    const saveCustomPreset = (settings) => localStorage.setItem('geminiSnowCustomPreset_v6', JSON.stringify(settings));
+    const getStreamingState = () => localStorage.getItem('geminiSnowStreaming_v6') === null ? true : JSON.parse(localStorage.getItem('geminiSnowStreaming_v6'));
+    const saveStreamingState = (isEnabled) => localStorage.setItem('geminiSnowStreaming_v6', JSON.stringify(isEnabled));
 
     const deleteChat = async (chatIdToDelete) => {
         let chats = getChats();
@@ -1051,13 +1098,13 @@ document.addEventListener('DOMContentLoaded', () => {
             title.className = 'history-item-title';
             title.textContent = chat.title;
             item.addEventListener('click', () => {
-                if (sendButton.classList.contains('is-loading')) return;
+                if (sendButton.classList.contains('is-loading') || isEditing) return;
                 loadChat(chat.id);
             });
             
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-chat-btn';
-            deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+            deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 deleteChat(chat.id);
@@ -1077,6 +1124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatOutput.innerHTML = '';
         chatOutput.appendChild(container);
         chatOutput.scrollTop = chatOutput.scrollHeight;
+        updateActionButtons();
     };
     
     const loadChat = (chatId) => {
@@ -1087,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderChatWindow(chat.messages);
             renderHistoryList();
             setLoading(false);
-            if(window.innerWidth <= 768) {
+            if(window.innerWidth <= 1024) {
                 appContainer.classList.add('sidebar-collapsed');
             }
         }
@@ -1108,9 +1156,8 @@ document.addEventListener('DOMContentLoaded', () => {
         userInput.style.height = 'auto';
         sendButton.classList.remove('visible');
         setLoading(false);
-        if(window.innerWidth <= 768) {
-            appContainer.classList.add('sidebar-collapsed');
-        }
+        updateActionButtons();
+        setInitialSidebarState();
     };
 
     const handleSend = async () => {
@@ -1150,18 +1197,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (isNewChat) renderHistoryList();
         
-        await streamResponse(prompt, loadingMsgWrapper, false, historyForAPI, isNewChat);
+        await streamResponse(prompt, loadingMsgWrapper, false, historyForAPI);
     };
     
-    const streamResponse = async (prompt, messageWrapperElement, isRegeneration = false, historyOverride = null, isNewChat = false) => {
+    const streamResponse = async (prompt, messageWrapperElement, isRegeneration = false, historyOverride = null) => {
         setLoading(true);
+        updateActionButtons();
         abortController = new AbortController();
         const messageElement = messageWrapperElement.querySelector('.message');
         
         let chats = getChats();
         let chat = chats.find(c => c.id === currentChatId);
         
-        let historyForAPI = historyOverride || (isRegeneration ? buildHistoryWithPresets(chat.messages.slice(0, -1)) : buildHistoryWithPresets(chat.messages.slice(0, -1)));
+        let historyForAPI = historyOverride || buildHistoryWithPresets(chat.messages.slice(0, -1));
 
         const isStreamingEnabled = getStreamingState();
 
@@ -1189,17 +1237,12 @@ document.addEventListener('DOMContentLoaded', () => {
             chats = getChats();
             chat = chats.find(c => c.id === currentChatId);
             const modelMessage = { role: 'model', parts: [{ text: fullText }] };
-            if (isRegeneration) {
-                chat.messages[chat.messages.length - 1] = modelMessage;
-            } else {
-                chat.messages.push(modelMessage);
-            }
-            saveChats(chats);
+            
+            chat.messages.push(modelMessage);
 
-            // ✨ Automatically generate title for new chats
-            if (isNewChat) {
-                generateAndSetTitle(prompt, fullText);
-            }
+            saveChats(chats);
+            
+            addEditButtonToLastUserMessage();
 
         } catch (error) {
             if (error.name === 'AbortError') {
@@ -1211,6 +1254,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             abortController = null;
             setLoading(false);
+            updateActionButtons();
         }
     };
     
@@ -1240,8 +1284,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const setLoading = (isLoading) => {
         userInput.disabled = isLoading;
         newChatButton.disabled = isLoading;
-        inspirationBtn.disabled = isLoading;
-        summarizeBtn.disabled = isLoading;
+        regenerateButton.disabled = isLoading;
 
         if (isLoading) {
             sendButton.classList.add('is-loading');
@@ -1255,16 +1298,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const appendMessage = (sender, text, container) => {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message-wrapper ${sender}`;
-
-        const iconHTML = sender === 'user' 
-            ? ''
-            : `<div class="message-icon"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d473533a3dc29220547d.gif" alt="Gemini Avatar"></div>`;
             
         const messageContentHTML = text === 'loading'
             ? `<div class="message"><span class="blinking-cursor">▋</span></div>`
             : `<div class="message">${marked.parse(text)}</div>`;
             
-        messageWrapper.innerHTML = `${iconHTML}${messageContentHTML}`;
+        messageWrapper.innerHTML = messageContentHTML;
         
         container.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
@@ -1314,71 +1353,131 @@ document.addEventListener('DOMContentLoaded', () => {
         return history;
     };
 
-    // --- ✨ Gemini Feature Handlers ---
-
-    const handleSummarize = async () => {
-        if (!currentChatId) {
-            showCustomModal({ type: 'alert', title: '无法总结', message: '当前没有对话可供总结。', showCancel: false });
-            return;
-        }
+    const updateActionButtons = () => {
         const chats = getChats();
         const chat = chats.find(c => c.id === currentChatId);
-        if (!chat || chat.messages.length < 2) {
-            showCustomModal({ type: 'alert', title: '无法总结', message: '对话内容过短，无法生成总结。', showCancel: false });
-            return;
+        const canRegenerate = chat && chat.messages.length > 0 && chat.messages[chat.messages.length - 1].role === 'model' && !isEditing;
+        regenerateButton.classList.toggle('visible', canRegenerate);
+        
+        document.querySelectorAll('.edit-button-wrapper').forEach(btn => btn.remove());
+        if (canRegenerate) {
+            addEditButtonToLastUserMessage();
         }
-
-        summarizeBtn.disabled = true;
-        const originalIcon = summarizeBtn.innerHTML;
-        summarizeBtn.innerHTML = `<div class="spinner-sm"></div>`;
-
-        const conversationText = chat.messages.map(m => `${m.role === 'user' ? '用户' : '模型'}: ${m.parts[0].text}`).join('\n');
-        const prompt = `请用中文精炼地总结以下对话的核心内容，保持简洁明了，直接输出总结即可:\n\n---\n${conversationText}\n---`;
+    };
+    
+    const addEditButtonToLastUserMessage = () => {
+        const messageWrappers = document.querySelectorAll('.message-wrapper.user');
+        if (messageWrappers.length === 0) return;
         
-        const summary = await callGemini(prompt);
+        const lastUserMessageWrapper = messageWrappers[messageWrappers.length - 1];
+        
+        if (lastUserMessageWrapper.querySelector('.edit-button-wrapper')) return;
 
-        summarizeBtn.disabled = false;
-        summarizeBtn.innerHTML = originalIcon;
-
-        showCustomModal({
-            type: 'alert',
-            title: '✨ 对话总结',
-            message: summary,
-            confirmText: '关闭',
-            showCancel: false
-        });
+        const editButtonWrapper = document.createElement('div');
+        editButtonWrapper.className = 'message-actions edit-button-wrapper';
+        editButtonWrapper.innerHTML = `
+            <button class="action-button edit-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
+            </button>
+        `;
+        
+        lastUserMessageWrapper.appendChild(editButtonWrapper);
+        editButtonWrapper.querySelector('.edit-button').addEventListener('click', () => handleEdit(lastUserMessageWrapper));
     };
 
-    const handleInspiration = async () => {
-        inspirationBtn.disabled = true;
-        const originalIcon = inspirationBtn.innerHTML;
-        inspirationBtn.innerHTML = `<div class="spinner-sm"></div>`;
+    const handleEdit = (messageWrapper) => {
+        if (isEditing) return;
+        isEditing = true;
+        updateActionButtons();
+        setLoading(true);
 
-        const prompt = "给我一个有趣、富有创意或引人深思的问题，请直接输出问题本身，不要包含任何额外的前缀或解释。";
-        const question = await callGemini(prompt);
+        const messageDiv = messageWrapper.querySelector('.message');
+        const originalHTML = messageDiv.innerHTML;
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        const originalText = chat.messages[chat.messages.length - 2].parts[0].text;
 
-        userInput.value = question.replace(/["“”]/g, ''); // Remove quotes
-        userInput.focus();
-        userInput.dispatchEvent(new Event('input', { bubbles: true })); // Trigger input event to show send button
-
-        inspirationBtn.disabled = false;
-        inspirationBtn.innerHTML = originalIcon;
-    };
-
-    const generateAndSetTitle = async (userPrompt, modelResponse) => {
-        const prompt = `根据下面的对话，用中文生成一个非常简短的、适合用作聊天记录标题的短语（5-10个字）。请直接输出标题，不要任何多余的文字。\n\n用户: "${userPrompt}"\n模型: "${modelResponse.substring(0, 100)}..."`;
+        messageDiv.innerHTML = ''; // Clear existing content
+        const editTextArea = document.createElement('textarea');
+        editTextArea.style.cssText = `width: 100%; height: auto; background: transparent; border: none; color: white; resize: none; outline: none; font-size: inherit; line-height: inherit; padding: 1rem 1.25rem;`;
+        editTextArea.value = originalText;
+        messageDiv.appendChild(editTextArea);
         
-        const title = await callGemini(prompt);
+        messageDiv.classList.add('is-editing');
+        
+        const setHeight = () => {
+            editTextArea.style.height = 'auto';
+            editTextArea.style.height = `${editTextArea.scrollHeight}px`;
+        };
+        setTimeout(setHeight, 0); // Ensure it runs after render
+        editTextArea.addEventListener('input', setHeight);
+        editTextArea.focus();
+        editTextArea.setSelectionRange(originalText.length, originalText.length);
 
-        if (title && !title.includes("无法")) {
-            let chats = getChats();
-            let chat = chats.find(c => c.id === currentChatId);
-            if (chat) {
-                chat.title = title.replace(/["“”]/g, ''); // Clean up quotes
-                saveChats(chats);
-                renderHistoryList(); // Refresh the list with the new title
+        const actionWrapper = document.createElement('div');
+        actionWrapper.className = 'message-actions';
+        actionWrapper.style.opacity = 1;
+        actionWrapper.style.transform = 'translateY(0)';
+        actionWrapper.innerHTML = `
+            <button class="action-button save-edit-button">保存并提交</button>
+            <button class="action-button cancel-edit-button">取消</button>
+        `;
+        messageWrapper.appendChild(actionWrapper);
+        
+        const cleanupEdit = () => {
+            messageDiv.innerHTML = originalHTML;
+            messageDiv.classList.remove('is-editing');
+            actionWrapper.remove();
+            isEditing = false;
+            setLoading(false);
+            updateActionButtons();
+        };
+
+        actionWrapper.querySelector('.save-edit-button').addEventListener('click', async () => {
+            const newText = editTextArea.value.trim();
+            if (newText && newText !== originalText) {
+                let currentChats = getChats();
+                let currentChat = currentChats.find(c => c.id === currentChatId);
+                // Replace last user message, remove last model message
+                currentChat.messages.splice(-2, 2, { role: 'user', parts: [{ text: newText }] });
+                saveChats(currentChats);
+
+                // Update DOM
+                messageWrapper.nextElementSibling?.remove(); // Remove old model response
+                messageDiv.innerHTML = marked.parse(newText);
+                messageDiv.classList.remove('is-editing');
+                actionWrapper.remove();
+                
+                const container = document.querySelector('.chat-content-container');
+                const loadingMsgWrapper = appendMessage('model', 'loading', container);
+                await streamResponse(newText, loadingMsgWrapper, false, currentChat.messages.slice(0, -1));
+
+            } else {
+                cleanupEdit();
             }
-        }
+            isEditing = false;
+            setLoading(false);
+            updateActionButtons();
+        });
+
+        actionWrapper.querySelector('.cancel-edit-button').addEventListener('click', cleanupEdit);
+    };
+    
+    const handleRegenerate = async () => {
+        let chats = getChats();
+        let chat = chats.find(c => c.id === currentChatId);
+        if (!chat || chat.messages.length < 2) return;
+
+        chat.messages.pop();
+        saveChats(chats);
+        document.querySelector('.message-wrapper.model:last-of-type')?.remove();
+        
+        const lastUserMessage = chat.messages[chat.messages.length - 1];
+        const prompt = lastUserMessage.parts[0].text;
+        
+        const container = document.querySelector('.chat-content-container');
+        const loadingMsgWrapper = appendMessage('model', 'loading', container);
+        await streamResponse(prompt, loadingMsgWrapper, true, chat.messages.slice(0, -1));
     };
 
 
@@ -1444,7 +1543,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isProUnlocked = true;
             await showCustomModal({type: 'alert', title: '操作成功', message: '已成功升级到UltraSnow！'});
             authButton.style.display = 'none';
-            currentModel = 'gemini-ultra';
+            currentModel = 'gemini-2.5-pro';
             setupModelSelector();
         } else if (enteredCode !== null) {
             await showCustomModal({type: 'alert', title: '操作失败', message: '代码错误。'});
@@ -1465,14 +1564,17 @@ document.addEventListener('DOMContentLoaded', () => {
         streamingToggle.addEventListener('change', () => saveStreamingState(streamingToggle.checked));
     };
 
+    const setInitialSidebarState = () => {
+        appContainer.classList.add('sidebar-collapsed');
+    };
+
+
     // --- Event Listeners ---
     menuToggleButton.addEventListener('click', () => {
         appContainer.classList.toggle('sidebar-collapsed');
-        appContainer.classList.toggle('sidebar-open', !appContainer.classList.contains('sidebar-collapsed'));
     });
     sidebarBackdrop.addEventListener('click', () => {
         appContainer.classList.add('sidebar-collapsed');
-        appContainer.classList.remove('sidebar-open');
     });
 
     newChatButton.addEventListener('click', createNewChat);
@@ -1493,8 +1595,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     userInput.addEventListener('input', () => {
+        // Upward expansion logic
         userInput.style.height = 'auto';
-        userInput.style.height = `${userInput.scrollHeight}px`;
+        let newHeight = userInput.scrollHeight;
+        const maxHeight = 125; // Corresponds to max-height in CSS
+        if (newHeight > maxHeight) {
+            newHeight = maxHeight;
+            userInput.style.overflowY = 'auto';
+        } else {
+            userInput.style.overflowY = 'hidden';
+        }
+        userInput.style.height = `${newHeight}px`;
+
         sendButton.classList.toggle('visible', userInput.value.trim().length > 0);
     });
     
@@ -1509,26 +1621,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     advancedPresetsButton.addEventListener('click', () => {
-        presetsModalOverlay.classList.remove('modal-hidden');
+        toggleModal(presetsModalOverlay, true);
         settingsMenu.classList.remove('active');
     });
     
     preferencesButton.addEventListener('click', () => {
-        preferencesModalOverlay.classList.remove('modal-hidden');
+        toggleModal(preferencesModalOverlay, true);
         settingsMenu.classList.remove('active');
     });
+    
+    regenerateButton.addEventListener('click', handleRegenerate);
 
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const targetId = e.currentTarget.dataset.target;
-            if(targetId) document.getElementById(targetId).classList.add('modal-hidden');
+            const modalToClose = targetId ? document.getElementById(targetId) : e.currentTarget.closest('.modal-overlay');
+            if(modalToClose) toggleModal(modalToClose, false);
         });
     });
     
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
-                overlay.classList.add('modal-hidden');
+                toggleModal(overlay, false);
             }
         });
     });
@@ -1542,24 +1657,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ✨ Gemini Feature Event Listeners
-    summarizeBtn.addEventListener('click', handleSummarize);
-    inspirationBtn.addEventListener('click', handleInspiration);
-
     // --- App Initialization ---
     setupModelSelector();
     setupPresetsModal();
     setupPreferencesModal();
+    setInitialSidebarState();
     createNewChat();
 
-    // Initial sidebar state for mobile
-    if (window.innerWidth <= 768) {
-        appContainer.classList.add('sidebar-collapsed');
-        appContainer.classList.remove('sidebar-open');
-    } else {
-        appContainer.classList.remove('sidebar-collapsed');
-        appContainer.classList.remove('sidebar-open');
-    }
 });
 </script>
 </body>
