@@ -48,6 +48,9 @@
 
             --gradient-start: #4b89e8;
             --gradient-end: #9b72cb;
+            --gradient-thinking-start: #89cff0;
+            --gradient-thinking-mid: #c8a2c8;
+            --gradient-thinking-end: #f0e68c;
 
             --sidebar-width: 256px;
             --header-height: 64px;
@@ -150,7 +153,6 @@
         }
 
         .app-container.sidebar-collapsed #sidebar {
-            /* MODIFIED: Changed to -100% for robust hiding regardless of width */
             transform: translateX(-100%); 
             box-shadow: none;
         }
@@ -173,6 +175,10 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                /* Applying zoom as requested for mobile view */
+                zoom: 0.85;
+            }
             .main-content-area {
                 margin-left: 0 !important;
             }
@@ -443,6 +449,24 @@
             overflow: hidden;
             position: relative;
         }
+        /* ADDED: Fade-out effect for chat content */
+        .chat-output-wrapper::before, .chat-output-wrapper::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 30px;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .chat-output-wrapper::before {
+            top: 0;
+            background: linear-gradient(to bottom, var(--bg-content), transparent);
+        }
+        .chat-output-wrapper::after {
+            bottom: 0;
+            background: linear-gradient(to top, var(--bg-content), transparent);
+        }
 
         #chatOutput {
             height: 100%;
@@ -481,6 +505,13 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        /* ADDED: Keyframes for the thinking animation */
+        @keyframes thinking-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         .message-wrapper {
@@ -534,6 +565,15 @@
             padding: 0;
             background-color: var(--bg-send-button);
         }
+        /* ADDED: Style for the thinking animation bubble */
+        .message.thinking-animation {
+            color: var(--text-secondary);
+            font-style: italic;
+            background: linear-gradient(90deg, var(--gradient-thinking-start), var(--gradient-thinking-mid), var(--gradient-thinking-end), var(--gradient-thinking-mid), var(--gradient-thinking-start));
+            background-size: 400% 400%;
+            animation: thinking-gradient 5s ease infinite;
+        }
+
         .message-wrapper.model .message {
             border-top-left-radius: 4px;
         }
@@ -797,7 +837,7 @@
             #chatOutput { padding: 16px; }
             .header-right { gap: 4px; }
 
-            /* ADDED: Make action buttons always visible on mobile */
+            /* Make action buttons always visible on mobile */
             .message-actions {
                 opacity: 1;
                 transform: translateY(0);
@@ -1133,12 +1173,11 @@ document.addEventListener('DOMContentLoaded', () => {
         chatOutput.appendChild(container);
         messages.forEach((msg) => {
             const messageWrapper = appendMessage(msg.role, msg.parts[0].text, container);
-            // Add action buttons to messages loaded from history
             if (msg.role === 'model') {
                 addActionsToModelMessage(messageWrapper);
             }
         });
-        updateActionButtons(); // This will add the edit button to the last user message
+        updateActionButtons();
         chatOutput.scrollTop = chatOutput.scrollHeight;
     };
     
@@ -1178,10 +1217,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const handleSend = async () => {
         const prompt = userInput.value.trim();
         if (!prompt) return;
-
+        
+        setLoading(true); // MODIFIED: Set loading immediately
         userInput.value = '';
         userInput.style.height = 'auto';
-        sendButton.classList.remove('visible');
+        // sendButton visibility is now handled by setLoading
 
         let chatContentContainer = chatOutput.querySelector('.chat-content-container');
         if (!chatContentContainer || chatContentContainer.querySelector('.welcome-container')) {
@@ -1203,8 +1243,6 @@ document.addEventListener('DOMContentLoaded', () => {
             chat = chats.find(c => c.id === currentChatId);
         }
 
-        // The entire conversation history is already being sent with each new prompt.
-        // This ensures the AI has the full context of the current chat.
         chat.messages.push({ role: 'user', parts: [{ text: prompt }] });
         const historyForAPI = buildHistoryWithPresets([...chat.messages]);
         saveChats(chats);
@@ -1218,7 +1256,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const streamResponse = async (prompt, messageWrapperElement, historyForAPI) => {
-        setLoading(true);
         updateActionButtons();
         abortController = new AbortController();
         const messageElement = messageWrapperElement.querySelector('.message');
@@ -1240,6 +1277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 const data = await response.json();
                 fullText = data.text; 
+                messageElement.classList.remove('thinking-animation');
                 messageElement.innerHTML = marked.parse(fullText);
                 addCopyButtonsToCodeBlocks(messageElement);
             }
@@ -1250,7 +1288,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let chat = chats.find(c => c.id === currentChatId);
             const modelMessage = { role: 'model', parts: [{ text: fullText }] };
             
-            // Remove the temporary 'loading' message and add the final one
             const lastMessage = chat.messages[chat.messages.length -1];
             if (lastMessage && lastMessage.role === 'model' && lastMessage.parts[0].text === 'loading') {
                 chat.messages.pop();
@@ -1269,6 +1306,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Fetch error:", error);
                 updateMessage(messageWrapperElement, `<b>抱歉，出错了。</b><br>${error.message}`);
             }
+            messageElement.classList.remove('thinking-animation');
         } finally {
             abortController = null;
             setLoading(false);
@@ -1280,11 +1318,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
-        element.innerHTML = '';
+        let isFirstChunk = true;
+        
         while (true) {
             try {
                 const { done, value } = await reader.read();
                 if (done) break;
+
+                if (isFirstChunk) {
+                    element.classList.remove('thinking-animation');
+                    element.innerHTML = ''; // Clear "思考中..." text
+                    isFirstChunk = false;
+                }
+
                 fullText += decoder.decode(value, { stream: true });
                 element.innerHTML = marked.parse(fullText + '▋');
                 chatOutput.scrollTop = chatOutput.scrollHeight;
@@ -1305,11 +1351,15 @@ document.addEventListener('DOMContentLoaded', () => {
         regenerateButton.disabled = isLoading;
 
         if (isLoading) {
-            sendButton.classList.add('is-loading');
+            sendButton.classList.add('is-loading', 'visible');
             sendButton.title = '停止';
         } else {
             sendButton.classList.remove('is-loading');
             sendButton.title = '发送';
+            // Hide button only if input is empty
+            if (userInput.value.trim().length === 0) {
+                sendButton.classList.remove('visible');
+            }
         }
     };
     
@@ -1318,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messageWrapper.className = `message-wrapper ${sender}`;
             
         const messageContentHTML = text === 'loading'
-            ? `<div class="message"><span class="blinking-cursor">▋</span></div>`
+            ? `<div class="message thinking-animation">思考中...</div>`
             : `<div class="message">${marked.parse(text)}</div>`;
             
         messageWrapper.innerHTML = messageContentHTML;
@@ -1488,14 +1538,13 @@ document.addEventListener('DOMContentLoaded', () => {
         actionWrapper.querySelector('.save-edit-button').addEventListener('click', async () => {
             const newText = editTextArea.value.trim();
             if (newText && newText !== originalText) {
+                setLoading(true); // Keep loading state
                 let currentChats = getChats();
                 let currentChat = currentChats.find(c => c.id === currentChatId);
                 
-                // Remove all subsequent messages and update the user's message
                 currentChat.messages.splice(messageIndex, Infinity, { role: 'user', parts: [{ text: newText }] });
                 saveChats(currentChats);
 
-                // Update DOM
                 while(messageWrapper.nextSibling) {
                     messageWrapper.nextSibling.remove();
                 }
@@ -1511,7 +1560,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cleanupEdit();
             }
             isEditing = false;
-            setLoading(false);
+            // setLoading(false) is handled in streamResponse's finally block
         });
 
         actionWrapper.querySelector('.cancel-edit-button').addEventListener('click', cleanupEdit);
@@ -1521,8 +1570,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let chats = getChats();
         let chat = chats.find(c => c.id === currentChatId);
         if (!chat || chat.messages.length < 2) return;
+        
+        setLoading(true);
 
-        // Remove last model response
         chat.messages.pop(); 
         saveChats(chats);
         
@@ -1622,7 +1672,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setInitialSidebarState = () => {
-        // On mobile, always start with the sidebar collapsed.
         if (window.innerWidth <= 768) {
             appContainer.classList.add('sidebar-collapsed');
         } else {
@@ -1642,10 +1691,9 @@ document.addEventListener('DOMContentLoaded', () => {
     newChatButton.addEventListener('click', createNewChat);
     authButton.addEventListener('click', handleAuth);
     
-    // The send button doubles as a stop button when generation is in progress.
     sendButton.addEventListener('click', () => {
         if (sendButton.classList.contains('is-loading')) {
-            if (abortController) abortController.abort(); // This stops the generation
+            if (abortController) abortController.abort();
         } else if(!userInput.disabled) {
             handleSend();
         }
@@ -1658,10 +1706,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     userInput.addEventListener('input', () => {
-        // Upward expansion logic
         userInput.style.height = 'auto';
         let newHeight = userInput.scrollHeight;
-        const maxHeight = 125; // Corresponds to max-height in CSS
+        const maxHeight = 125;
         if (newHeight > maxHeight) {
             newHeight = maxHeight;
             userInput.style.overflowY = 'auto';
@@ -1670,7 +1717,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         userInput.style.height = `${newHeight}px`;
 
-        sendButton.classList.toggle('visible', userInput.value.trim().length > 0);
+        if (!sendButton.classList.contains('is-loading')) {
+            sendButton.classList.toggle('visible', userInput.value.trim().length > 0);
+        }
     });
     
     selectedModelContainer.addEventListener('click', (e) => {
@@ -1724,7 +1773,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModelSelector();
     setupPresetsModal();
     setupPreferencesModal();
-    createNewChat(); // This now calls setInitialSidebarState
+    createNewChat();
 
 });
 </script>
