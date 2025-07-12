@@ -117,17 +117,17 @@
         }
 
         #sidebar-backdrop {
-            display: none; /* MODIFIED: Changed from block for robust toggling */
+            display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-modal-backdrop);
             z-index: 199;
             opacity: 0;
             pointer-events: none;
-            /* MODIFIED: Transition removed as it doesn't work with display property change */
+            transition: opacity var(--transition-speed-normal) ease;
         }
         .app-container:not(.sidebar-collapsed) #sidebar-backdrop {
-            display: block; /* ADDED: Explicitly show backdrop */
+            display: block;
             opacity: 1;
             pointer-events: auto;
         }
@@ -150,7 +150,8 @@
         }
 
         .app-container.sidebar-collapsed #sidebar {
-            transform: translateX(calc(-1 * var(--sidebar-width)));
+            /* MODIFIED: Changed to -100% for robust hiding regardless of width */
+            transform: translateX(-100%); 
             box-shadow: none;
         }
         
@@ -177,6 +178,7 @@
             }
             #sidebar {
                 width: 85%;
+                max-width: 320px;
             }
         }
 
@@ -445,7 +447,7 @@
         #chatOutput {
             height: 100%;
             overflow-y: auto;
-            padding: 0 24px 16px 24px; /* MODIFIED: Reduced bottom padding to move input area up */
+            padding: 0 24px 16px 24px;
         }
         /* Custom Scrollbar for Chat */
         #chatOutput::-webkit-scrollbar { width: 8px; }
@@ -462,7 +464,7 @@
             display: flex;
             flex-direction: column;
             gap: 24px;
-            height: 100%; /* Ensure it fills the parent */
+            height: 100%;
         }
         
         @keyframes fadeIn {
@@ -544,14 +546,14 @@
             margin-bottom: 1em;
         }
         .message ul, .message ol {
-            padding-left: 1.5em; /* MODIFIED: Adjusted padding for better alignment */
+            padding-left: 1.5em;
         }
         .message pre {
             background-color: #1e1e1e; color: #d4d4d4; padding: 16px;
-            border-radius: 8px; /* MODIFIED: overflow-x removed */ position: relative;
+            border-radius: 8px; position: relative;
             margin: 1em 0;
-            white-space: pre-wrap; /* ADDED: For wrapping text in code blocks */
-            word-wrap: break-word; /* ADDED: For breaking long words */
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         .message code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; font-size: 14px; }
         .copy-code-button {
@@ -683,7 +685,7 @@
             display: flex;
             justify-content: center;
             height: 44px; /* Reserve space to prevent layout shift */
-            margin-bottom: 8px; /* ADDED: Space between button and input */
+            margin-bottom: 8px;
         }
 
         #regenerateButton {
@@ -794,6 +796,15 @@
             .chat-input-area { padding: 8px 16px 12px 16px; }
             #chatOutput { padding: 16px; }
             .header-right { gap: 4px; }
+
+            /* ADDED: Make action buttons always visible on mobile */
+            .message-actions {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .delete-chat-btn {
+                opacity: 0.7;
+            }
         }
     </style>
 </head>
@@ -1118,11 +1129,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderChatWindow = (messages) => {
         const container = document.createElement('div');
         container.className = 'chat-content-container';
-        messages.forEach((msg) => appendMessage(msg.role, msg.parts[0].text, container));
         chatOutput.innerHTML = '';
         chatOutput.appendChild(container);
+        messages.forEach((msg) => {
+            const messageWrapper = appendMessage(msg.role, msg.parts[0].text, container);
+            // Add action buttons to messages loaded from history
+            if (msg.role === 'model') {
+                addActionsToModelMessage(messageWrapper);
+            }
+        });
+        updateActionButtons(); // This will add the edit button to the last user message
         chatOutput.scrollTop = chatOutput.scrollHeight;
-        updateActionButtons();
     };
     
     const loadChat = (chatId) => {
@@ -1133,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderChatWindow(chat.messages);
             renderHistoryList();
             setLoading(false);
-            if(window.innerWidth <= 1024) {
+            if(window.innerWidth <= 768) {
                 appContainer.classList.add('sidebar-collapsed');
             }
         }
@@ -1186,8 +1203,10 @@ document.addEventListener('DOMContentLoaded', () => {
             chat = chats.find(c => c.id === currentChatId);
         }
 
-        const historyForAPI = buildHistoryWithPresets([...chat.messages]);
+        // The entire conversation history is already being sent with each new prompt.
+        // This ensures the AI has the full context of the current chat.
         chat.messages.push({ role: 'user', parts: [{ text: prompt }] });
+        const historyForAPI = buildHistoryWithPresets([...chat.messages]);
         saveChats(chats);
         
         appendMessage('user', prompt, chatContentContainer);
@@ -1195,17 +1214,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (isNewChat) renderHistoryList();
         
-        await streamResponse(prompt, loadingMsgWrapper, false, historyForAPI);
+        await streamResponse(prompt, loadingMsgWrapper, historyForAPI);
     };
     
-    const streamResponse = async (prompt, messageWrapperElement, historyOverride = null) => {
+    const streamResponse = async (prompt, messageWrapperElement, historyForAPI) => {
         setLoading(true);
         updateActionButtons();
         abortController = new AbortController();
         const messageElement = messageWrapperElement.querySelector('.message');
         
-        const historyForAPI = historyOverride || buildHistoryWithPresets([]);
-
         const isStreamingEnabled = getStreamingState();
 
         try {
@@ -1233,11 +1250,17 @@ document.addEventListener('DOMContentLoaded', () => {
             let chat = chats.find(c => c.id === currentChatId);
             const modelMessage = { role: 'model', parts: [{ text: fullText }] };
             
+            // Remove the temporary 'loading' message and add the final one
+            const lastMessage = chat.messages[chat.messages.length -1];
+            if (lastMessage && lastMessage.role === 'model' && lastMessage.parts[0].text === 'loading') {
+                chat.messages.pop();
+            }
             chat.messages.push(modelMessage);
 
             saveChats(chats);
             
-            addEditButtonToLastUserMessage();
+            addActionsToModelMessage(messageWrapperElement);
+            updateActionButtons();
 
         } catch (error) {
             if (error.name === 'AbortError') {
@@ -1303,7 +1326,14 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         
-        if (sender === 'model' && text !== 'loading') {
+        if (sender === 'model' && text === 'loading') {
+            let chats = getChats();
+            let chat = chats.find(c => c.id === currentChatId);
+            if (chat) {
+                chat.messages.push({ role: 'model', parts: [{ text: 'loading' }] });
+                saveChats(chats);
+            }
+        } else if (sender === 'model') {
              addCopyButtonsToCodeBlocks(messageWrapper);
         }
         
@@ -1351,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateActionButtons = () => {
         const chats = getChats();
         const chat = chats.find(c => c.id === currentChatId);
-        const canRegenerate = chat && chat.messages.length > 0 && chat.messages[chat.messages.length - 1].role === 'model' && !isEditing;
+        const canRegenerate = chat && chat.messages.length > 0 && chat.messages.at(-1).role === 'model' && !isEditing;
         regenerateButton.classList.toggle('visible', canRegenerate);
         
         document.querySelectorAll('.edit-button-wrapper').forEach(btn => btn.remove());
@@ -1360,6 +1390,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
+    const addActionsToModelMessage = (messageWrapper) => {
+        if (messageWrapper.querySelector('.message-actions')) return;
+
+        const actionWrapper = document.createElement('div');
+        actionWrapper.className = 'message-actions';
+        
+        const copyButton = document.createElement('button');
+        copyButton.className = 'action-button copy-message-button';
+        copyButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>复制</span>
+        `;
+        copyButton.onclick = () => {
+            const messageText = messageWrapper.querySelector('.message').innerText;
+            navigator.clipboard.writeText(messageText).then(() => {
+                const span = copyButton.querySelector('span');
+                span.textContent = '已复制!';
+                setTimeout(() => { span.textContent = '复制'; }, 2000);
+            });
+        };
+        
+        actionWrapper.appendChild(copyButton);
+        messageWrapper.appendChild(actionWrapper);
+    };
+
     const addEditButtonToLastUserMessage = () => {
         const messageWrappers = document.querySelectorAll('.message-wrapper.user');
         if (messageWrappers.length === 0) return;
@@ -1373,6 +1428,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editButtonWrapper.innerHTML = `
             <button class="action-button edit-button">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
+                <span>编辑</span>
             </button>
         `;
         
@@ -1390,7 +1446,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const originalHTML = messageDiv.innerHTML;
         const chats = getChats();
         const chat = chats.find(c => c.id === currentChatId);
-        const originalText = chat.messages[chat.messages.length - 2].parts[0].text;
+        const messageIndex = Array.from(messageWrapper.parentElement.children).indexOf(messageWrapper);
+        const originalText = chat.messages[messageIndex].parts[0].text;
 
         messageDiv.innerHTML = ''; // Clear existing content
         const editTextArea = document.createElement('textarea');
@@ -1433,26 +1490,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newText && newText !== originalText) {
                 let currentChats = getChats();
                 let currentChat = currentChats.find(c => c.id === currentChatId);
-                // Replace last user message, remove last model message
-                currentChat.messages.splice(-2, 2, { role: 'user', parts: [{ text: newText }] });
+                
+                // Remove all subsequent messages and update the user's message
+                currentChat.messages.splice(messageIndex, Infinity, { role: 'user', parts: [{ text: newText }] });
                 saveChats(currentChats);
 
                 // Update DOM
-                messageWrapper.nextElementSibling?.remove(); // Remove old model response
+                while(messageWrapper.nextSibling) {
+                    messageWrapper.nextSibling.remove();
+                }
                 messageDiv.innerHTML = marked.parse(newText);
                 messageDiv.classList.remove('is-editing');
                 actionWrapper.remove();
                 
                 const container = document.querySelector('.chat-content-container');
                 const loadingMsgWrapper = appendMessage('model', 'loading', container);
-                await streamResponse(newText, loadingMsgWrapper, currentChat.messages.slice(0, -1));
+                await streamResponse(newText, loadingMsgWrapper, currentChat.messages);
 
             } else {
                 cleanupEdit();
             }
             isEditing = false;
             setLoading(false);
-            updateActionButtons();
         });
 
         actionWrapper.querySelector('.cancel-edit-button').addEventListener('click', cleanupEdit);
@@ -1463,16 +1522,19 @@ document.addEventListener('DOMContentLoaded', () => {
         let chat = chats.find(c => c.id === currentChatId);
         if (!chat || chat.messages.length < 2) return;
 
-        chat.messages.pop();
+        // Remove last model response
+        chat.messages.pop(); 
         saveChats(chats);
-        document.querySelector('.message-wrapper.model:last-of-type')?.remove();
         
-        const lastUserMessage = chat.messages[chat.messages.length - 1];
-        const prompt = lastUserMessage.parts[0].text;
+        const lastModelMessageElement = document.querySelector('.message-wrapper.model:last-of-type');
+        if (lastModelMessageElement) lastModelMessageElement.remove();
+        
+        const historyForAPI = buildHistoryWithPresets([...chat.messages]);
+        const lastUserPrompt = chat.messages.at(-1).parts[0].text;
         
         const container = document.querySelector('.chat-content-container');
         const loadingMsgWrapper = appendMessage('model', 'loading', container);
-        await streamResponse(prompt, loadingMsgWrapper, chat.messages.slice(0, -1));
+        await streamResponse(lastUserPrompt, loadingMsgWrapper, historyForAPI);
     };
 
 
@@ -1560,7 +1622,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setInitialSidebarState = () => {
-        appContainer.classList.add('sidebar-collapsed');
+        // On mobile, always start with the sidebar collapsed.
+        if (window.innerWidth <= 768) {
+            appContainer.classList.add('sidebar-collapsed');
+        } else {
+            appContainer.classList.remove('sidebar-collapsed');
+        }
     };
 
 
@@ -1575,9 +1642,10 @@ document.addEventListener('DOMContentLoaded', () => {
     newChatButton.addEventListener('click', createNewChat);
     authButton.addEventListener('click', handleAuth);
     
+    // The send button doubles as a stop button when generation is in progress.
     sendButton.addEventListener('click', () => {
         if (sendButton.classList.contains('is-loading')) {
-            if (abortController) abortController.abort();
+            if (abortController) abortController.abort(); // This stops the generation
         } else if(!userInput.disabled) {
             handleSend();
         }
@@ -1656,8 +1724,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModelSelector();
     setupPresetsModal();
     setupPreferencesModal();
-    setInitialSidebarState();
-    createNewChat();
+    createNewChat(); // This now calls setInitialSidebarState
 
 });
 </script>
