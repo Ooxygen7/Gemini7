@@ -1280,14 +1280,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (!response.ok) {
-                let errorJson;
-                try {
-                    errorJson = await response.json();
-                } catch (e) {
-                    const errorText = await response.text();
-                    throw new Error(`服务器错误 ${response.status}: ${errorText}`);
-                }
-                throw new Error(`服务器错误 ${response.status}: ${errorJson.error || '未知错误'}`);
+                 const errorText = await response.text();
+                 throw new Error(`服务器错误 ${response.status}: ${errorText}`);
             }
             
             let fullText;
@@ -1329,10 +1323,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const statusMatch = errorMessage.match(/服务器错误 (\d+)/);
                 const statusCode = statusMatch ? statusMatch[1] : 'N/A';
                 
-                const cleanMessage = errorMessage.replace(/服务器错误 \d+: /, '');
-
                 displayMessage += `<b>错误码:</b> ${statusCode}<br>`;
-                displayMessage += `<b>原因:</b> ${cleanMessage}`;
+                
+                if (errorMessage.includes('All API keys failed')) {
+                    displayMessage += '<b>原因:</b> 所有可用的API密钥均尝试失败。请检查您的Vercel环境变量配置。';
+                } else if (errorMessage.includes('Invalid API Key')) {
+                     displayMessage += '<b>原因:</b> 当前使用的API密钥无效。';
+                } else {
+                    const cleanMessage = errorMessage.replace(/服务器错误 \d+: /, '');
+                    displayMessage += `<b>详情:</b> ${cleanMessage}`;
+                }
                 
                 updateMessage(messageWrapperElement, displayMessage);
             }
@@ -1421,8 +1421,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateMessage = (messageWrapperElement, newContent) => {
         const messageElement = messageWrapperElement.querySelector('.message');
         if (messageElement) {
-            messageElement.innerHTML = newContent;
-            if(!newContent.includes("<b>")) {
+            messageElement.innerHTML = newContent; // Use innerHTML directly for formatted error
+            if(!newContent.includes("<b>")) { // Avoid re-parsing markdown for error messages
                addCopyButtonsToCodeBlocks(messageElement);
             }
         }
