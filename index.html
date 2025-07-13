@@ -491,26 +491,9 @@
                 transform: translateY(0);
             }
         }
-        
-        @keyframes fadeInWord {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
 
         .message.fade-in-whole {
             animation: floatIn 0.5s var(--transition-easing) forwards;
-        }
-
-        .message .word-fade-in {
-            display: inline-block;
-            opacity: 0;
-            animation: fadeInWord 0.3s ease forwards;
         }
 
         @keyframes thinking-gradient {
@@ -888,7 +871,7 @@
                 <span class="icon-placeholder">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </span>
-                <span>New</span>
+                <span>New chat</span>
             </button>
         </div>
         
@@ -1386,72 +1369,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
-        let buffer = '';
-        let isFirstChunk = true;
-        let animationDelay = 0;
-
+        
         element.classList.remove('thinking-animation');
-        element.innerHTML = ''; // Clear "Thinking..."
-
-        const renderer = new marked.Renderer();
-        const originalCodeRenderer = renderer.code;
-        renderer.code = function(code, language, isEscaped) {
-            // Temporarily disable word splitting for code blocks
-            this.inCodeBlock = true;
-            const result = originalCodeRenderer.call(this, code, language, isEscaped);
-            this.inCodeBlock = false;
-            return result;
-        };
-
-        const processBuffer = (force = false) => {
-            if (this.inCodeBlock) {
-                 // For code blocks, append directly without splitting
-                 element.innerHTML = marked.parse(fullText + buffer, { renderer });
-                 return;
-            }
-
-            // Split by space or punctuation for better word grouping
-            const parts = buffer.split(/(\s+|[.,;!?，。；！？])/);
-            buffer = force ? '' : (parts.length > 1 ? parts.pop() : '');
-            const wordsToRender = force ? parts : parts.slice(0, -1);
-
-            wordsToRender.forEach(word => {
-                if (word.trim().length > 0) {
-                    const span = document.createElement('span');
-                    span.className = 'word-fade-in';
-                    span.innerHTML = marked.parseInline(word);
-                    span.style.animationDelay = `${animationDelay}s`;
-                    animationDelay += 0.02; // Stagger animation
-                    element.appendChild(span);
-                } else {
-                    // Append whitespace directly
-                    element.appendChild(document.createTextNode(word));
-                }
-            });
-             chatOutput.scrollTop = chatOutput.scrollHeight;
-        };
+        element.innerHTML = ''; 
 
         while (true) {
             try {
                 const { done, value } = await reader.read();
-                if (done) {
-                    buffer += decoder.decode(new Uint8Array(0), { stream: false });
-                    fullText += buffer;
-                    processBuffer(true); // Process any remaining buffer
-                    break;
-                }
+                if (done) break;
 
-                buffer += decoder.decode(value, { stream: true });
-                fullText += buffer.substring(0, buffer.lastIndexOf(' ') + 1);
-                processBuffer();
-
+                fullText += decoder.decode(value, { stream: true });
+                // Render the full text with a blinking cursor at the end
+                element.innerHTML = marked.parse(fullText + '▋'); 
+                chatOutput.scrollTop = chatOutput.scrollHeight;
             } catch (error) {
                 if (error.name === 'AbortError') return null;
                 throw error;
             }
         }
-        
-        element.innerHTML = marked.parse(fullText); // Final render with full markdown
+        // Final render without the cursor
+        element.innerHTML = marked.parse(fullText);
         addCopyButtonsToCodeBlocks(element);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         return fullText;
@@ -1932,4 +1869,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
