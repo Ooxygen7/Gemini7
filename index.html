@@ -341,7 +341,6 @@
         .chat-area {
             width: 100%;
             height: 100%;
-            /* MODIFIED: Changed to solid background for new gradient transition */
             background-color: var(--bg-content);
             display: grid;
             grid-template-rows: var(--header-height) 1fr auto;
@@ -356,7 +355,7 @@
             align-items: center;
             padding: 0 24px;
             flex-shrink: 0;
-            background: transparent; /* Ensure header is transparent */
+            background: transparent;
         }
 
         .header-left, .header-right {
@@ -371,7 +370,7 @@
             gap: 8px;
         }
         .header-title-group h1 {
-            font-size: 1.375rem; /* 22px */
+            font-size: 1.375rem;
             font-weight: 500;
             color: var(--text-primary);
         }
@@ -453,7 +452,6 @@
             top: 0;
             background: linear-gradient(to bottom, var(--bg-content), transparent);
         }
-        /* MODIFIED: Added bottom fade for seamless transition to input area */
         .chat-output-wrapper::after {
             content: '';
             position: absolute;
@@ -522,7 +520,9 @@
             transform: translateY(0);
         }
 
-
+        .chat-content-container > .message-wrapper:last-of-type {
+            margin-bottom: 45vh;
+        }
 
         .welcome-container {
             display: flex;
@@ -537,7 +537,7 @@
             animation: floatIn 0.7s var(--transition-easing) forwards;
         }
         .welcome-message h2 {
-            font-size: 3.5rem; /* 56px */
+            font-size: 3.5rem;
             font-weight: 500;
             color: #3c4043;
         }
@@ -643,7 +643,7 @@
             width: 100%;
             max-width: 800px;
             position: relative;
-            margin-top: 12px; /* Add margin to separate from gradient */
+            margin-top: 12px;
         }
         .chat-input {
             display: flex;
@@ -787,6 +787,47 @@
         .options-list { display: flex; flex-direction: column; gap: 16px; }
         .option-item { display: flex; justify-content: space-between; align-items: center; }
         .option-item p.jieshao { color: var(--text-secondary); font-size: 0.8rem; }
+        
+        #temperature-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            flex-grow: 1;
+            max-width: 150px;
+            height: 6px;
+            background: var(--bg-hover-dark);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            transition: all var(--transition-speed-fast) ease;
+        }
+        #temperature-slider:hover {
+            opacity: 0.9;
+        }
+        #temperature-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--text-link);
+            border-radius: 50%;
+            border: 3px solid var(--bg-content);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            margin-top: -6px;
+            transition: transform var(--transition-speed-fast) ease;
+        }
+        #temperature-slider:hover::-webkit-slider-thumb,
+        #temperature-slider:focus::-webkit-slider-thumb {
+             transform: scale(1.1);
+        }
+        #temperature-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: var(--text-link);
+            border-radius: 50%;
+            border: 3px solid var(--bg-content);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
 
         /* --- 8. Responsiveness --- */
         @media (max-width: 768px) {
@@ -948,6 +989,13 @@
                     </div>
                     <label class="switch"><input type="checkbox" id="night-mode-toggle"><span class="slider"></span></label>
                 </div>
+                <div class="option-item">
+                    <div>
+                        <label for="temperature-slider">Temperature: <span id="temperature-value">1.0</span></label>
+                        <p class="jieshao">控制输出的随机性</p>
+                    </div>
+                    <input type="range" id="temperature-slider" min="0" max="2" step="0.1" value="1">
+                </div>
             </div>
         </div>
     </div>
@@ -982,6 +1030,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ultraBadge = document.getElementById('ultra-badge');
     const customModalOverlay = document.getElementById('custom-modal-overlay');
     const modalCloseCustomBtn = document.getElementById('modal-close-custom');
+    const temperatureSlider = document.getElementById('temperature-slider');
+    const temperatureValue = document.getElementById('temperature-value');
     
     // --- State & Config ---
     const API_URL = '/api/askGemini';
@@ -1060,6 +1110,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveCustomPreset = (settings) => localStorage.setItem('geminiSnowCustomPreset_v6', JSON.stringify(settings));
     const getStreamingState = () => localStorage.getItem('geminiSnowStreaming_v6') === null ? true : JSON.parse(localStorage.getItem('geminiSnowStreaming_v6'));
     const saveStreamingState = (isEnabled) => localStorage.setItem('geminiSnowStreaming_v6', JSON.stringify(isEnabled));
+    const getTemperature = () => localStorage.getItem('geminiSnowTemperature_v6') || '1';
+    const saveTemperature = (value) => localStorage.setItem('geminiSnowTemperature_v6', value);
+
 
     const deleteChat = async (chatIdToDelete) => {
         let chats = getChats();
@@ -1210,15 +1263,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageElement = messageWrapperElement.querySelector('.message');
         
         const isStreamingEnabled = getStreamingState();
+        const temperature = getTemperature();
 
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, history: historyForAPI, model: currentModel, stream: isStreamingEnabled }),
+                body: JSON.stringify({ 
+                    prompt, 
+                    history: historyForAPI, 
+                    model: currentModel, 
+                    stream: isStreamingEnabled,
+                    temperature: temperature 
+                }),
                 signal: abortController.signal
             });
-            if (!response.ok) throw new Error(`服务器错误: ${response.status}`);
+            
+            if (!response.ok) {
+                 const errorText = await response.text();
+                 throw new Error(`服务器错误 ${response.status}: ${errorText}`);
+            }
             
             let fullText;
             if (isStreamingEnabled && response.body) {
@@ -1253,7 +1317,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateMessage(messageWrapperElement, '已停止生成。');
             } else {
                 console.error("Fetch error:", error);
-                updateMessage(messageWrapperElement, `<b>抱歉，出错了。</b><br>${error.message}`);
+                let displayMessage = '<b>抱歉，出错了。</b><br>';
+                const errorMessage = error.message || '';
+
+                const statusMatch = errorMessage.match(/服务器错误 (\d+)/);
+                const statusCode = statusMatch ? statusMatch[1] : 'N/A';
+                
+                displayMessage += `<b>错误码:</b> ${statusCode}<br>`;
+                
+                if (errorMessage.includes('All API keys failed')) {
+                    displayMessage += '<b>原因:</b> 所有可用的API密钥均尝试失败。请检查您的Vercel环境变量配置。';
+                } else if (errorMessage.includes('Invalid API Key')) {
+                     displayMessage += '<b>原因:</b> 当前使用的API密钥无效。';
+                } else {
+                    const cleanMessage = errorMessage.replace(/服务器错误 \d+: /, '');
+                    displayMessage += `<b>详情:</b> ${cleanMessage}`;
+                }
+                
+                updateMessage(messageWrapperElement, displayMessage);
             }
             messageElement.classList.remove('thinking-animation');
         } finally {
@@ -1340,8 +1421,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateMessage = (messageWrapperElement, newContent) => {
         const messageElement = messageWrapperElement.querySelector('.message');
         if (messageElement) {
-            messageElement.innerHTML = marked.parse(newContent);
-            if(newContent !== 'loading') addCopyButtonsToCodeBlocks(messageElement);
+            messageElement.innerHTML = newContent; // Use innerHTML directly for formatted error
+            if(!newContent.includes("<b>")) { // Avoid re-parsing markdown for error messages
+               addCopyButtonsToCodeBlocks(messageElement);
+            }
         }
     };
 
@@ -1642,10 +1725,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const setupPreferencesModal = () => {
         streamingToggle.checked = getStreamingState();
         streamingToggle.addEventListener('change', () => saveStreamingState(streamingToggle.checked));
+
+        const currentTemp = getTemperature();
+        temperatureSlider.value = currentTemp;
+        temperatureValue.textContent = parseFloat(currentTemp).toFixed(1);
+        temperatureSlider.addEventListener('input', (e) => {
+            const newTemp = e.target.value;
+            temperatureValue.textContent = parseFloat(newTemp).toFixed(1);
+        });
+        temperatureSlider.addEventListener('change', (e) => {
+            saveTemperature(e.target.value);
+        });
     };
 
     const setInitialSidebarState = () => {
-        // MODIFIED: Always start with sidebar collapsed
         appContainer.classList.add('sidebar-collapsed');
     };
 
