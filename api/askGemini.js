@@ -12,7 +12,7 @@ export default async function handler(req) {
   }
 
   try {
-    // 从请求中获取 stream 标志
+    // 从请求中获取 stream 标志!
     const { prompt, history, model: selectedModel, stream: useStream } = await req.json();
 
     if (!prompt) {
