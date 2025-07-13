@@ -1,7 +1,6 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // --- API Key Polling Logic ---
-// 1. Read all potential API keys from environment variables.
 const apiKeys = [
   process.env.GEMINI_API_KEY_1,
   process.env.GEMINI_API_KEY_2,
@@ -12,9 +11,8 @@ const apiKeys = [
   process.env.GEMINI_API_KEY_7,
   process.env.GEMINI_API_KEY_8,
   process.env.GEMINI_API_KEY_9,
-  process.env.GEMINI_API_KEY_10
-  // Add more keys here if you have them, e.g., process.env.GEMINI_API_KEY_4
-].filter(key => key); // 2. Filter out any keys that are not set.
+  process.env.GEMINI_API_KEY_10,
+].filter(key => key); 
 
 if (apiKeys.length === 0) {
   throw new Error("No GEMINI_API_KEY environment variables found. Please set at least one, e.g., GEMINI_API_KEY_1.");
@@ -33,10 +31,20 @@ export const config = {
  * @param {object} requestData The data from the original request.
  * @returns {Promise<Response>} A promise that resolves to the API response.
  */
-async function generateResponse(apiKey, { prompt, history, model: selectedModel, stream: useStream }) {
+async function generateResponse(apiKey, { prompt, history, model: selectedModel, stream: useStream, temperature }) {
     const genAI = new GoogleGenerativeAI(apiKey);
+
+    // MODIFIED: Create generationConfig object with temperature, default is now 1.
+    const generationConfig = {
+        temperature: temperature !== undefined ? parseFloat(temperature) : 1, // Default to 1 if not provided
+    };
+
     const modelToUse = selectedModel || "gemini-2.5-flash-lite-preview-06-17";
-    const model = genAI.getGenerativeModel({ model: modelToUse });
+    
+    const model = genAI.getGenerativeModel({ 
+        model: modelToUse,
+        generationConfig
+    });
 
     const chat = model.startChat({
         history: history || [],
@@ -81,7 +89,6 @@ export default async function handler(req) {
   const startIndex = currentApiKeyIndex;
   let lastError = null;
 
-  // Loop through API keys starting from the current one, allowing for retries.
   for (let i = 0; i < apiKeys.length; i++) {
     const keyIndex = (startIndex + i) % apiKeys.length;
     const apiKey = apiKeys[keyIndex];
@@ -91,18 +98,15 @@ export default async function handler(req) {
     try {
       const response = await generateResponse(apiKey, requestData);
       
-      // If successful, update the index for the next request and return the response.
       currentApiKeyIndex = (keyIndex + 1) % apiKeys.length;
       return response;
 
     } catch (error) {
       console.error(`Error with API Key #${keyIndex + 1}:`, error.message);
       lastError = error;
-      // The loop will automatically continue to the next key.
     }
   }
 
-  // If all keys have failed
   console.error('All API keys failed.', lastError);
   return new Response(`Internal Server Error: All API keys failed. Last error: ${lastError.message}`, { status: 500 });
 }
