@@ -1,11 +1,16 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createClient } from '@vercel/kv';
+import { createClient } from 'redis';
+import { NextResponse } from 'next/server';
 
-// --- Rate Limiting Setup ---
-const kv = createClient({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-});
+const redis = await createClient().connect();
+
+export const POST = async () => {
+  // Fetch data from Redis
+  const result = await redis.get("item");
+  
+  // Return the result in the response
+  return new NextResponse(JSON.stringify({ result }), { status: 200 });
+};
 
 // Define daily limits per model for a single IP address
 const DAILY_LIMITS = {
