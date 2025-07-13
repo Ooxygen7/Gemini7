@@ -6,222 +6,27 @@
     <title>Geminisnow - 智能AI对话平台</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0a0a;
-            color: #ffffff;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        /* 星空背景 */
-        .stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .star {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: #ffffff;
-            border-radius: 50%;
-            animation: twinkle 3s infinite;
-        }
-
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
-        }
-        
-        /* 扫描射线效果 */
-        .scan-beam {
-            position: fixed;
-            width: 3px;
-            height: 200vh;
-            background: linear-gradient(to bottom, 
-                transparent 0%, 
-                rgba(255,255,255,0.3) 20%, 
-                rgba(255,255,255,0.6) 50%, 
-                rgba(255,255,255,0.3) 80%, 
-                transparent 100%);
-            pointer-events: none;
-            z-index: 2;
-            transform-origin: top left;
-            opacity: 0.7;
-        }
-
-        .scan-beam.top-left {
-            top: 0;
-            left: 0;
-            animation: scanFromTopLeft 8s infinite linear;
-        }
-
-        .scan-beam.top-right {
-            top: 0;
-            right: 0;
-            animation: scanFromTopRight 8s infinite linear;
-            animation-delay: 4s;
-        }
-
-        @keyframes scanFromTopLeft {
-            0% { transform: rotate(0deg); opacity: 0; }
-            10% { opacity: 0.7; }
-            45% { transform: rotate(90deg); opacity: 0.7; }
-            50% { opacity: 0; }
-            60% { opacity: 0.7; }
-            95% { transform: rotate(180deg); opacity: 0.7; }
-            100% { transform: rotate(180deg); opacity: 0; }
-        }
-
-        @keyframes scanFromTopRight {
-            0% { transform: rotate(0deg); opacity: 0; }
-            10% { opacity: 0.7; }
-            45% { transform: rotate(-90deg); opacity: 0.7; }
-            50% { opacity: 0; }
-            60% { opacity: 0.7; }
-            95% { transform: rotate(-180deg); opacity: 0.7; }
-            100% { transform: rotate(-180deg); opacity: 0; }
-        }
-
-        /* 主界面 */
-        .main-interface {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            position: relative;
-            z-index: 3;
-        }
-
-        .content-container {
-            background: rgba(26, 26, 26, 0.9);
-            border: 1px solid #404040;
-            border-radius: 24px;
-            padding: 32px;
-            width: 100%;
-            max-width: 440px;
-            backdrop-filter: blur(20px);
-            position: relative;
-            animation: slideIn 0.8s ease-out;
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        .content-header {
-            text-align: center;
-            margin-bottom: 24px;
-            flex-shrink: 0;
-        }
-
-        .content-header h1 {
-            font-size: 32px;
-            font-weight: 300;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #ffffff;
-            font-size: 14px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #404040;
-            border-radius: 12px;
-            font-size: 16px;
-            background: rgba(42, 42, 42, 0.5);
-            color: #ffffff;
-            transition: all 0.3s ease;
-            outline: none;
-        }
-
-        .form-control:focus {
-            border-color: #606060;
-            background: rgba(42, 42, 42, 0.8);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-        }
-
-        .form-control::placeholder {
-            color: #808080;
-        }
-
-        .btn-auth {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-            border: 2px solid #404040;
-            border-radius: 12px;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 4px;
-        }
-
-        .btn-auth:hover {
-            transform: translateY(-2px);
-            border-color: #606060;
-            box-shadow: 0 10px 30px rgba(255,255,255,0.1);
-        }
-        
-        .auth-switch {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .auth-switch a {
-            color: #808080;
-            text-decoration: none;
-            transition: color 0.3s ease;
-            cursor: pointer;
-        }
-
-        .auth-switch a:hover {
-            color: #ffffff;
-        }
-
-        @media (max-width: 768px) {
-            .content-container {
-                padding: 24px 20px;
-                margin: 10px;
-                max-height: 80vh;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #ffffff; min-height: 100vh; overflow-x: hidden; position: relative; }
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .star { position: absolute; width: 2px; height: 2px; background: #ffffff; border-radius: 50%; animation: twinkle 3s infinite; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        .main-interface { display: flex; align-items: center; justify-content: center; min-height: 100vh; position: relative; z-index: 3; }
+        .content-container { background: rgba(26, 26, 26, 0.9); border: 1px solid #404040; border-radius: 24px; padding: 32px; width: 100%; max-width: 440px; backdrop-filter: blur(20px); position: relative; animation: slideIn 0.8s ease-out; }
+        @keyframes slideIn { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .content-header { text-align: center; margin-bottom: 24px; flex-shrink: 0; }
+        .content-header h1 { font-size: 32px; font-weight: 300; color: #ffffff; margin-bottom: 8px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #ffffff; font-size: 14px; }
+        .form-control { width: 100%; padding: 12px 16px; border: 2px solid #404040; border-radius: 12px; font-size: 16px; background: rgba(42, 42, 42, 0.5); color: #ffffff; transition: all 0.3s ease; outline: none; }
+        .form-control:focus { border-color: #606060; background: rgba(42, 42, 42, 0.8); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1); }
+        .form-control::placeholder { color: #808080; }
+        .btn-auth { width: 100%; padding: 14px; background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%); border: 2px solid #404040; border-radius: 12px; color: #ffffff; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; margin-top: 4px; }
+        .btn-auth:hover { transform: translateY(-2px); border-color: #606060; box-shadow: 0 10px 30px rgba(255,255,255,0.1); }
+        .auth-switch { text-align: center; margin-top: 20px; }
+        .auth-switch a { color: #808080; text-decoration: none; transition: color 0.3s ease; cursor: pointer; }
+        .auth-switch a:hover { color: #ffffff; }
+        @media (max-width: 768px) { .content-container { padding: 24px 20px; margin: 10px; max-height: 80vh; } }
     </style>
 </head>
 <body>
@@ -265,10 +70,8 @@
     <script>
         const { createClient } = supabase;
 
-        // 已填入您提供的 Supabase 项目信息
         const SUPABASE_URL = 'https://jvvffapbwyyuuhhxdjvu.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2dmZmYXBid3l5dXVoaHhkanZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MTkzMDksImV4cCI6MjA2Nzk5NTMwOX0.4YZls6VKhZBLQASnM6V6fyKn31usxc33Gs1oSSzJcWU';
-
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const loginForm = document.getElementById('login-form');
@@ -278,7 +81,6 @@
         const goToRegisterBtn = document.getElementById('go-to-register');
         const goToLoginBtn = document.getElementById('go-to-login');
 
-        // 切换视图
         goToRegisterBtn.addEventListener('click', (e) => {
             e.preventDefault();
             loginView.style.display = 'none';
@@ -291,45 +93,34 @@
             loginView.style.display = 'block';
         });
 
-        // 注册逻辑
+        // 注册逻辑 (已简化)
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('register-email').value;
             const password = document.getElementById('register-password').value;
 
-            // 1. 注册用户
-            const { data: authData, error: authError } = await _supabase.auth.signUp({
+            // 只需调用 signUp 即可，数据库触发器会自动处理 profiles 表
+            const { error } = await _supabase.auth.signUp({
                 email: email,
                 password: password,
             });
 
-            if (authError) {
-                return alert('注册失败: ' + authError.message);
+            if (error) {
+                alert('注册失败: ' + error.message);
+            } else {
+                alert('注册成功！请登录。');
+                registerView.style.display = 'none';
+                loginView.style.display = 'block';
             }
-
-            // 2. 为新用户在 profiles 表中创建记录
-            //    这会触发我们在 Supabase SQL 中设置的默认值
-            const { error: profileError } = await _supabase
-                .from('profiles')
-                .insert({ id: authData.user.id });
-
-            if (profileError) {
-                // 即使这里失败，用户也已注册，可以引导他们重试或联系支持
-                return alert('创建用户档案失败: ' + profileError.message);
-            }
-            
-            alert('注册成功！请登录。');
-            registerView.style.display = 'none';
-            loginView.style.display = 'block';
         });
 
-        // 登录逻辑
+        // 登录逻辑 (保持不变)
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
 
-            const { data, error } = await _supabase.auth.signInWithPassword({
+            const { error } = await _supabase.auth.signInWithPassword({
                 email: email,
                 password: password,
             });
@@ -337,12 +128,10 @@
             if (error) {
                 alert('登录失败: ' + error.message);
             } else {
-                // 登录成功，跳转到主聊天页面
                 window.location.href = '/index.html';
             }
         });
 
-        // 背景星星效果
         function createStars() {
             const starsContainer = document.querySelector('.stars');
             if (!starsContainer) return;
