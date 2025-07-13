@@ -1,22 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createClient } from 'redis';
-import { NextResponse } from 'next/server';
-
-const redis = await createClient().connect();
-
-export const POST = async () => {
-  // Fetch data from Redis
-  const result = await redis.get("item");
-  
-  // Return the result in the response
-  return new NextResponse(JSON.stringify({ result }), { status: 200 });
-};
-
-// Define daily limits per model for a single IP address
-const DAILY_LIMITS = {
-  "gemini-2.5-pro": 1,
-  "gemini-2.5-flash": 2,
-};
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // --- API Key Polling Logic ---
 const apiKeys = [
@@ -33,7 +15,7 @@ const apiKeys = [
 ].filter(key => key); 
 
 if (apiKeys.length === 0) {
-  throw new Error("No GEMINI_API_KEY environment variables found.");
+  throw new Error("No GEMINI_API_KEY environment variables found. Please set at least one, e.g., GEMINI_API_KEY_1.");
 }
 
 let currentApiKeyIndex = 0;
@@ -45,35 +27,53 @@ export const config = {
 
 /**
  * Generates a response from the Gemini API using a specific API key.
+ * @param {string} apiKey The API key to use for this request.
+ * @param {object} requestData The data from the original request.
+ * @returns {Promise<Response>} A promise that resolves to the API response.
  */
 async function generateResponse(apiKey, { prompt, history, model: selectedModel, stream: useStream, temperature }) {
     const genAI = new GoogleGenerativeAI(apiKey);
+
+    // MODIFIED: Create generationConfig object with temperature, default is now 1.
     const generationConfig = {
-        temperature: temperature !== undefined ? parseFloat(temperature) : 1,
+        temperature: temperature !== undefined ? parseFloat(temperature) : 1, // Default to 1 if not provided
     };
+
+    const modelToUse = selectedModel || "gemini-2.5-flash-lite-preview-06-17";
+    
     const model = genAI.getGenerativeModel({ 
-        model: selectedModel,
+        model: modelToUse,
         generationConfig
     });
-    const chat = model.startChat({ history: history || [] });
+
+    const chat = model.startChat({
+        history: history || [],
+    });
 
     if (useStream) {
         const result = await chat.sendMessageStream(prompt);
         const stream = new ReadableStream({
             async start(controller) {
                 for await (const chunk of result.stream) {
-                    controller.enqueue(new TextEncoder().encode(chunk.text()));
+                    const chunkText = chunk.text();
+                    controller.enqueue(new TextEncoder().encode(chunkText));
                 }
                 controller.close();
             },
         });
-        return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+        return new Response(stream, {
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        });
     } else {
         const result = await chat.sendMessage(prompt);
-        const text = result.response.text();
-        return new Response(JSON.stringify({ text }), { headers: { 'Content-Type': 'application/json' } });
+        const response = result.response;
+        const text = response.text();
+        return new Response(JSON.stringify({ text }), {
+            headers: { 'Content-Type': 'application/json' },
+        });
     }
 }
+
 
 // --- Main Handler ---
 export default async function handler(req) {
@@ -85,48 +85,7 @@ export default async function handler(req) {
   if (!requestData.prompt) {
     return new Response('Bad Request: Missing prompt.', { status: 400 });
   }
-  
-  const modelToUse = requestData.model || "gemini-2.5-flash-lite-preview-06-17";
 
-  // --- IP Rate Limiting Logic ---
-  const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
-  const today = new Date().toISOString().split('T')[0];
-  const rateLimitKey = `rate-limit:${ip}:${modelToUse}:${today}`;
-  
-  try {
-    const usage = await kv.get(rateLimitKey) || 0;
-    const limit = DAILY_LIMITS[modelToUse] || DAILY_LIMITS.default;
-
-    if (usage >= limit) {
-      console.warn(`Rate limit exceeded for IP: ${ip} on model: ${modelToUse}`);
-      
-      const ttl = await kv.ttl(rateLimitKey);
-      const hours = Math.floor(ttl / 3600);
-      const minutes = Math.floor((ttl % 3600) / 60);
-      const resetTimeMessage = `将在 ${hours} 小时 ${minutes} 分钟后重置。`;
-
-      return new Response(JSON.stringify({ 
-          error: `您对 ${modelToUse} 模型的使用次数已达今日上限 (${limit}次)。${resetTimeMessage}` 
-      }), {
-          status: 429,
-          headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const newUsage = await kv.incr(rateLimitKey);
-    // If this was the first usage for the key, set the expiration
-    if (newUsage === 1) {
-        await kv.expire(rateLimitKey, 86400); // 86400 seconds = 24 hours
-    }
-
-  } catch (kvError) {
-      console.error("Vercel KV error:", kvError);
-      // If KV store fails, we proceed without rate limiting to not block users.
-  }
-  // --- End of IP Rate Limiting Logic ---
-
-
-  // --- API Key Polling & Retry Logic ---
   const startIndex = currentApiKeyIndex;
   let lastError = null;
 
@@ -137,9 +96,11 @@ export default async function handler(req) {
     console.log(`Attempting to use API Key #${keyIndex + 1}`);
 
     try {
-      const response = await generateResponse(apiKey, { ...requestData, model: modelToUse });
+      const response = await generateResponse(apiKey, requestData);
+      
       currentApiKeyIndex = (keyIndex + 1) % apiKeys.length;
       return response;
+
     } catch (error) {
       console.error(`Error with API Key #${keyIndex + 1}:`, error.message);
       lastError = error;
