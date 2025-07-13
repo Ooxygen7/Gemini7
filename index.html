@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geminisnow</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -71,21 +70,6 @@
             font-family: var(--font-family-sans);
             color: var(--text-primary);
             display: flex;
-        }
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            font-size: 1.2rem;
-            color: var(--text-primary);
         }
 
         button, input, textarea {
@@ -796,27 +780,77 @@
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--text-link); }
         input:checked + .slider:before { transform: translateX(20px); }
+
         .custom-preset-container { margin-top: 16px; }
         .custom-preset-toggle-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         #custom-preset-input { width: 100%; min-height: 100px; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); resize: vertical; }
         .options-list { display: flex; flex-direction: column; gap: 16px; }
         .option-item { display: flex; justify-content: space-between; align-items: center; }
         .option-item p.jieshao { color: var(--text-secondary); font-size: 0.8rem; }
-        #temperature-slider { -webkit-appearance: none; appearance: none; flex-grow: 1; max-width: 150px; height: 6px; background: var(--bg-hover-dark); border-radius: 3px; outline: none; cursor: pointer; transition: all var(--transition-speed-fast) ease; }
-        #temperature-slider:hover { opacity: 0.9; }
-        #temperature-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: var(--text-link); border-radius: 50%; border: 3px solid var(--bg-content); box-shadow: 0 1px 4px rgba(0,0,0,0.2); margin-top: -6px; transition: transform var(--transition-speed-fast) ease; }
-        #temperature-slider:hover::-webkit-slider-thumb, #temperature-slider:focus::-webkit-slider-thumb { transform: scale(1.1); }
-        #temperature-slider::-moz-range-thumb { width: 18px; height: 18px; background: var(--text-link); border-radius: 50%; border: 3px solid var(--bg-content); box-shadow: 0 1px 4px rgba(0,0,0,0.2); cursor: pointer; }
-        @media (max-width: 768px) { .chat-header { padding: 0 16px; } .header-title-group h1, #selected-model-display { font-size: 1.25rem; } .welcome-message h2 { font-size: 2.5rem; text-align: center; } .chat-input-area { padding: 8px 16px 12px 16px; } #chatOutput { padding: 16px; } .header-right { gap: 4px; } .message-actions { opacity: 1; transform: translateY(0); } .delete-chat-btn { opacity: 0.7; } }
+        
+        #temperature-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            flex-grow: 1;
+            max-width: 150px;
+            height: 6px;
+            background: var(--bg-hover-dark);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            transition: all var(--transition-speed-fast) ease;
+        }
+        #temperature-slider:hover {
+            opacity: 0.9;
+        }
+        #temperature-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--text-link);
+            border-radius: 50%;
+            border: 3px solid var(--bg-content);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            margin-top: -6px;
+            transition: transform var(--transition-speed-fast) ease;
+        }
+        #temperature-slider:hover::-webkit-slider-thumb,
+        #temperature-slider:focus::-webkit-slider-thumb {
+             transform: scale(1.1);
+        }
+        #temperature-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: var(--text-link);
+            border-radius: 50%;
+            border: 3px solid var(--bg-content);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+
+        /* --- 8. Responsiveness --- */
+        @media (max-width: 768px) {
+            .chat-header { padding: 0 16px; }
+            .header-title-group h1, #selected-model-display { font-size: 1.25rem; }
+            .welcome-message h2 { font-size: 2.5rem; text-align: center; }
+            .chat-input-area { padding: 8px 16px 12px 16px; }
+            #chatOutput { padding: 16px; }
+            .header-right { gap: 4px; }
+
+            .message-actions {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .delete-chat-btn {
+                opacity: 0.7;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay" class="loading-overlay">
-    <p>正在加载用户数据，请稍候...</p>
-</div>
-
-<div class="app-container" id="app-container" style="visibility: hidden;">
+<div class="app-container" id="app-container">
     <div id="sidebar-backdrop"></div>
     
     <aside id="sidebar">
@@ -902,6 +936,7 @@
         </main> 
     </div>
 
+    <!-- Modals -->
     <div id="custom-modal-overlay" class="modal-overlay">
         <div id="custom-modal" class="modal-content">
             <div class="modal-header">
@@ -964,20 +999,12 @@
             </div>
         </div>
     </div>
+
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-
-    // --- 1. INITIAL SETUP & CONFIGURATION ---
-
-    // Correctly initialize the Supabase client. This is the first critical step.
-    const SUPABASE_URL = 'https://jvvffapbwyyuuhhxdjvu.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2dmZmYXBid3l5dXVoaHhkanZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MTkzMDksImV4cCI6MjA2Nzk5NTMwOX0.4YZls6VKhZBLQASnM6V6fyKn31usxc33Gs1oSSzJcWU';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // Get all necessary DOM elements
-    const loadingOverlay = document.getElementById('loading-overlay');
+    // --- Element References ---
     const appContainer = document.getElementById('app-container');
     const menuToggleButton = document.getElementById('menu-toggle-btn');
     const sidebarBackdrop = document.getElementById('sidebar-backdrop');
@@ -1005,14 +1032,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCloseCustomBtn = document.getElementById('modal-close-custom');
     const temperatureSlider = document.getElementById('temperature-slider');
     const temperatureValue = document.getElementById('temperature-value');
-
-    // App's internal state
-    let currentUser = null;
-    let userProfile = {};
-    let currentChatId = null;
-    let isEditing = false;
-    let abortController = null;
+    
+    // --- State & Config ---
     const API_URL = '/api/askGemini';
+    let abortController = null;
+    let isProUnlocked = false;
     const models = [
         { id: 'gemini-2.5-flash', name: '2.5 Flash', description: '快速提供全方位的帮助', locked: true },
         { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码', locked: true },
@@ -1021,73 +1045,608 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'gemini-2.0-flash-lite', name: '2.0 Flash Lite', description: '成本效益和低延迟', locked: false }
     ];
     let currentModel = 'gemini-2.5-flash-lite-preview-06-17';
+    let currentChatId = null;
+    let isEditing = false;
 
     marked.setOptions({ breaks: true, sanitize: true });
 
-    // --- 2. DATA MANAGEMENT FUNCTIONS (SUPABASE & LOCALSTORAGE) ---
-
-    async function loadUserSettings(userId) {
-        const { data, error } = await supabaseClient
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-        if (error) {
-            console.error('Error loading user profile:', error);
-            userProfile = { is_ultra: false, preferences: { streaming: true, temperature: 1.0 }, preset_prompt: '' };
+    // --- Core Functions ---
+    
+    const toggleModal = (modalOverlay, show) => {
+        if (show) {
+            modalOverlay.classList.add('active');
         } else {
-            userProfile = data || { is_ultra: false, preferences: { streaming: true, temperature: 1.0 }, preset_prompt: '' };
+            modalOverlay.classList.remove('active');
         }
-    }
+    };
 
-    async function saveUserSettings() {
-        if (!currentUser) return;
-        const updatedProfile = {
-            preferences: {
-                streaming: streamingToggle.checked,
-                temperature: parseFloat(temperatureSlider.value)
-            },
-            preset_prompt: customPresetToggle.checked ? customPresetInput.value.trim() : ''
-        };
-        const { error } = await supabaseClient.from('profiles').update(updatedProfile).eq('id', currentUser.id);
-        if (error) console.error('Error saving settings:', error);
-    }
+    const showCustomModal = (options) => {
+        const config = { type: 'alert', title: '', message: '', placeholder: '', confirmText: '确定', cancelText: '取消', showCancel: true };
+        Object.assign(config, options);
+        
+        toggleModal(customModalOverlay, true);
+        document.getElementById('modal-title').textContent = config.title;
+        document.getElementById('modal-message').textContent = config.message;
+        const inputWrapper = document.getElementById('modal-input-wrapper');
+        const inputEl = document.getElementById('modal-input');
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        
+        confirmBtn.textContent = config.confirmText;
+        cancelBtn.textContent = config.cancelText;
+        inputEl.placeholder = config.placeholder;
+        inputEl.value = '';
+        
+        inputWrapper.style.display = config.type === 'prompt' ? 'block' : 'none';
+        cancelBtn.style.display = (config.type === 'alert' || !config.showCancel) ? 'none' : 'inline-block';
+        
+        if (config.type === 'prompt') inputEl.focus();
 
-    async function upgradeToUltra() {
-        if (!currentUser) return;
-        const { error } = await supabaseClient.from('profiles').update({ is_ultra: true }).eq('id', currentUser.id);
-        if (error) {
-            await showCustomModal({type: 'alert', title: '错误', message: '升级失败，请稍后重试。'});
-        } else {
-            userProfile.is_ultra = true;
-            await showCustomModal({type: 'alert', title: '操作成功', message: '已成功升级到UltraSnow！'});
-            applyUserSettingsToUI();
-        }
-    }
+        return new Promise((resolve) => {
+            let isResolved = false;
+            const close = (value) => {
+                if (isResolved) return;
+                isResolved = true;
+                toggleModal(customModalOverlay, false);
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+                customModalOverlay.onclick = null;
+                inputEl.onkeydown = null;
+                modalCloseCustomBtn.onclick = null;
+                resolve(value);
+            };
+            
+            confirmBtn.onclick = () => close(config.type === 'prompt' ? inputEl.value : true);
+            cancelBtn.onclick = () => close(config.type === 'prompt' ? null : false);
+            modalCloseCustomBtn.onclick = () => cancelBtn.onclick();
+            customModalOverlay.onclick = (e) => { if (e.target === customModalOverlay) cancelBtn.onclick(); };
+            inputEl.onkeydown = (e) => { if (e.key === 'Enter') confirmBtn.click(); else if (e.key === 'Escape') cancelBtn.click(); }
+        });
+    };
 
     const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats_v6') || '[]');
     const saveChats = (chats) => localStorage.setItem('geminiSnowChats_v6', JSON.stringify(chats));
+    const getCustomPreset = () => JSON.parse(localStorage.getItem('geminiSnowCustomPreset_v6') || '{ "enabled": false, "prompt": "" }');
+    const saveCustomPreset = (settings) => localStorage.setItem('geminiSnowCustomPreset_v6', JSON.stringify(settings));
+    const getStreamingState = () => localStorage.getItem('geminiSnowStreaming_v6') === null ? true : JSON.parse(localStorage.getItem('geminiSnowStreaming_v6'));
+    const saveStreamingState = (isEnabled) => localStorage.setItem('geminiSnowStreaming_v6', JSON.stringify(isEnabled));
+    const getTemperature = () => localStorage.getItem('geminiSnowTemperature_v6') || '1';
+    const saveTemperature = (value) => localStorage.setItem('geminiSnowTemperature_v6', value);
 
-    // --- 3. UI LOGIC AND RENDERING FUNCTIONS ---
+
+    const deleteChat = async (chatIdToDelete) => {
+        let chats = getChats();
+        const chatToDelete = chats.find(chat => chat.id === chatIdToDelete);
+        if (!chatToDelete) return;
+
+        const confirmed = await showCustomModal({
+            type: 'confirm',
+            title: '删除对话',
+            message: `您确定要删除对话 "${chatToDelete.title}" 吗？此操作无法撤销。`,
+            confirmText: '删除',
+            cancelText: '取消'
+        });
+
+        if (confirmed) {
+            chats = chats.filter(chat => chat.id !== chatIdToDelete);
+            saveChats(chats);
+            if (currentChatId === chatIdToDelete) {
+                createNewChat();
+            } else {
+                renderHistoryList();
+            }
+        }
+    };
+
+    const renderHistoryList = () => {
+        const chats = getChats();
+        historyList.innerHTML = '';
+        chats.forEach(chat => {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.dataset.chatId = chat.id;
+
+            const title = document.createElement('div');
+            title.className = 'history-item-title';
+            title.textContent = chat.title;
+            item.addEventListener('click', () => {
+                if (sendButton.classList.contains('is-loading') || isEditing) return;
+                loadChat(chat.id);
+            });
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-chat-btn';
+            deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteChat(chat.id);
+            });
+
+            if (chat.id === currentChatId) item.classList.add('active');
+            item.appendChild(title);
+            item.appendChild(deleteBtn);
+            historyList.prepend(item);
+        });
+    };
     
-    function applyUserSettingsToUI() {
-        const prefs = userProfile.preferences || { streaming: true, temperature: 1.0 };
-        const isProUnlocked = userProfile.is_ultra || false;
-
-        ultraBadge.style.display = isProUnlocked ? 'block' : 'none';
-        authButton.style.display = isProUnlocked ? 'none' : 'block';
-        
-        streamingToggle.checked = prefs.streaming !== false;
-        temperatureSlider.value = prefs.temperature || 1.0;
-        temperatureValue.textContent = parseFloat(temperatureSlider.value).toFixed(1);
-
-        customPresetToggle.checked = !!userProfile.preset_prompt;
-        customPresetInput.value = userProfile.preset_prompt || '';
-        
-        setupModelSelector(isProUnlocked);
-    }
+    const renderChatWindow = (messages) => {
+        const container = document.createElement('div');
+        container.className = 'chat-content-container';
+        chatOutput.innerHTML = '';
+        chatOutput.appendChild(container);
+        messages.forEach((msg, index) => {
+            const messageWrapper = appendMessage(msg.role, msg.parts[0].text, container);
+            if (msg.role === 'model') {
+                addActionsToModelMessage(messageWrapper);
+            }
+        });
+        updateActionButtons();
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+    };
     
-    function setupModelSelector(isProUnlocked) {
+    const loadChat = (chatId) => {
+        const chats = getChats();
+        const chat = chats.find(c => c.id === chatId);
+        if (chat) {
+            currentChatId = chatId;
+            renderChatWindow(chat.messages);
+            renderHistoryList();
+            setLoading(false);
+            if(window.innerWidth <= 768) {
+                appContainer.classList.add('sidebar-collapsed');
+            }
+        }
+    };
+
+    const createNewChat = () => {
+        currentChatId = null;
+        chatOutput.innerHTML = `
+            <div class="chat-content-container">
+                <div class="welcome-container">
+                    <div class="welcome-message">
+                        <h2>SummerVIBES, 你好</h2>
+                    </div>
+                </div>
+            </div>`;
+        renderHistoryList();
+        userInput.value = '';
+        userInput.style.height = 'auto';
+        sendButton.classList.remove('visible');
+        setLoading(false);
+        updateActionButtons();
+        setInitialSidebarState();
+    };
+
+    const handleSend = async () => {
+        const prompt = userInput.value.trim();
+        if (!prompt) return;
+        
+        setLoading(true);
+        userInput.value = '';
+        userInput.style.height = 'auto';
+
+        let chatContentContainer = chatOutput.querySelector('.chat-content-container');
+        if (!chatContentContainer || chatContentContainer.querySelector('.welcome-container')) {
+            chatContentContainer = document.createElement('div');
+            chatContentContainer.className = 'chat-content-container';
+            chatOutput.innerHTML = '';
+            chatOutput.appendChild(chatContentContainer);
+        }
+
+        let chats = getChats();
+        let isNewChat = false;
+        let chat;
+        if (!currentChatId) {
+            isNewChat = true;
+            currentChatId = `chat_${Date.now()}`;
+            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [] };
+            chats.push(chat);
+        } else {
+            chat = chats.find(c => c.id === currentChatId);
+        }
+
+        chat.messages.push({ role: 'user', parts: [{ text: prompt }] });
+        const historyForAPI = buildHistoryWithPresets([...chat.messages]);
+        saveChats(chats);
+        
+        appendMessage('user', prompt, chatContentContainer);
+        const loadingMsgWrapper = appendMessage('model', 'loading', chatContentContainer);
+        
+        if (isNewChat) renderHistoryList();
+        
+        await streamResponse(prompt, loadingMsgWrapper, historyForAPI);
+    };
+    
+    const streamResponse = async (prompt, messageWrapperElement, historyForAPI) => {
+        updateActionButtons();
+        abortController = new AbortController();
+        const messageElement = messageWrapperElement.querySelector('.message');
+        
+        const isStreamingEnabled = getStreamingState();
+        const temperature = getTemperature();
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    prompt, 
+                    history: historyForAPI, 
+                    model: currentModel, 
+                    stream: isStreamingEnabled,
+                    temperature: temperature 
+                }),
+                signal: abortController.signal
+            });
+            
+            if (!response.ok) {
+                 const errorText = await response.text();
+                 throw new Error(`服务器错误 ${response.status}: ${errorText}`);
+            }
+            
+            let fullText;
+            if (isStreamingEnabled && response.body) {
+                fullText = await streamIntoElement(response, messageElement);
+            } else {
+                const data = await response.json();
+                fullText = data.text; 
+                messageElement.classList.remove('thinking-animation');
+                messageElement.innerHTML = marked.parse(fullText);
+                addCopyButtonsToCodeBlocks(messageElement);
+            }
+            
+            if(fullText === null) return;
+            
+            let chats = getChats();
+            let chat = chats.find(c => c.id === currentChatId);
+            const modelMessage = { role: 'model', parts: [{ text: fullText }] };
+            
+            const lastMessage = chat.messages[chat.messages.length -1];
+            if (lastMessage && lastMessage.role === 'model' && lastMessage.parts[0].text === 'loading') {
+                chat.messages.pop();
+            }
+            chat.messages.push(modelMessage);
+
+            saveChats(chats);
+            
+            addActionsToModelMessage(messageWrapperElement);
+            updateActionButtons();
+
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                updateMessage(messageWrapperElement, '已停止生成。');
+            } else {
+                console.error("Fetch error:", error);
+                let displayMessage = '<b>抱歉，出错了。</b><br>';
+                const errorMessage = error.message || '';
+
+                const statusMatch = errorMessage.match(/服务器错误 (\d+)/);
+                const statusCode = statusMatch ? statusMatch[1] : 'N/A';
+                
+                displayMessage += `<b>错误码:</b> ${statusCode}<br>`;
+                
+                if (errorMessage.includes('All API keys failed')) {
+                    displayMessage += '<b>原因:</b> 所有可用的API密钥均尝试失败。请检查您的Vercel环境变量配置。';
+                } else if (errorMessage.includes('Invalid API Key')) {
+                     displayMessage += '<b>原因:</b> 当前使用的API密钥无效。';
+                } else {
+                    const cleanMessage = errorMessage.replace(/服务器错误 \d+: /, '');
+                    displayMessage += `<b>详情:</b> ${cleanMessage}`;
+                }
+                
+                updateMessage(messageWrapperElement, displayMessage);
+            }
+            messageElement.classList.remove('thinking-animation');
+        } finally {
+            abortController = null;
+            setLoading(false);
+            updateActionButtons();
+        }
+    };
+    
+    const streamIntoElement = async (response, element) => {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        let isFirstChunk = true;
+        
+        while (true) {
+            try {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                if (isFirstChunk) {
+                    element.classList.remove('thinking-animation');
+                    element.innerHTML = '';
+                    isFirstChunk = false;
+                }
+
+                fullText += decoder.decode(value, { stream: true });
+                element.innerHTML = marked.parse(fullText + '▋');
+                chatOutput.scrollTop = chatOutput.scrollHeight;
+            } catch (error) {
+                if (error.name === 'AbortError') return null;
+                throw error;
+            }
+        }
+        element.innerHTML = marked.parse(fullText);
+        addCopyButtonsToCodeBlocks(element);
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+        return fullText;
+    };
+    
+    const setLoading = (isLoading) => {
+        userInput.disabled = isLoading;
+        newChatButton.disabled = isLoading;
+
+        if (isLoading) {
+            sendButton.classList.add('is-loading', 'visible');
+            sendButton.title = '停止';
+        } else {
+            sendButton.classList.remove('is-loading');
+            sendButton.title = '发送';
+            if (userInput.value.trim().length === 0) {
+                sendButton.classList.remove('visible');
+            }
+        }
+    };
+    
+    const appendMessage = (sender, text, container) => {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = `message-wrapper ${sender}`;
+            
+        const messageContentHTML = text === 'loading'
+            ? `<div class="message thinking-animation">思考中...</div>`
+            : `<div class="message">${marked.parse(text)}</div>`;
+            
+        messageWrapper.innerHTML = messageContentHTML;
+        
+        container.appendChild(messageWrapper);
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+        
+        if (sender === 'model' && text === 'loading') {
+            let chats = getChats();
+            let chat = chats.find(c => c.id === currentChatId);
+            if (chat) {
+                chat.messages.push({ role: 'model', parts: [{ text: 'loading' }] });
+                saveChats(chats);
+            }
+        } else if (sender === 'model') {
+             addCopyButtonsToCodeBlocks(messageWrapper);
+        }
+        
+        return messageWrapper;
+    };
+
+    const updateMessage = (messageWrapperElement, newContent) => {
+        const messageElement = messageWrapperElement.querySelector('.message');
+        if (messageElement) {
+            messageElement.innerHTML = newContent; // Use innerHTML directly for formatted error
+            if(!newContent.includes("<b>")) { // Avoid re-parsing markdown for error messages
+               addCopyButtonsToCodeBlocks(messageElement);
+            }
+        }
+    };
+
+    const addCopyButtonsToCodeBlocks = (container) => {
+        const codeBlocks = container.querySelectorAll('pre');
+        codeBlocks.forEach(block => {
+            if (block.querySelector('.copy-code-button')) return;
+            const button = document.createElement('button');
+            button.className = 'copy-code-button';
+            button.textContent = 'Copy';
+            button.onclick = () => {
+                const code = block.querySelector('code').innerText;
+                navigator.clipboard.writeText(code).then(() => {
+                    button.textContent = 'Copied!';
+                    setTimeout(() => { button.textContent = 'Copy'; }, 2000);
+                });
+            };
+            block.appendChild(button);
+        });
+    };
+    
+    const buildHistoryWithPresets = (history) => {
+        const customPreset = getCustomPreset();
+        if (customPreset.enabled && customPreset.prompt && customPreset.prompt.trim() !== '') {
+            const presetMessages = [
+                { role: 'user', parts: [{ text: `System instruction: ${customPreset.prompt.trim()}` }] },
+                { role: 'model', parts: [{ text: 'OK, I will follow that instruction.' }] }
+            ];
+            return [...presetMessages, ...history];
+        }
+        return history;
+    };
+
+    const updateActionButtons = () => {
+        // Remove any existing action buttons we manage here
+        document.querySelector('.regenerate-button')?.remove();
+        document.querySelectorAll('.edit-button-wrapper').forEach(btn => btn.remove());
+
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        const canPerformActions = chat && chat.messages.length > 0 && chat.messages.at(-1).role === 'model' && !isEditing && !sendButton.classList.contains('is-loading');
+
+        if (canPerformActions) {
+            addEditButtonToLastUserMessage();
+
+            const lastModelMessage = document.querySelector('.message-wrapper.model:last-of-type');
+            if (lastModelMessage) {
+                let actionsContainer = lastModelMessage.querySelector('.message-actions');
+                if (!actionsContainer) {
+                    actionsContainer = document.createElement('div');
+                    actionsContainer.className = 'message-actions';
+                    lastModelMessage.appendChild(actionsContainer);
+                }
+                
+                // Make sure actions are visible
+                actionsContainer.style.opacity = 1;
+                actionsContainer.style.transform = 'translateY(0)';
+
+                const regenerateButton = document.createElement('button');
+                regenerateButton.className = 'action-button regenerate-button';
+                regenerateButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+                    <span>重新生成</span>
+                `;
+                regenerateButton.onclick = handleRegenerate;
+                
+                actionsContainer.prepend(regenerateButton);
+            }
+        }
+    };
+    
+    const addActionsToModelMessage = (messageWrapper) => {
+        if (messageWrapper.querySelector('.message-actions')) return;
+
+        const actionWrapper = document.createElement('div');
+        actionWrapper.className = 'message-actions';
+        
+        const copyButton = document.createElement('button');
+        copyButton.className = 'action-button copy-message-button';
+        copyButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>复制</span>
+        `;
+        copyButton.onclick = () => {
+            const messageText = messageWrapper.querySelector('.message').innerText;
+            navigator.clipboard.writeText(messageText).then(() => {
+                const span = copyButton.querySelector('span');
+                span.textContent = '已复制!';
+                setTimeout(() => { span.textContent = '复制'; }, 2000);
+            });
+        };
+        
+        actionWrapper.appendChild(copyButton);
+        messageWrapper.appendChild(actionWrapper);
+    };
+
+    const addEditButtonToLastUserMessage = () => {
+        const messageWrappers = document.querySelectorAll('.message-wrapper.user');
+        if (messageWrappers.length === 0) return;
+        
+        const lastUserMessageWrapper = messageWrappers[messageWrappers.length - 1];
+        
+        if (lastUserMessageWrapper.querySelector('.edit-button-wrapper')) return;
+
+        const editButtonWrapper = document.createElement('div');
+        editButtonWrapper.className = 'message-actions edit-button-wrapper';
+        editButtonWrapper.innerHTML = `
+            <button class="action-button edit-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
+                <span>编辑</span>
+            </button>
+        `;
+        
+        lastUserMessageWrapper.appendChild(editButtonWrapper);
+        editButtonWrapper.querySelector('.edit-button').addEventListener('click', () => handleEdit(lastUserMessageWrapper));
+    };
+
+    const handleEdit = (messageWrapper) => {
+        if (isEditing) return;
+        isEditing = true;
+        updateActionButtons();
+        setLoading(true);
+
+        const messageDiv = messageWrapper.querySelector('.message');
+        const originalHTML = messageDiv.innerHTML;
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        const messageIndex = Array.from(messageWrapper.parentElement.children).indexOf(messageWrapper);
+        const originalText = chat.messages[messageIndex].parts[0].text;
+
+        messageDiv.innerHTML = '';
+        const editTextArea = document.createElement('textarea');
+        editTextArea.style.cssText = `width: 100%; height: auto; background: transparent; border: none; color: var(--text-primary); resize: none; outline: none; font-size: inherit; line-height: inherit; padding: 1rem 1.25rem;`;
+        editTextArea.value = originalText;
+        messageDiv.appendChild(editTextArea);
+        
+        messageDiv.classList.add('is-editing');
+        
+        const setHeight = () => {
+            editTextArea.style.height = 'auto';
+            editTextArea.style.height = `${editTextArea.scrollHeight}px`;
+        };
+        setTimeout(setHeight, 0);
+        editTextArea.addEventListener('input', setHeight);
+        editTextArea.focus();
+        editTextArea.setSelectionRange(originalText.length, originalText.length);
+
+        const actionWrapper = document.createElement('div');
+        actionWrapper.className = 'message-actions';
+        actionWrapper.style.opacity = 1;
+        actionWrapper.style.transform = 'translateY(0)';
+        actionWrapper.innerHTML = `
+            <button class="action-button save-edit-button">保存并提交</button>
+            <button class="action-button cancel-edit-button">取消</button>
+        `;
+        messageWrapper.appendChild(actionWrapper);
+        
+        const cleanupEdit = () => {
+            messageDiv.innerHTML = originalHTML;
+            messageDiv.classList.remove('is-editing');
+            actionWrapper.remove();
+            isEditing = false;
+            setLoading(false);
+            updateActionButtons();
+        };
+
+        actionWrapper.querySelector('.save-edit-button').addEventListener('click', async () => {
+            const newText = editTextArea.value.trim();
+            if (newText && newText !== originalText) {
+                setLoading(true);
+                let currentChats = getChats();
+                let currentChat = currentChats.find(c => c.id === currentChatId);
+                
+                currentChat.messages.splice(messageIndex, Infinity, { role: 'user', parts: [{ text: newText }] });
+                saveChats(currentChats);
+
+                while(messageWrapper.nextSibling) {
+                    messageWrapper.nextSibling.remove();
+                }
+                messageDiv.innerHTML = marked.parse(newText);
+                messageDiv.classList.remove('is-editing');
+                actionWrapper.remove();
+                
+                const container = document.querySelector('.chat-content-container');
+                const loadingMsgWrapper = appendMessage('model', 'loading', container);
+                await streamResponse(newText, loadingMsgWrapper, currentChat.messages);
+
+            } else {
+                cleanupEdit();
+            }
+            isEditing = false;
+        });
+
+        actionWrapper.querySelector('.cancel-edit-button').addEventListener('click', cleanupEdit);
+    };
+    
+    const handleRegenerate = async () => {
+        let chats = getChats();
+        let chat = chats.find(c => c.id === currentChatId);
+        if (!chat || chat.messages.length < 2) return;
+        
+        setLoading(true);
+        updateActionButtons();
+
+        chat.messages.pop(); 
+        saveChats(chats);
+        
+        const lastModelMessageElement = document.querySelector('.message-wrapper.model:last-of-type');
+        if (lastModelMessageElement) lastModelMessageElement.remove();
+        
+        const historyForAPI = buildHistoryWithPresets([...chat.messages]);
+        const lastUserPrompt = chat.messages.at(-1).parts[0].text;
+        
+        const container = document.querySelector('.chat-content-container');
+        const loadingMsgWrapper = appendMessage('model', 'loading', container);
+        await streamResponse(lastUserPrompt, loadingMsgWrapper, historyForAPI);
+    };
+
+
+    // --- Setup and Init Functions ---
+
+    const setupModelSelector = () => {
         modelDropdownList.innerHTML = '';
         models.forEach(model => {
             const option = document.createElement('div');
@@ -1095,308 +1654,189 @@ document.addEventListener('DOMContentLoaded', () => {
             option.dataset.value = model.id;
             const isLocked = model.locked && !isProUnlocked;
             if (isLocked) option.classList.add('disabled');
-            option.innerHTML = `<div class="model-option-text" style="flex-grow: 1;"><h4>${model.name} ${isLocked ? '🔒' : ''}</h4><p>${model.description}</p></div><span class="checkmark" style="visibility:hidden;">✓</span>`;
+            
+            option.innerHTML = `
+                <div class="model-option-text" style="flex-grow: 1;">
+                    <h4>${model.name} ${isLocked ? '🔒' : ''}</h4>
+                    <p>${model.description}</p>
+                </div>
+                <span class="checkmark" style="visibility:hidden;">✓</span>`;
+                
             if (!isLocked) {
-                option.addEventListener('click', () => { currentModel = model.id; updateSelectorDisplay(); modelDropdownList.classList.remove('active'); });
+                option.addEventListener('click', () => {
+                    currentModel = model.id;
+                    updateSelectorDisplay();
+                    modelDropdownList.classList.remove('active');
+                });
             } else {
-                option.addEventListener('click', () => showCustomModal({ type: 'alert', title: '模型已锁定', message: '升级到 Ultra 即可使用此模型。' }));
+                 option.addEventListener('click', () => showCustomModal({
+                    type: 'alert', title: '模型已锁定', message: '升级到 Ultra 即可使用此模型。'
+                }));
             }
             modelDropdownList.appendChild(option);
         });
         updateSelectorDisplay();
-    }
+    };
 
-    function updateSelectorDisplay() {
+    const updateSelectorDisplay = () => {
         const selectedModel = models.find(m => m.id === currentModel);
-        if (selectedModel) selectedModelDisplay.textContent = selectedModel.name;
+        if (selectedModel) {
+            selectedModelDisplay.textContent = selectedModel.name;
+        }
+        ultraBadge.style.display = isProUnlocked ? 'block' : 'none';
+        
         document.querySelectorAll('.model-option').forEach(opt => {
             const checkmark = opt.querySelector('.checkmark');
-            const isSelected = opt.dataset.value === currentModel;
-            if(checkmark) checkmark.style.visibility = isSelected ? 'visible' : 'hidden';
-            opt.style.backgroundColor = isSelected ? 'var(--bg-hover-light)' : 'transparent';
+            if(opt.dataset.value === currentModel){
+                opt.style.backgroundColor = 'var(--bg-hover-light)';
+                if(checkmark) checkmark.style.visibility = 'visible';
+            } else {
+                opt.style.backgroundColor = 'transparent';
+                if(checkmark) checkmark.style.visibility = 'hidden';
+            }
         });
-    }
-
-    function buildHistoryWithPresets(history) {
-        if (customPresetToggle.checked && customPresetInput.value.trim() !== '') {
-            const presetMessages = [{ role: 'user', parts: [{ text: `System instruction: ${customPresetInput.value.trim()}` }] }, { role: 'model', parts: [{ text: 'OK, I will follow that instruction.' }] }];
-            return [...presetMessages, ...history];
+    };
+    
+    const handleAuth = async () => {
+        const enteredCode = await showCustomModal({
+            type: 'prompt', title: '升级到 UltraSnow', message: '升级到Ultra以解锁限制模型。',
+            placeholder: '请输入测试代码', confirmText: '升级'
+        });
+        if (enteredCode === "703777") {
+            isProUnlocked = true;
+            await showCustomModal({type: 'alert', title: '操作成功', message: '已成功升级到UltraSnow！'});
+            authButton.style.display = 'none';
+            currentModel = 'gemini-2.5-pro';
+            setupModelSelector();
+        } else if (enteredCode !== null) {
+            await showCustomModal({type: 'alert', title: '操作失败', message: '代码错误。'});
         }
-        return history;
-    }
+        settingsMenu.classList.remove('active');
+    };
 
-    function createNewChat() {
-        currentChatId = null;
-        chatOutput.innerHTML = `<div class="chat-content-container"><div class="welcome-container"><div class="welcome-message"><h2>SummerVIBES, 你好</h2></div></div></div>`;
-        renderHistoryList();
-        userInput.value = '';
+    const setupPresetsModal = () => {
+        const currentPreset = getCustomPreset();
+        customPresetToggle.checked = currentPreset.enabled;
+        customPresetInput.value = currentPreset.prompt;
+        customPresetToggle.addEventListener('change', () => saveCustomPreset({ enabled: customPresetToggle.checked, prompt: customPresetInput.value }));
+        customPresetInput.addEventListener('input', () => saveCustomPreset({ enabled: customPresetToggle.checked, prompt: customPresetInput.value }));
+    };
+
+    const setupPreferencesModal = () => {
+        streamingToggle.checked = getStreamingState();
+        streamingToggle.addEventListener('change', () => saveStreamingState(streamingToggle.checked));
+
+        const currentTemp = getTemperature();
+        temperatureSlider.value = currentTemp;
+        temperatureValue.textContent = parseFloat(currentTemp).toFixed(1);
+        temperatureSlider.addEventListener('input', (e) => {
+            const newTemp = e.target.value;
+            temperatureValue.textContent = parseFloat(newTemp).toFixed(1);
+        });
+        temperatureSlider.addEventListener('change', (e) => {
+            saveTemperature(e.target.value);
+        });
+    };
+
+    const setInitialSidebarState = () => {
+        appContainer.classList.add('sidebar-collapsed');
+    };
+
+
+    // --- Event Listeners ---
+    menuToggleButton.addEventListener('click', () => {
+        appContainer.classList.toggle('sidebar-collapsed');
+    });
+    sidebarBackdrop.addEventListener('click', () => {
+        appContainer.classList.add('sidebar-collapsed');
+    });
+
+    newChatButton.addEventListener('click', createNewChat);
+    authButton.addEventListener('click', handleAuth);
+    
+    sendButton.addEventListener('click', () => {
+        if (sendButton.classList.contains('is-loading')) {
+            if (abortController) abortController.abort();
+        } else if(!userInput.disabled) {
+            handleSend();
+        }
+    });
+
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && !userInput.disabled) {
+            e.preventDefault();
+            handleSend();
+        }
+    });
+    userInput.addEventListener('input', () => {
         userInput.style.height = 'auto';
-        sendButton.classList.remove('visible');
-        setLoading(false);
-        updateActionButtons();
-    }
-
-    function renderHistoryList() {
-        const chats = getChats();
-        historyList.innerHTML = '';
-        chats.forEach(chat => {
-            const item = document.createElement('div');
-            item.className = 'history-item';
-            item.dataset.chatId = chat.id;
-            item.innerHTML = `<div class="history-item-title">${chat.title}</div><button class="delete-chat-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
-            item.addEventListener('click', () => { if (!sendButton.classList.contains('is-loading') && !isEditing) loadChat(chat.id); });
-            item.querySelector('.delete-chat-btn').addEventListener('click', (e) => { e.stopPropagation(); deleteChat(chat.id); });
-            if (chat.id === currentChatId) item.classList.add('active');
-            historyList.prepend(item);
-        });
-    }
-    
-    function loadChat(chatId) {
-        const chat = getChats().find(c => c.id === chatId);
-        if (chat) {
-            currentChatId = chatId;
-            renderChatWindow(chat.messages);
-            renderHistoryList();
-            setLoading(false);
-            if(window.innerWidth <= 768) appContainer.classList.add('sidebar-collapsed');
+        let newHeight = userInput.scrollHeight;
+        const maxHeight = 125;
+        if (newHeight > maxHeight) {
+            newHeight = maxHeight;
+            userInput.style.overflowY = 'auto';
+        } else {
+            userInput.style.overflowY = 'hidden';
         }
-    }
-    
-    function renderChatWindow(messages) {
-        const container = document.createElement('div');
-        container.className = 'chat-content-container';
-        chatOutput.innerHTML = '';
-        chatOutput.appendChild(container);
-        messages.forEach(msg => {
-            const messageWrapper = appendMessage(msg.role, msg.parts[0].text, container);
-            if (msg.role === 'model') addActionsToModelMessage(messageWrapper);
-        });
-        updateActionButtons();
-        chatOutput.scrollTop = chatOutput.scrollHeight;
-    }
+        userInput.style.height = `${newHeight}px`;
 
-    async function handleSend() {
-        const prompt = userInput.value.trim();
-        if (!prompt) return;
-        setLoading(true);
-        userInput.value = '';
-        userInput.style.height = 'auto';
-        let container = chatOutput.querySelector('.chat-content-container');
-        if (!container || container.querySelector('.welcome-container')) {
-            container = document.createElement('div');
-            container.className = 'chat-content-container';
-            chatOutput.innerHTML = '';
-            chatOutput.appendChild(container);
-        }
-        let chats = getChats();
-        let isNew = !currentChatId;
-        let chat = isNew ? { id: `chat_${Date.now()}`, title: prompt.substring(0, 30), messages: [] } : chats.find(c => c.id === currentChatId);
-        if (isNew) { currentChatId = chat.id; chats.push(chat); }
-        chat.messages.push({ role: 'user', parts: [{ text: prompt }] });
-        saveChats(chats);
-        appendMessage('user', prompt, container);
-        const loadingWrapper = appendMessage('model', 'loading', container);
-        if (isNew) renderHistoryList();
-        await streamResponse(prompt, loadingWrapper, buildHistoryWithPresets(chat.messages));
-    }
-
-    async function streamResponse(prompt, wrapper, history) {
-        updateActionButtons();
-        abortController = new AbortController();
-        const messageEl = wrapper.querySelector('.message');
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, history, model: currentModel, stream: streamingToggle.checked, temperature: parseFloat(temperatureSlider.value) }),
-                signal: abortController.signal
-            });
-            if (!response.ok) throw new Error(`服务器错误 ${response.status}: ${await response.text()}`);
-            
-            const fullText = streamingToggle.checked && response.body 
-                ? await streamIntoElement(response, messageEl) 
-                : (await response.json()).text;
-
-            if (fullText === null) return; // Stream was aborted
-            
-            if (!streamingToggle.checked) { 
-                messageEl.classList.remove('thinking-animation'); 
-                messageEl.innerHTML = marked.parse(fullText); 
-                addCopyButtonsToCodeBlocks(messageEl); 
-            }
-
-            let chats = getChats();
-            let chat = chats.find(c => c.id === currentChatId);
-            if(chat) {
-                const lastMessage = chat.messages[chat.messages.length -1];
-                if (lastMessage && lastMessage.role === 'model' && lastMessage.parts[0].text === 'loading') {
-                    chat.messages.pop();
-                }
-                chat.messages.push({ role: 'model', parts: [{ text: fullText }] });
-                saveChats(chats);
-            }
-            addActionsToModelMessage(wrapper);
-        } catch (err) {
-            if (err.name !== 'AbortError') { 
-                console.error("Fetch error:", err); 
-                updateMessage(wrapper, `<b>抱歉，出错了。</b><br>${err.message}`); 
-            }
-            messageEl.classList.remove('thinking-animation');
-        } finally {
-            abortController = null;
-            setLoading(false);
-            updateActionButtons();
-        }
-    }
-    
-    async function streamIntoElement(response, element) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let fullText = '';
-        element.classList.remove('thinking-animation');
-        element.innerHTML = '';
-        while (true) {
-            try {
-                const { done, value } = await reader.read();
-                if (done) break;
-                fullText += decoder.decode(value, { stream: true });
-                element.innerHTML = marked.parse(fullText + '▋');
-                chatOutput.scrollTop = chatOutput.scrollHeight;
-            } catch (err) {
-                if (err.name === 'AbortError') { updateMessage(element.parentElement, '已停止生成。'); return null; }
-                throw err;
-            }
-        }
-        element.innerHTML = marked.parse(fullText);
-        addCopyButtonsToCodeBlocks(element);
-        chatOutput.scrollTop = chatOutput.scrollHeight;
-        return fullText;
-    }
-    
-    function setLoading(isLoading) {
-        userInput.disabled = isLoading;
-        newChatButton.disabled = isLoading;
-        sendButton.classList.toggle('is-loading', isLoading);
-        sendButton.title = isLoading ? '停止' : '发送';
-        sendButton.classList.toggle('visible', isLoading || userInput.value.trim().length > 0);
-    }
-    
-    function appendMessage(sender, text, container) {
-        const wrapper = document.createElement('div');
-        wrapper.className = `message-wrapper ${sender}`;
-        wrapper.innerHTML = text === 'loading' ? `<div class="message thinking-animation">思考中...</div>` : `<div class="message">${marked.parse(text)}</div>`;
-        container.appendChild(wrapper);
-        chatOutput.scrollTop = chatOutput.scrollHeight;
-        if (sender === 'model' && text !== 'loading') addCopyButtonsToCodeBlocks(wrapper);
-        return wrapper;
-    }
-
-    function updateMessage(wrapper, content) {
-        const messageEl = wrapper.querySelector('.message');
-        if (messageEl) {
-            messageEl.innerHTML = content;
-            if(!content.includes("<b>")) addCopyButtonsToCodeBlocks(messageEl);
-        }
-    }
-
-    function addCopyButtonsToCodeBlocks(container) {
-        container.querySelectorAll('pre').forEach(block => {
-            if (block.querySelector('.copy-code-button')) return;
-            const button = document.createElement('button');
-            button.className = 'copy-code-button';
-            button.textContent = 'Copy';
-            button.onclick = () => {
-                navigator.clipboard.writeText(block.querySelector('code').innerText).then(() => {
-                    button.textContent = 'Copied!';
-                    setTimeout(() => { button.textContent = 'Copy'; }, 2000);
-                });
-            };
-            block.appendChild(button);
-        });
-    }
-
-    function updateActionButtons() { /* Logic for showing/hiding edit/regenerate buttons */ }
-    function addActionsToModelMessage(wrapper) { /* Logic for adding copy button to messages */ }
-    function deleteChat(chatId) { /* Logic for deleting a chat */ }
-    
-    function toggleModal(modalOverlay, show) {
-        modalOverlay.classList.toggle('active', show);
-    }
-
-    // --- 4. APP INITIALIZATION SEQUENCE ---
-
-    async function main() {
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
-        
-        if (error || !session) {
-            const authTokenKey = `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`;
-            localStorage.removeItem(authTokenKey);
-            window.location.replace('/auth.html');
-            return;
-        }
-        
-        currentUser = session.user;
-        await loadUserSettings(currentUser.id);
-        
-        initializeAppUI();
-        
-        loadingOverlay.style.display = 'none';
-        appContainer.style.visibility = 'visible';
-    }
-    
-    function initializeAppUI() {
-        applyUserSettingsToUI();
-        
-        authButton.addEventListener('click', async () => {
-            const code = await showCustomModal({ type: 'prompt', title: '升级到 UltraSnow', message: '请输入测试代码', confirmText: '升级' });
-            if (code === '703777') await upgradeToUltra();
-            else if (code !== null) await showCustomModal({ type: 'alert', title: '操作失败', message: '代码错误。' });
-        });
-
-        streamingToggle.addEventListener('change', saveUserSettings);
-        temperatureSlider.addEventListener('change', saveUserSettings);
-        temperatureSlider.addEventListener('input', () => { temperatureValue.textContent = parseFloat(temperatureSlider.value).toFixed(1); });
-        customPresetToggle.addEventListener('change', saveUserSettings);
-        customPresetInput.addEventListener('input', saveUserSettings);
-        
-        newChatButton.addEventListener('click', createNewChat);
-        sendButton.addEventListener('click', () => {
-            if (sendButton.classList.contains('is-loading')) { if (abortController) abortController.abort(); } 
-            else if (!userInput.disabled) { handleSend(); }
-        });
-        userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !userInput.disabled) { e.preventDefault(); handleSend(); } });
-        userInput.addEventListener('input', () => {
-            userInput.style.height = 'auto';
-            userInput.style.height = `${Math.min(userInput.scrollHeight, 125)}px`;
+        if (!sendButton.classList.contains('is-loading')) {
             sendButton.classList.toggle('visible', userInput.value.trim().length > 0);
-        });
-        
-        menuToggleButton.addEventListener('click', () => appContainer.classList.toggle('sidebar-collapsed'));
-        sidebarBackdrop.addEventListener('click', () => appContainer.classList.add('sidebar-collapsed'));
-        settingsButton.addEventListener('click', (e) => { e.stopPropagation(); settingsMenu.classList.toggle('active'); });
-        selectedModelContainer.addEventListener('click', (e) => { e.stopPropagation(); modelDropdownList.classList.toggle('active'); });
-        
-        document.addEventListener('click', (e) => {
-            if (settingsMenu && !settingsMenu.contains(e.target) && !settingsButton.contains(e.target)) settingsMenu.classList.remove('active');
-            if (modelDropdownList && !modelDropdownList.contains(e.target) && !selectedModelContainer.contains(e.target)) modelDropdownList.classList.remove('active');
-        });
+        }
+    });
+    
+    selectedModelContainer.addEventListener('click', (e) => {
+        e.stopPropagation();
+        modelDropdownList.classList.toggle('active');
+    });
 
-        preferencesButton.addEventListener('click', () => toggleModal(preferencesModalOverlay, true));
-        advancedPresetsButton.addEventListener('click', () => toggleModal(presetsModalOverlay, true));
-        document.querySelectorAll('.modal-close-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const overlay = btn.closest('.modal-overlay');
-                if (overlay) toggleModal(overlay, false);
-            });
-        });
-        
-        createNewChat();
-    }
+    settingsButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        settingsMenu.classList.toggle('active');
+    });
 
-    // --- START THE APP ---
-    main();
+    advancedPresetsButton.addEventListener('click', () => {
+        toggleModal(presetsModalOverlay, true);
+        settingsMenu.classList.remove('active');
+    });
+    
+    preferencesButton.addEventListener('click', () => {
+        toggleModal(preferencesModalOverlay, true);
+        settingsMenu.classList.remove('active');
+    });
+    
+    document.querySelectorAll('.modal-close-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetId = e.currentTarget.dataset.target;
+            const modalToClose = targetId ? document.getElementById(targetId) : e.currentTarget.closest('.modal-overlay');
+            if(modalToClose) toggleModal(modalToClose, false);
+        });
+    });
+    
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                toggleModal(overlay, false);
+            }
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!modelDropdownList.contains(e.target) && !selectedModelContainer.contains(e.target)) {
+            modelDropdownList.classList.remove('active');
+        }
+        if (!settingsMenu.contains(e.target) && !settingsButton.contains(e.target)) {
+            settingsMenu.classList.remove('active');
+        }
+    });
+
+    // --- App Initialization ---
+    setupModelSelector();
+    setupPresetsModal();
+    setupPreferencesModal();
+    createNewChat();
+
 });
 </script>
-
 </body>
 </html>
