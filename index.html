@@ -1176,8 +1176,8 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'gemini-2.5-flash', name: '2.5 Flash', description: '快速提供全方位的帮助', locked: false },
         { id: 'gemini-2.5-pro', name: '2.5 Pro', description: '推理、数学和编码，思考时间长', locked: false },
         { id: 'gemini-2.0-flash', name: '2.0 Flash', description: '以最快速度提供帮助', locked: false },
-        { id: 'gemini-2.5-flash-lite-preview-06-17', name: '2.5 Flash Lite', description: '最具成本效益且支持高吞吐量', locked: false },
-        { id: 'gemini-2.0-flash-lite', name: '2.0 Flash Lite', description: '成本效益和低延迟', locked: false }
+        { id: 'gemini-2.5-flash-lite-preview-06-17', name: '2.5 Lite', description: '最具成本效益且支持高吞吐量', locked: false },
+        { id: 'gemini-2.0-flash-lite', name: '2.0 Lite', description: '成本效益和低延迟', locked: false }
     ];
     let currentModel = 'gemini-2.5-flash-lite-preview-06-17';
     let currentChatId = null;
@@ -1741,7 +1741,13 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
         `;
         
-        lastUserMessageWrapper.appendChild(editButtonWrapper);
+        const messageDiv = lastUserMessageWrapper.querySelector('.message');
+        if (messageDiv) {
+            messageDiv.after(editButtonWrapper);
+        } else {
+            lastUserMessageWrapper.appendChild(editButtonWrapper);
+        }
+
         editButtonWrapper.querySelector('.edit-button').addEventListener('click', () => handleEdit(lastUserMessageWrapper));
         setTimeout(() => {
             editButtonWrapper.style.opacity = 1;
@@ -1787,7 +1793,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="action-button save-edit-button">保存并提交</button>
             <button class="action-button cancel-edit-button">取消</button>
         `;
-        messageWrapper.appendChild(actionWrapper);
+        messageDiv.after(actionWrapper);
         
         const cleanupEdit = () => {
             messageDiv.innerHTML = originalHTML;
