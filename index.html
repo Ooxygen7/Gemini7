@@ -541,8 +541,13 @@
                 transform: translateY(0);
             }
         }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
 
-        .message.fade-in-whole {
+        .message.fade-in-whole, .message.content-refreshed {
             animation: floatIn 0.5s var(--transition-easing) forwards;
         }
 
@@ -660,9 +665,9 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 8px;
+            margin-bottom: 8px;
             opacity: 0;
-            transform: translateY(-5px);
+            transform: translateY(5px);
             transition: opacity var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
         }
         
@@ -694,6 +699,22 @@
             width: 18px; height: 18px;
          }
         
+        @keyframes gradient-pulse {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .animated-gradient-button {
+            background: linear-gradient(-45deg, #89b4e4, #c2e7ff, #89b4e4, #c2e7ff);
+            background-size: 400% 400%;
+            animation: gradient-pulse 5s ease infinite;
+            border: none;
+        }
+        body.dark-mode .animated-gradient-button {
+             color: #131314;
+        }
+        
         .rewrite-options {
             display: none;
             gap: 8px;
@@ -713,6 +734,7 @@
             z-index: 10;
             font-size: 0.9rem;
             font-weight: 500;
+            animation: fadeIn 0.3s ease;
         }
 
 
@@ -845,6 +867,9 @@
         .modal-overlay.active .modal-content {
             transform: scale(1);
             opacity: 1;
+        }
+        .modal-content.content-fade-in {
+            animation: fadeIn 0.4s ease forwards;
         }
 
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -1172,16 +1197,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const showCustomModal = (options) => {
-        const config = { type: 'alert', title: '', message: '', placeholder: '', confirmText: '确定', cancelText: '取消', showCancel: true };
+        const config = { type: 'alert', title: '', message: '', placeholder: '', confirmText: '确定', cancelText: '取消', showCancel: true, isSummary: false };
         Object.assign(config, options);
         
         toggleModal(customModalOverlay, true);
+        const modalContent = customModalOverlay.querySelector('.modal-content');
         document.getElementById('modal-title').textContent = config.title;
         document.getElementById('modal-message').textContent = config.message;
         const inputWrapper = document.getElementById('modal-input-wrapper');
         const inputEl = document.getElementById('modal-input');
         const confirmBtn = document.getElementById('modal-confirm-btn');
         const cancelBtn = document.getElementById('modal-cancel-btn');
+        
+        modalContent.classList.toggle('content-fade-in', config.isSummary);
+        if (config.isSummary) {
+            setTimeout(() => modalContent.classList.remove('content-fade-in'), 500);
+        }
         
         if (config.confirmText) {
             confirmBtn.style.display = 'inline-block';
@@ -1613,7 +1644,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!actionsContainer) {
                     actionsContainer = document.createElement('div');
                     actionsContainer.className = 'message-actions';
-                    lastModelMessage.appendChild(actionsContainer);
+                    lastModelMessage.insertBefore(actionsContainer, lastModelMessage.firstChild);
                 }
                 
                 // Make sure actions are visible
@@ -1658,13 +1689,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- ✨ Gemini Rewrite Feature ---
         const rewriteButton = document.createElement('button');
-        rewriteButton.className = 'action-button rewrite-button';
+        rewriteButton.className = 'action-button rewrite-button animated-gradient-button';
         rewriteButton.innerHTML = `✨ <span>改写</span>`;
 
         const rewriteOptions = document.createElement('div');
         rewriteOptions.className = 'rewrite-options'; // Hidden by default via CSS
         rewriteOptions.innerHTML = `
-            <button class="action-button" data-rewrite-action="shorter">缩短</button>
             <button class="action-button" data-rewrite-action="longer">扩写</button>
             <button class="action-button" data-rewrite-action="simpler">简化</button>
         `;
@@ -1690,7 +1720,7 @@ document.addEventListener('DOMContentLoaded', () => {
         actionWrapper.appendChild(rewriteOptions);
         // --- End Gemini Feature ---
 
-        messageWrapper.appendChild(actionWrapper);
+        messageWrapper.insertBefore(actionWrapper, messageWrapper.firstChild);
     };
 
     const addEditButtonToLastUserMessage = () => {
@@ -1710,8 +1740,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
         `;
         
-        lastUserMessageWrapper.appendChild(editButtonWrapper);
-        editButtonWrapper.querySelector('.edit-button').addEventListener('click', () => handleEdit(lastUserMessageWrapper));
+        lastUserMessageWrapper.insertBefore(editButtonWrapper, lastUserMessageWrapper.firstChild);
     };
 
     const handleEdit = (messageWrapper) => {
@@ -1875,7 +1904,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'alert',
                 title: '对话摘要',
                 message: summary,
-                confirmText: '好的'
+                confirmText: '好的',
+                isSummary: true
             });
         } else {
             showCustomModal({
@@ -1893,12 +1923,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const chat = chats.find(c => c.id === currentChatId);
         if (!chat) return;
 
-        const messageIndex = Array.from(messageWrapper.parentElement.children).indexOf(messageWrapper);
+        const messageIndex = Array.from(messageWrapper.parentElement.children).filter(el => el.classList.contains('message-wrapper')).indexOf(messageWrapper);
         const originalMessageText = chat.messages[messageIndex].parts[0].text;
 
         let prompt = '';
         switch(action) {
-            case 'shorter': prompt = `请将以下文本缩短，保持核心意思不变:\n\n"${originalMessageText}"`; break;
             case 'longer': prompt = `请将以下文本进行扩写，增加更多细节和描述:\n\n"${originalMessageText}"`; break;
             case 'simpler': prompt = `请用更简单、更通俗易懂的语言解释以下文本:\n\n"${originalMessageText}"`; break;
         }
@@ -1914,6 +1943,8 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.remove();
         if (!rewrittenText.startsWith('Error:')) {
             messageElement.innerHTML = marked.parse(rewrittenText);
+            messageElement.classList.add('content-refreshed');
+            setTimeout(() => messageElement.classList.remove('content-refreshed'), 500);
             addCopyButtonsToCodeBlocks(messageElement);
             chat.messages[messageIndex].parts[0].text = rewrittenText;
             saveChats(chats);
@@ -2010,6 +2041,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.add('light-mode');
         }
         darkModeToggle.checked = (theme === 'dark');
+        summarizeBtn.classList.toggle('animated-gradient-button', theme === 'dark');
     };
 
     const setupPreferencesModal = () => {
