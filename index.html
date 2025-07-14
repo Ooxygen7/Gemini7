@@ -1730,7 +1730,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const addEditButtonToLastUserMessage = (lastUserMessageWrapper) => {
-        if (lastUserMessageWrapper.querySelector('.edit-button-wrapper')) return;
+        if (lastUserMessageWrapper.querySelector('.message-actions')) return;
 
         const editButtonWrapper = document.createElement('div');
         editButtonWrapper.className = 'message-actions edit-button-wrapper';
@@ -1741,12 +1741,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
         `;
         
-        const messageDiv = lastUserMessageWrapper.querySelector('.message');
-        if (messageDiv) {
-            messageDiv.after(editButtonWrapper);
-        } else {
-            lastUserMessageWrapper.appendChild(editButtonWrapper);
-        }
+        lastUserMessageWrapper.appendChild(editButtonWrapper);
 
         editButtonWrapper.querySelector('.edit-button').addEventListener('click', () => handleEdit(lastUserMessageWrapper));
         setTimeout(() => {
@@ -1793,7 +1788,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="action-button save-edit-button">保存并提交</button>
             <button class="action-button cancel-edit-button">取消</button>
         `;
-        messageDiv.after(actionWrapper);
+        messageWrapper.appendChild(actionWrapper);
         
         const cleanupEdit = () => {
             messageDiv.innerHTML = originalHTML;
