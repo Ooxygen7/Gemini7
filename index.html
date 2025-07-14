@@ -676,8 +676,13 @@
             display: flex !important;
             opacity: 1 !important;
             transform: translateY(0) !important;
+            transition: opacity 0.2s ease, transform 0.2s ease;
             margin-top: 8px;
             justify-content: flex-end; /* 按钮右对齐 */
+        }
+                .message-wrapper.user:hover .message-actions {
+            opacity: 1;
+            transform: translateY(0);
         }
         
         .action-button {
@@ -1923,7 +1928,7 @@ const updateActionButtons = () => {
         showCustomModal({
             type: 'alert',
             title: '正在生成摘要...',
-            message: '请稍候，Gemini 正在为您总结对话内容。',
+            message: '请稍候，GeminiSnow 正在为您总结对话内容。',
             showCancel: false,
             confirmText: ''
         });
@@ -1985,7 +1990,7 @@ const updateActionButtons = () => {
             chat.messages[messageIndex].parts[0].text = rewrittenText;
             saveChats(chats);
         } else {
-            showCustomModal({type: 'alert', title: '改写失败', message: rewrittenText});
+            showCustomModal({type: 'alert', title: '改写失败，可能是达到后端最长反应时间限制！', message: rewrittenText});
         }
     };
 
