@@ -673,10 +673,11 @@
             transform: translateY(5px);
         }
         .message-wrapper.user .message-actions {
+            display: flex !important;
+            opacity: 1 !important;
+            transform: translateY(0) !important;
             margin-top: 8px;
-            transform: translateY(0);
-            opacity: 1; /* 强制显示 */
-            display: flex;
+            justify-content: flex-end; /* 按钮右对齐 */
         }
         
         .action-button {
@@ -969,7 +970,7 @@
             .chat-input-area { padding: 8px 16px 12px 16px; }
             #chatOutput { padding: 16px; }
             .header-right { gap: 4px; }
-
+            .message-wrapper.user .message-actions {display: flex !important;opacity: 1 !important;}
             .message-actions {
                 opacity: 1;
                 transform: translateY(0)!important;
@@ -978,6 +979,9 @@
                 opacity: 0.7;
             }
         }
+        .edit-button {
+    margin-left: auto; /* 使按钮靠右 */
+}
     </style>
 </head>
 <body>
@@ -1652,14 +1656,15 @@ const updateActionButtons = () => {
     }
 
     // 为最后一个用户消息添加编辑按钮
-    const lastUserMessageWrapper = document.querySelector('.message-wrapper.user:last-of-type');
-    if (lastUserMessageWrapper) {
-        const editButtonWrapper = document.createElement('div');
-        editButtonWrapper.className = 'message-actions';
+    const userMessages = document.querySelectorAll('.message-wrapper.user');
+    if (userMessages.length > 0) {
+        const lastUserMessage = userMessages[userMessages.length - 1];
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'message-actions';
         
-        const editButton = document.createElement('button');
-        editButton.className = 'action-button edit-button';
-        editButton.innerHTML = `
+        const editBtn = document.createElement('button');
+        editBtn.className = 'action-button edit-button';
+        editBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
                 <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
@@ -1667,15 +1672,19 @@ const updateActionButtons = () => {
             <span>编辑</span>
         `;
         
-        editButton.addEventListener('click', () => handleEdit(lastUserMessageWrapper));
-        editButtonWrapper.appendChild(editButton);
-        lastUserMessageWrapper.appendChild(editButtonWrapper);
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleEdit(lastUserMessage);
+        });
+        
+        actionsDiv.appendChild(editBtn);
+        lastUserMessage.appendChild(actionsDiv);
     }
 
     // 为模型消息添加操作按钮
-    const modelMessageWrappers = document.querySelectorAll('.message-wrapper.model');
-    modelMessageWrappers.forEach((wrapper, index) => {
-        addActionsToModelMessage(wrapper, index === modelMessageWrappers.length - 1);
+    const modelMessages = document.querySelectorAll('.message-wrapper.model');
+    modelMessages.forEach((msg, index) => {
+        addActionsToModelMessage(msg, index === modelMessages.length - 1);
     });
 };
     
