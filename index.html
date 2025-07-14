@@ -658,6 +658,7 @@
         
         .message-actions {
             display: flex;
+            flex-wrap: wrap;
             gap: 8px;
             margin-top: 8px;
             opacity: 0;
@@ -692,6 +693,27 @@
          .action-button.regenerate-button svg {
             width: 18px; height: 18px;
          }
+        
+        .rewrite-options {
+            display: none;
+            gap: 8px;
+        }
+        .rewrite-options.visible {
+            display: flex;
+        }
+        .message-loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            z-index: 10;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
 
 
         /* --- 6. Chat Input Area --- */
@@ -976,6 +998,9 @@
                     </div>
                 </div>
                 <div class="header-right">
+                    <button id="summarize-btn" class="icon-button" title="总结对话" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C7.03 3 3 7.03 3 12S7.03 21 12 21s9-4.03 9-9c0-1.06-.18-2.08-.5-3.02"></path><path d="M15.64 4.36A9 9 0 0 0 12 3v0"></path><path d="M12 3C7.03 3 3 7.03 3 12S7.03 21 12 21s9-4.03 9-9c0-1.06-.18-2.08-.5-3.02"></path><path d="M15.64 4.36A9 9 0 0 0 12 3v0"></path><path d="M16 8L12 12L8 8"></path><path d="M12 16V12"></path></svg>
+                    </button>
                     <div class="ultra-badge" id="ultra-badge">ULTRA</div>
                 </div>
             </header>
@@ -1103,6 +1128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCloseCustomBtn = document.getElementById('modal-close-custom');
     const temperatureSlider = document.getElementById('temperature-slider');
     const temperatureValue = document.getElementById('temperature-value');
+    const summarizeBtn = document.getElementById('summarize-btn');
     
     // --- State & Config ---
     const API_URL = '/api/askGemini';
@@ -1157,7 +1183,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const confirmBtn = document.getElementById('modal-confirm-btn');
         const cancelBtn = document.getElementById('modal-cancel-btn');
         
-        confirmBtn.textContent = config.confirmText;
+        if (config.confirmText) {
+            confirmBtn.style.display = 'inline-block';
+            confirmBtn.textContent = config.confirmText;
+        } else {
+            confirmBtn.style.display = 'none';
+        }
+
         cancelBtn.textContent = config.cancelText;
         inputEl.placeholder = config.placeholder;
         inputEl.value = '';
@@ -1279,6 +1311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderChatWindow(chat.messages);
             renderHistoryList();
             setLoading(false);
+            updateHeaderButtons();
             if(window.innerWidth <= 768) {
                 appContainer.classList.add('sidebar-collapsed');
             }
@@ -1302,6 +1335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sendButton.classList.remove('visible');
         setLoading(false);
         updateActionButtons();
+        updateHeaderButtons();
         setInitialSidebarState();
     };
 
@@ -1340,7 +1374,10 @@ document.addEventListener('DOMContentLoaded', () => {
         appendMessage('user', prompt, chatContentContainer);
         const loadingMsgWrapper = appendMessage('model', 'loading', chatContentContainer);
         
-        if (isNewChat) renderHistoryList();
+        if (isNewChat) {
+            renderHistoryList();
+            updateHeaderButtons();
+        }
         
         await streamResponse(prompt, loadingMsgWrapper, historyForAPI);
     };
@@ -1548,6 +1585,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return history;
     };
 
+    const updateHeaderButtons = () => {
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        if (chat && chat.messages.length >= 2) {
+            summarizeBtn.style.display = 'flex';
+        } else {
+            summarizeBtn.style.display = 'none';
+        }
+    };
+
     const updateActionButtons = () => {
         // Remove any existing action buttons we manage here
         document.querySelector('.regenerate-button')?.remove();
@@ -1608,6 +1655,41 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         actionWrapper.appendChild(copyButton);
+
+        // --- ✨ Gemini Rewrite Feature ---
+        const rewriteButton = document.createElement('button');
+        rewriteButton.className = 'action-button rewrite-button';
+        rewriteButton.innerHTML = `✨ <span>改写</span>`;
+
+        const rewriteOptions = document.createElement('div');
+        rewriteOptions.className = 'rewrite-options'; // Hidden by default via CSS
+        rewriteOptions.innerHTML = `
+            <button class="action-button" data-rewrite-action="shorter">缩短</button>
+            <button class="action-button" data-rewrite-action="longer">扩写</button>
+            <button class="action-button" data-rewrite-action="simpler">简化</button>
+        `;
+
+        rewriteButton.onclick = (e) => {
+            e.stopPropagation();
+            // Close other open rewrite options
+            document.querySelectorAll('.rewrite-options.visible').forEach(opt => {
+                if (opt !== rewriteOptions) opt.classList.remove('visible');
+            });
+            rewriteOptions.classList.toggle('visible');
+        };
+        
+        rewriteOptions.addEventListener('click', (e) => {
+            if (e.target.matches('[data-rewrite-action]')) {
+                const action = e.target.dataset.rewriteAction;
+                handleRewrite(messageWrapper, action);
+                rewriteOptions.classList.remove('visible');
+            }
+        });
+
+        actionWrapper.appendChild(rewriteButton);
+        actionWrapper.appendChild(rewriteOptions);
+        // --- End Gemini Feature ---
+
         messageWrapper.appendChild(actionWrapper);
     };
 
@@ -1733,6 +1815,111 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.querySelector('.chat-content-container');
         const loadingMsgWrapper = appendMessage('model', 'loading', container);
         await streamResponse(lastUserPrompt, loadingMsgWrapper, historyForAPI);
+    };
+
+    // --- ✨ Gemini API Helper Functions ---
+    const getGeminiResponse = async (prompt, history = []) => {
+        // This is a non-streaming helper for specific tasks like summarize/rewrite
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt,
+                    history,
+                    model: 'gemini-2.5-flash', // Use a fast model for these tasks
+                    stream: false,
+                    temperature: 0.7 
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API Error ${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
+            return data.text;
+
+        } catch (error) {
+            console.error("Gemini API call failed:", error);
+            return `Error: ${error.message}`;
+        }
+    };
+
+    const handleSummarize = async () => {
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        if (!chat || chat.messages.length < 2) {
+            showCustomModal({type: 'alert', title: '无法总结', message: '对话内容过少，无法进行总结。'});
+            return;
+        }
+
+        showCustomModal({
+            type: 'alert',
+            title: '正在生成摘要...',
+            message: '请稍候，Gemini 正在为您总结对话内容。',
+            showCancel: false,
+            confirmText: ''
+        });
+
+        const conversationText = chat.messages
+            .filter(msg => msg.parts[0].text !== 'loading')
+            .map(msg => `${msg.role === 'model' ? 'AI' : 'User'}: ${msg.parts[0].text}`).join('\n---\n');
+        const prompt = `请根据以下对话内容，生成一个简洁的摘要，不超过三句话。摘要应客观地概括对话的核心要点。\n\n对话内容:\n${conversationText}`;
+
+        const summary = await getGeminiResponse(prompt);
+
+        if (!summary.startsWith('Error:')) {
+            showCustomModal({
+                type: 'alert',
+                title: '对话摘要',
+                message: summary,
+                confirmText: '好的'
+            });
+        } else {
+            showCustomModal({
+                type: 'alert',
+                title: '生成失败',
+                message: summary,
+                confirmText: '关闭'
+            });
+        }
+    };
+
+    const handleRewrite = async (messageWrapper, action) => {
+        const messageElement = messageWrapper.querySelector('.message');
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        if (!chat) return;
+
+        const messageIndex = Array.from(messageWrapper.parentElement.children).indexOf(messageWrapper);
+        const originalMessageText = chat.messages[messageIndex].parts[0].text;
+
+        let prompt = '';
+        switch(action) {
+            case 'shorter': prompt = `请将以下文本缩短，保持核心意思不变:\n\n"${originalMessageText}"`; break;
+            case 'longer': prompt = `请将以下文本进行扩写，增加更多细节和描述:\n\n"${originalMessageText}"`; break;
+            case 'simpler': prompt = `请用更简单、更通俗易懂的语言解释以下文本:\n\n"${originalMessageText}"`; break;
+        }
+        if (!prompt) return;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'message-loading-overlay';
+        overlay.textContent = '改写中...';
+        messageElement.appendChild(overlay);
+
+        const rewrittenText = await getGeminiResponse(prompt);
+        
+        overlay.remove();
+        if (!rewrittenText.startsWith('Error:')) {
+            messageElement.innerHTML = marked.parse(rewrittenText);
+            addCopyButtonsToCodeBlocks(messageElement);
+            chat.messages[messageIndex].parts[0].text = rewrittenText;
+            saveChats(chats);
+        } else {
+            showCustomModal({type: 'alert', title: '改写失败', message: rewrittenText});
+        }
     };
 
 
@@ -1867,6 +2054,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     newChatButton.addEventListener('click', createNewChat);
     authButton.addEventListener('click', handleAuth);
+    summarizeBtn.addEventListener('click', handleSummarize);
     
     sendButton.addEventListener('click', () => {
         if (sendButton.classList.contains('is-loading')) {
@@ -1943,6 +2131,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (!settingsMenu.contains(e.target) && !settingsButton.contains(e.target)) {
             settingsMenu.classList.remove('active');
+        }
+        // Close rewrite options if clicking outside
+        const activeRewriteOptions = document.querySelector('.rewrite-options.visible');
+        if (activeRewriteOptions && !activeRewriteOptions.parentElement.contains(e.target)) {
+            activeRewriteOptions.classList.remove('visible');
         }
     });
 
