@@ -1788,11 +1788,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     userInput.addEventListener('keydown', (e) => {
-        // On mobile, prevent Enter from submitting. On desktop, allow Shift+Enter for new line.
-        if (e.key === 'Enter' && !e.shiftKey) {
-            if (isMobile) {
-                e.preventDefault(); // Prevent submission on mobile
-            } else if (!userInput.disabled) {
+        // On mobile, allow Enter for a new line. On desktop, Enter submits.
+        if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
+            if (!userInput.disabled) {
                 e.preventDefault();
                 handleSend();
             }
