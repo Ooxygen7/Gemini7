@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/askGemini.js": {
+      "maxDuration": 60
+    }
+  }
+}
