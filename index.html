@@ -1583,6 +1583,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             addActionsToModelMessage(messageWrapperElement, true); // It's the latest one now
             updateActionButtons();
+            updateHeaderButtons();
 
         } catch (error) {
             if (error.name === 'AbortError') {
