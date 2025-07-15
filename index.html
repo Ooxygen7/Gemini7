@@ -1977,6 +1977,7 @@ const updateActionButtons = () => {
     // --- ✨ Gemini API Helper Functions ---
     const getGeminiResponse = async (prompt, history = []) => {
         // This is a non-streaming helper for specific tasks like summarize/rewrite
+        const maxOutputTokens = getMaxOutputTokens(); // Get the value
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
@@ -1986,7 +1987,8 @@ const updateActionButtons = () => {
                     history,
                     model: 'gemini-2.5-flash', // Use a fast model for these tasks
                     stream: false,
-                    temperature: 0.7 
+                    temperature: 0.7,
+                    maxOutputTokens: parseInt(maxOutputTokens, 10) // Add the missing value
                 }),
             });
 
@@ -2056,7 +2058,7 @@ const updateActionButtons = () => {
 
         let prompt = '';
         switch(action) {
-            case 'longer': prompt = `请将以下文本进行扩写，增加更多细节和描述,你只需要照做，不需要回复这段话:\n\n"${originalMessageText}"`; break;
+           case 'longer': prompt = `请将以下文本进行扩写，增加更多细节和描述,你只需要照做，不需要回复这段话:\n\n"${originalMessageText}"`; break;
             case 'simpler': prompt = `请用更简单、更通俗易懂的语言解释以下文本，字数一定要比原文更少，你只需要照做，不需要回复这段话:\n\n"${originalMessageText}"`; break;
         }
         if (!prompt) return;
