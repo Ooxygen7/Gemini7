@@ -38,7 +38,9 @@ async function generateResponse(apiKey, { prompt, history, model: selectedModel,
     const generationConfig = {
         temperature: temperature !== undefined ? parseFloat(temperature) : 1, // Default to 1 if not provided
     };
-
+    if (maxOutputTokens && !isNaN(parseInt(maxOutputTokens, 10))) {
+        generationConfig.maxOutputTokens = parseInt(maxOutputTokens, 10);
+    }
     const modelToUse = selectedModel || "gemini-2.5-flash-lite-preview-06-17";
     
     const model = genAI.getGenerativeModel({ 
