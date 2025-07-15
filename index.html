@@ -1586,16 +1586,16 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
         
-        if (sender === 'model' && text === 'loading') {
-            let chats = getChats();
-            let chat = chats.find(c => c.id === currentChatId);
-            if (chat) {
-                chat.messages.push({ role: 'model', parts: [{ text: 'loading' }] });
-                saveChats(chats);
-            }
-        } else if (sender === 'model') {
-             addCopyButtonsToCodeBlocks(messageWrapper);
-        }
+//        if (sender === 'model' && text === 'loading') {
+//            let chats = getChats();
+//            let chat = chats.find(c => c.id === currentChatId);
+//            if (chat) {
+//               chat.messages.push({ role: 'model', parts: [{ text: 'loading' }] });
+//                saveChats(chats);
+//            }
+//        } else if (sender === 'model') {
+//             addCopyButtonsToCodeBlocks(messageWrapper);
+//       }
         
         return messageWrapper;
     };
