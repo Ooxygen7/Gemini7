@@ -31,16 +31,19 @@ export const config = {
  * @param {object} requestData The data from the original request.
  * @returns {Promise<Response>} A promise that resolves to the API response.
  */
-async function generateResponse(apiKey, { prompt, history, model: selectedModel, stream: useStream, temperature }) {
+// 修正点：在函数签名中添加 maxOutputTokens 参数
+async function generateResponse(apiKey, { prompt, history, model: selectedModel, stream: useStream, temperature, maxOutputTokens }) {
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    // MODIFIED: Create generationConfig object with temperature, default is now 1.
     const generationConfig = {
-        temperature: temperature !== undefined ? parseFloat(temperature) : 1, // Default to 1 if not provided
+        temperature: temperature !== undefined ? parseFloat(temperature) : 1,
     };
+
+    // 新增：如果提供了 maxOutputTokens，则将其添加到配置中
     if (maxOutputTokens && !isNaN(parseInt(maxOutputTokens, 10))) {
         generationConfig.maxOutputTokens = parseInt(maxOutputTokens, 10);
     }
+
     const modelToUse = selectedModel || "gemini-2.5-flash-lite-preview-06-17";
     
     const model = genAI.getGenerativeModel({ 
