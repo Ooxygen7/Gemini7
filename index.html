@@ -1047,10 +1047,8 @@
             flex-shrink: 0;
         }
         #canvas-title-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            overflow: hidden;
+            flex-grow: 1;
+            overflow: hidden; /* Prevents title from pushing other elements */
         }
         #canvas-title {
             font-size: 1.25rem;
@@ -1058,6 +1056,11 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+        #canvas-controls {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; /* Prevents this container from shrinking */
         }
         #canvas-content-wrapper {
             flex-grow: 1;
@@ -1135,6 +1138,7 @@
             display: flex;
             align-items: center;
             gap: 4px;
+            margin-right: 8px;
         }
         .toolbar-divider {
             width: 1px;
@@ -1342,6 +1346,8 @@
             <header class="canvas-header">
                 <div id="canvas-title-wrapper">
                     <h2 id="canvas-title">Canvas</h2>
+                </div>
+                <div id="canvas-controls">
                     <div id="canvas-toolbar" style="display: none;">
                         <div class="text-style-dropdown">
                             <button class="toolbar-button" id="text-style-button">
@@ -1363,10 +1369,10 @@
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7.75 3a.75.75 0 000 1.5h1.25l-3.25 9h-1a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-1.25l3.25-9h1a.75.75 0 000-1.5h-5z" /></svg>
                         </button>
                     </div>
+                    <button id="canvas-close-btn" class="icon-button" title="关闭 Canvas">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
                 </div>
-                <button id="canvas-close-btn" class="icon-button" title="关闭 Canvas">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
             </header>
             <div id="canvas-content-wrapper">
                 <div id="canvas-content" contenteditable="true"></div>
@@ -1867,9 +1873,12 @@ User's topic: "${prompt}"`;
         const responseJsonString = await getGeminiResponse(canvasPrompt, history);
         let responseData;
         try {
-            responseData = JSON.parse(responseJsonString);
+            // Attempt to find a valid JSON object within the response string
+            const jsonMatch = responseJsonString.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error("No JSON object found in response.");
+            responseData = JSON.parse(jsonMatch[0]);
         } catch (e) {
-            console.error("Failed to parse AI JSON response:", e);
+            console.error("Failed to parse AI JSON response:", e, "Raw response:", responseJsonString);
             responseData = { conversation: "抱歉，我无法正确处理您的请求。", document: "生成内容时出错，请稍后重试。" };
         }
 
@@ -1886,10 +1895,11 @@ User's topic: "${prompt}"`;
         chat.canvases[canvasId] = { id: canvasId, title: canvasTitleText, content: document };
         
         canvasTitle.textContent = canvasTitleText;
+        canvasView.dataset.activeCanvasId = canvasId; // Track active canvas
         renderCanvasContent(document);
         
         // 3. Append canvas card to chat
-        const canvasCard = appendCanvasCard(canvasId);
+        appendCanvasCard(canvasId);
         chat.messages.push({ role: 'canvas', canvasId: canvasId });
         
         setLoading(false);
@@ -2007,7 +2017,7 @@ User's topic: "${prompt}"`;
     const setLoading = (isLoading) => {
         userInput.disabled = isLoading;
         newChatButton.disabled = isLoading;
-        canvasToggle.disabled = isLoading;
+        // canvasToggle.disabled = isLoading; // Let user toggle canvas even when loading
 
         if (isLoading) {
             sendButton.classList.add('is-loading');
@@ -2234,7 +2244,7 @@ User's topic: "${prompt}"`;
         const chats = getChats();
         const chat = chats.find(c => c.id === currentChatId);
         
-        const messageWrappers = Array.from(messageWrapper.parentElement.children);
+        const messageWrappers = Array.from(messageWrapper.parentElement.children).filter(el => el.classList.contains('message-wrapper'));
         const messageIndexInDOM = messageWrappers.indexOf(messageWrapper);
         const originalText = chat.messages[messageIndexInDOM].parts[0].text;
 
@@ -2417,7 +2427,7 @@ User's topic: "${prompt}"`;
         const chat = chats.find(c => c.id === currentChatId);
         if (!chat) return;
 
-        const messageWrappers = Array.from(messageWrapper.parentElement.children);
+        const messageWrappers = Array.from(messageWrapper.parentElement.children).filter(el => el.classList.contains('message-wrapper'));
         const messageIndexInDOM = messageWrappers.indexOf(messageWrapper);
         const originalMessageText = chat.messages[messageIndexInDOM].parts[0].text;
 
@@ -2485,6 +2495,7 @@ User's topic: "${prompt}"`;
             canvasContent.innerHTML = '';
             canvasTitle.textContent = 'Canvas';
             canvasToolbar.style.display = 'none';
+            canvasView.removeAttribute('data-active-canvas-id');
         }
     };
 
@@ -2495,6 +2506,7 @@ User's topic: "${prompt}"`;
         if (canvasData) {
             toggleCanvas(true);
             canvasTitle.textContent = canvasData.title;
+            canvasView.dataset.activeCanvasId = canvasId;
             renderCanvasContent(canvasData.content);
         }
     };
@@ -2520,8 +2532,10 @@ User's topic: "${prompt}"`;
             }
         });
 
-        document.addEventListener('click', () => {
-             textStyleMenu.style.display = 'none';
+        document.addEventListener('click', (e) => {
+             if (!textStyleButton.contains(e.target)) {
+                textStyleMenu.style.display = 'none';
+             }
         });
 
         canvasContent.addEventListener('keyup', updateToolbarState);
@@ -2848,5 +2862,4 @@ User's topic: "${prompt}"`;
 </script>
 </body>
 </html>
-
 
