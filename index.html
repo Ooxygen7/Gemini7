@@ -33,6 +33,7 @@
             --canvas-bg: #f0f4f9;
             --canvas-content-bg: #ffffff;
             --canvas-border-color: #d8dde3;
+            --toolbar-button-active-bg: #e8f0fe;
 
             --text-primary: #1f1f1f;
             --text-secondary: #444746;
@@ -49,7 +50,8 @@
             --thinking-animation-bg: linear-gradient(90deg, #e9e9e9, #f7f7f7, #e9e9e9);
             --new-chat-btn-bg: var(--bg-main);
             --new-chat-btn-hover-bg: #f8fafd;
-            --scrollbar-thumb-bg: #d6d6d6;
+            --scrollbar-thumb-bg: #c1c1c1;
+            --scrollbar-track-bg: #f1f1f1;
             --temp-slider-thumb-border: var(--bg-content);
 
             --sidebar-width: 256px;
@@ -79,6 +81,7 @@
             --canvas-bg: #131314;
             --canvas-content-bg: #1e1f20;
             --canvas-border-color: #3c3d3f;
+            --toolbar-button-active-bg: #28313b;
 
 
             --text-primary: #e3e3e3;
@@ -97,6 +100,7 @@
             --new-chat-btn-bg: var(--bg-input);
             --new-chat-btn-hover-bg: #3c3d3f;
             --scrollbar-thumb-bg: #4a4c4e;
+            --scrollbar-track-bg: #2d2e30;
             --temp-slider-thumb-border: var(--bg-input);
         }
 
@@ -137,8 +141,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             background: none;
             border: none;
             border-radius: 50%;
@@ -1042,6 +1046,12 @@
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
         }
+        #canvas-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            overflow: hidden;
+        }
         #canvas-title {
             font-size: 1.25rem;
             font-weight: 500;
@@ -1051,9 +1061,29 @@
         }
         #canvas-content-wrapper {
             flex-grow: 1;
-            overflow-y: auto;
+            overflow: auto; /* Changed to auto for scrollbars */
             padding: 24px;
         }
+        /* Custom Scrollbar */
+        #canvas-content-wrapper::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        #canvas-content-wrapper::-webkit-scrollbar-track {
+            background: var(--scrollbar-track-bg);
+            border-radius: 10px;
+        }
+        #canvas-content-wrapper::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb-bg);
+            border-radius: 10px;
+        }
+        #canvas-content-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        body.dark-mode #canvas-content-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #5f5f5f;
+        }
+
         #canvas-content {
             max-width: 840px;
             width: 100%;
@@ -1074,6 +1104,93 @@
         }
         #canvas-content * {
              max-width: 100%;
+        }
+        .canvas-card {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-top: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background-color var(--transition-speed-fast) ease;
+        }
+        .canvas-card:hover {
+            background-color: var(--bg-input-focus);
+        }
+        .canvas-card-icon {
+            flex-shrink: 0;
+        }
+        .canvas-card-title {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Toolbar Styles */
+        #canvas-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .toolbar-divider {
+            width: 1px;
+            height: 20px;
+            background-color: var(--border-color);
+            margin: 0 8px;
+        }
+        .toolbar-button {
+            background: none;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color var(--transition-speed-fast) ease;
+        }
+        .toolbar-button:hover {
+            background-color: var(--bg-hover-dark);
+        }
+        .toolbar-button.active {
+            background-color: var(--toolbar-button-active-bg);
+            color: var(--text-link);
+        }
+        .toolbar-button svg {
+            width: 20px;
+            height: 20px;
+        }
+        .text-style-dropdown {
+            position: relative;
+        }
+        #text-style-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            background-color: var(--bg-content);
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            z-index: 10;
+            width: 180px;
+            display: none;
+        }
+        .text-style-option {
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .text-style-option:hover {
+            background-color: var(--bg-hover-dark);
+        }
+        #text-style-label {
+            min-width: 80px;
+            text-align: left;
         }
 
 
@@ -1223,7 +1340,30 @@
         <!-- Canvas View -->
         <div id="canvas-view" class="canvas-view">
             <header class="canvas-header">
-                <h2 id="canvas-title">Canvas</h2>
+                <div id="canvas-title-wrapper">
+                    <h2 id="canvas-title">Canvas</h2>
+                    <div id="canvas-toolbar" style="display: none;">
+                        <div class="text-style-dropdown">
+                            <button class="toolbar-button" id="text-style-button">
+                                <span id="text-style-label">普通文本</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                            <div id="text-style-menu">
+                                <div class="text-style-option" data-format="p">普通文本</div>
+                                <div class="text-style-option" data-format="h1" style="font-size: 1.5em; font-weight: bold;">标题 1</div>
+                                <div class="text-style-option" data-format="h2" style="font-size: 1.25em; font-weight: bold;">标题 2</div>
+                                <div class="text-style-option" data-format="h3" style="font-size: 1.1em; font-weight: bold;">标题 3</div>
+                            </div>
+                        </div>
+                        <div class="toolbar-divider"></div>
+                        <button class="toolbar-button" id="bold-button" title="粗体">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a1 1 0 011-1h5.5a3.5 3.5 0 011.888 6.512A3.5 3.5 0 0111.5 17H5a1 1 0 01-1-1V4zm4.5 2.5a1.5 1.5 0 100 3H6v-3h2.5zM6 15h4.5a1.5 1.5 0 100-3H6v3z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <button class="toolbar-button" id="italic-button" title="斜体">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7.75 3a.75.75 0 000 1.5h1.25l-3.25 9h-1a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-1.25l3.25-9h1a.75.75 0 000-1.5h-5z" /></svg>
+                        </button>
+                    </div>
+                </div>
                 <button id="canvas-close-btn" class="icon-button" title="关闭 Canvas">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
@@ -1373,6 +1513,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvasTitle = document.getElementById('canvas-title');
     const canvasContent = document.getElementById('canvas-content');
     const canvasCloseBtn = document.getElementById('canvas-close-btn');
+    const canvasToolbar = document.getElementById('canvas-toolbar');
+    const boldButton = document.getElementById('bold-button');
+    const italicButton = document.getElementById('italic-button');
+    const textStyleButton = document.getElementById('text-style-button');
+    const textStyleMenu = document.getElementById('text-style-menu');
+    const textStyleLabel = document.getElementById('text-style-label');
+
 
     // --- State & Config ---
     const API_URL = '/api/askGemini';
@@ -1522,8 +1669,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Local Storage Functions ---
-    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats_v6') || '[]');
-    const saveChats = (chats) => localStorage.setItem('geminiSnowChats_v6', JSON.stringify(chats));
+    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats_v7') || '[]');
+    const saveChats = (chats) => localStorage.setItem('geminiSnowChats_v7', JSON.stringify(chats));
     const getCustomPreset = () => JSON.parse(localStorage.getItem('geminiSnowCustomPreset_v6') || '{ "enabled": false, "prompt": "" }');
     const saveCustomPreset = (settings) => localStorage.setItem('geminiSnowCustomPreset_v6', JSON.stringify(settings));
     const getStreamingState = () => localStorage.getItem('geminiSnowStreaming_v6') === null ? true : JSON.parse(localStorage.getItem('geminiSnowStreaming_v6'));
@@ -1534,9 +1681,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveThemeState = (theme) => localStorage.setItem('geminiSnowTheme_v1', theme);
     const getMaxOutputTokens = () => localStorage.getItem('geminiSnowMaxTokens_v1') || '65536';
     const saveMaxOutputTokens = (value) => localStorage.setItem('geminiSnowMaxTokens_v1', value);
-    const getCanvasContent = () => JSON.parse(localStorage.getItem('geminiSnowCanvas_v2') || 'null');
-    const saveCanvasContent = (content) => localStorage.setItem('geminiSnowCanvas_v2', JSON.stringify(content));
-    const clearCanvasContent = () => localStorage.removeItem('geminiSnowCanvas_v2');
 
 
     const deleteChat = async (chatIdToDelete) => {
@@ -1576,7 +1720,6 @@ document.addEventListener('DOMContentLoaded', () => {
             title.textContent = chat.title;
             item.addEventListener('click', () => {
                 if (sendButton.classList.contains('is-loading') || isEditing) return;
-                // When loading a chat, ensure canvas is off
                 if (canvasToggle.checked) {
                     toggleCanvas(false);
                 }
@@ -1598,14 +1741,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    const renderChatWindow = (messages) => {
+    const renderChatWindow = (chat) => {
+        const messages = chat.messages;
         const container = document.createElement('div');
         container.className = 'chat-content-container';
         chatOutput.innerHTML = '';
         chatOutput.appendChild(container);
-        messages.forEach((msg, index) => {
-            // Filter out any leftover 'loading' messages from storage
-            if (msg.parts[0].text !== 'loading') {
+        messages.forEach((msg) => {
+            if (msg.role === 'canvas') {
+                appendCanvasCard(msg.canvasId, container);
+            } else if (msg.parts[0].text !== 'loading') {
                 const messageWrapper = appendMessage(msg.role, msg.parts[0].text, container);
                 if (msg.role === 'model') {
                     addActionsToModelMessage(messageWrapper);
@@ -1621,7 +1766,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chat = chats.find(c => c.id === chatId);
         if (chat) {
             currentChatId = chatId;
-            renderChatWindow(chat.messages);
+            renderChatWindow(chat);
             renderHistoryList();
             setLoading(false);
             updateHeaderButtons();
@@ -1659,18 +1804,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const prompt = userInput.value.trim();
         if (!prompt || sendButton.classList.contains('is-loading')) return;
         
-        if (canvasToggle.checked) {
-            await handleCanvasSend(prompt);
-        } else {
-            await handleChatSend(prompt);
-        }
-    };
-
-    const handleChatSend = async (prompt) => {
         setLoading(true);
         userInput.value = '';
         userInput.style.height = 'auto';
 
+        let chats = getChats();
+        let isNewChat = false;
+        let chat;
+
+        if (!currentChatId) {
+            isNewChat = true;
+            currentChatId = `chat_${Date.now()}`;
+            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [], canvases: {} };
+            chats.push(chat);
+        } else {
+            chat = chats.find(c => c.id === currentChatId);
+        }
+        
         let chatContentContainer = chatOutput.querySelector('.chat-content-container');
         if (!chatContentContainer || chatContentContainer.querySelector('.welcome-container')) {
             chatContentContainer = document.createElement('div');
@@ -1679,35 +1829,74 @@ document.addEventListener('DOMContentLoaded', () => {
             chatOutput.appendChild(chatContentContainer);
         }
 
-        let chats = getChats();
-        let isNewChat = false;
-        let chat;
-        if (!currentChatId) {
-            isNewChat = true;
-            currentChatId = `chat_${Date.now()}`;
-            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [] };
-            chats.push(chat);
-        } else {
-            chat = chats.find(c => c.id === currentChatId);
-        }
-        
-        const historyForAPI = buildHistoryWithPresets([...chat.messages]);
-        
         chat.messages.push({ role: 'user', parts: [{ text: prompt }] });
-        saveChats(chats);
-        
         appendMessage('user', prompt, chatContentContainer);
-        const loadingMsgWrapper = appendMessage('model', 'loading', chatContentContainer);
         
         if (isNewChat) {
             renderHistoryList();
-            updateHeaderButtons();
+        }
+
+        const historyForAPI = buildHistoryWithPresets(chat);
+        const loadingMsgWrapper = appendMessage('model', 'loading', chatContentContainer);
+
+        if (canvasToggle.checked) {
+            await handleCanvasResponse(prompt, chat, loadingMsgWrapper, historyForAPI);
+        } else {
+            await handleChatResponse(prompt, chat, loadingMsgWrapper, historyForAPI);
         }
         
-        await streamResponse(prompt, loadingMsgWrapper, historyForAPI);
+        saveChats(getChats()); // Save at the end
+    };
+
+    const handleChatResponse = async (prompt, chat, loadingMsgWrapper, history) => {
+        await streamResponse(prompt, loadingMsgWrapper, history, (fullText) => {
+            chat.messages.push({ role: 'model', parts: [{ text: fullText }] });
+        });
     };
     
-    const streamResponse = async (prompt, messageWrapperElement, historyForAPI) => {
+    const handleCanvasResponse = async (prompt, chat, loadingMsgWrapper, history) => {
+        const canvasPrompt = `You are an expert assistant. A user has requested content on the following topic. Your task is to generate a JSON object containing two fields: "conversation" and "document".
+- The "conversation" field should contain a brief, conversational response acknowledging the user's request (e.g., "Certainly, here is the document about...").
+- The "document" field should contain the main content. You must determine if the request is for code or a text document.
+- If for code, the "document" field should contain ONLY the raw code, enclosed in appropriate Markdown code fences.
+- If for a text document, the "document" field should contain a well-structured document in Markdown format.
+- IMPORTANT: Respond ONLY with the valid JSON object and nothing else.
+
+User's topic: "${prompt}"`;
+        
+        const responseJsonString = await getGeminiResponse(canvasPrompt, history);
+        let responseData;
+        try {
+            responseData = JSON.parse(responseJsonString);
+        } catch (e) {
+            console.error("Failed to parse AI JSON response:", e);
+            responseData = { conversation: "抱歉，我无法正确处理您的请求。", document: "生成内容时出错，请稍后重试。" };
+        }
+
+        const { conversation, document } = responseData;
+
+        // 1. Update chat message with conversational part
+        updateMessage(loadingMsgWrapper, marked.parse(conversation || ""));
+        chat.messages.push({ role: 'model', parts: [{ text: conversation || "" }] });
+
+        // 2. Create and render canvas
+        const canvasId = `canvas_${Date.now()}`;
+        const canvasTitleText = `Canvas: ${prompt.substring(0, 30)}...`;
+        
+        chat.canvases[canvasId] = { id: canvasId, title: canvasTitleText, content: document };
+        
+        canvasTitle.textContent = canvasTitleText;
+        renderCanvasContent(document);
+        
+        // 3. Append canvas card to chat
+        const canvasCard = appendCanvasCard(canvasId);
+        chat.messages.push({ role: 'canvas', canvasId: canvasId });
+        
+        setLoading(false);
+    };
+
+
+    const streamResponse = async (prompt, messageWrapperElement, historyForAPI, onComplete) => {
         updateActionButtons();
         abortController = new AbortController();
         const messageElement = messageWrapperElement.querySelector('.message');
@@ -1750,15 +1939,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if(fullText === null) return;
             
-            let chats = getChats();
-            let chat = chats.find(c => c.id === currentChatId);
-            const modelMessage = { role: 'model', parts: [{ text: fullText }] };
+            onComplete(fullText);
             
-            chat.messages.push(modelMessage);
-
-            saveChats(chats);
-            
-            addActionsToModelMessage(messageWrapperElement, true); // It's the latest one now
+            addActionsToModelMessage(messageWrapperElement, true);
             updateActionButtons();
             updateHeaderButtons();
 
@@ -1889,15 +2072,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    const buildHistoryWithPresets = (history) => {
+    const buildHistoryWithPresets = (chat) => {
+        const history = [];
         const customPreset = getCustomPreset();
         if (customPreset.enabled && customPreset.prompt && customPreset.prompt.trim() !== '') {
-            const presetMessages = [
+            history.push(
                 { role: 'user', parts: [{ text: `System instruction: ${customPreset.prompt.trim()}` }] },
                 { role: 'model', parts: [{ text: 'OK, I will follow that instruction.' }] }
-            ];
-            return [...presetMessages, ...history];
+            );
         }
+        
+        chat.messages.forEach(msg => {
+            if (msg.role === 'canvas') {
+                const canvasData = chat.canvases[msg.canvasId];
+                if (canvasData) {
+                    history.push({ 
+                        role: 'user', 
+                        parts: [{ text: `CONTEXT FROM A PREVIOUSLY GENERATED CANVAS TITLED "${canvasData.title}":\n\n${canvasData.content}` }]
+                    });
+                    history.push({
+                         role: 'model',
+                         parts: [{ text: 'OK, I have reviewed the canvas content and will use it as context.' }]
+                    });
+                }
+            } else {
+                 history.push({ role: msg.role, parts: msg.parts });
+            }
+        });
+
         return history;
     };
 
@@ -1920,7 +2122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const userMessages = document.querySelectorAll('.message-wrapper.user');
+        const userMessages = Array.from(document.querySelectorAll('.message-wrapper.user'));
         if (userMessages.length > 0) {
             const lastUserMessage = userMessages[userMessages.length - 1];
             const actionsDiv = document.createElement('div');
@@ -1945,7 +2147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lastUserMessage.appendChild(actionsDiv);
         }
 
-        const modelMessages = document.querySelectorAll('.message-wrapper.model');
+        const modelMessages = Array.from(document.querySelectorAll('.message-wrapper.model'));
         modelMessages.forEach((msg, index) => {
             addActionsToModelMessage(msg, index === modelMessages.length - 1);
         });
@@ -2031,8 +2233,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const originalHTML = messageDiv.innerHTML;
         const chats = getChats();
         const chat = chats.find(c => c.id === currentChatId);
-        const messageIndex = Array.from(messageWrapper.parentElement.children).indexOf(messageWrapper);
-        const originalText = chat.messages[messageIndex].parts[0].text;
+        
+        const messageWrappers = Array.from(messageWrapper.parentElement.children);
+        const messageIndexInDOM = messageWrappers.indexOf(messageWrapper);
+        const originalText = chat.messages[messageIndexInDOM].parts[0].text;
 
         messageDiv.innerHTML = '';
         const editTextArea = document.createElement('textarea');
@@ -2080,9 +2284,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let currentChats = getChats();
                 let currentChat = currentChats.find(c => c.id === currentChatId);
                 
-                currentChat.messages.splice(messageIndex, Infinity, { role: 'user', parts: [{ text: newText }] });
-                saveChats(currentChats);
-
+                currentChat.messages.splice(messageIndexInDOM, Infinity, { role: 'user', parts: [{ text: newText }] });
+                
                 while(messageWrapper.nextSibling) {
                     messageWrapper.nextSibling.remove();
                 }
@@ -2092,7 +2295,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const container = document.querySelector('.chat-content-container');
                 const loadingMsgWrapper = appendMessage('model', 'loading', container);
-                await streamResponse(newText, loadingMsgWrapper, currentChat.messages);
+                
+                await handleChatResponse(newText, currentChat, loadingMsgWrapper, buildHistoryWithPresets(currentChat));
+                saveChats(currentChats);
 
             } else {
                 cleanupEdit();
@@ -2105,23 +2310,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const handleRegenerate = async () => {
         let chats = getChats();
         let chat = chats.find(c => c.id === currentChatId);
-        if (!chat || chat.messages.length < 2) return;
+        if (!chat || chat.messages.length < 1) return;
         
         setLoading(true);
         updateActionButtons();
 
-        chat.messages.pop(); 
-        saveChats(chats);
+        // Find last model message to remove
+        let lastModelIndex = -1;
+        for (let i = chat.messages.length - 1; i >= 0; i--) {
+            if (chat.messages[i].role === 'model') {
+                lastModelIndex = i;
+                break;
+            }
+        }
+        if (lastModelIndex !== -1) {
+            chat.messages.splice(lastModelIndex, 1);
+        }
         
         const lastModelMessageElement = document.querySelector('.message-wrapper.model:last-of-type');
         if (lastModelMessageElement) lastModelMessageElement.remove();
         
-        const historyForAPI = buildHistoryWithPresets([...chat.messages]);
-        const lastUserPrompt = chat.messages.at(-1).parts[0].text;
+        const historyForAPI = buildHistoryWithPresets(chat);
+        const lastUserPrompt = chat.messages.filter(m => m.role === 'user').pop().parts[0].text;
         
         const container = document.querySelector('.chat-content-container');
         const loadingMsgWrapper = appendMessage('model', 'loading', container);
-        await streamResponse(lastUserPrompt, loadingMsgWrapper, historyForAPI);
+        await handleChatResponse(lastUserPrompt, chat, loadingMsgWrapper, historyForAPI);
+        saveChats(chats);
     };
 
     // --- Gemini API Helper Functions ---
@@ -2172,7 +2387,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const conversationText = chat.messages
-            .filter(msg => msg.parts[0].text !== 'loading')
+            .filter(msg => msg.role !== 'canvas' && msg.parts[0].text !== 'loading')
             .map(msg => `${msg.role === 'model' ? 'AI' : 'User'}: ${msg.parts[0].text}`).join('\n---\n');
         const prompt = `请根据以下对话内容，生成一个简洁的摘要，不超过三句话。摘要应客观地概括对话的核心要点。\n\n对话内容:\n${conversationText}`;
 
@@ -2202,8 +2417,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const chat = chats.find(c => c.id === currentChatId);
         if (!chat) return;
 
-        const messageIndex = Array.from(messageWrapper.parentElement.children).filter(el => el.classList.contains('message-wrapper')).indexOf(messageWrapper);
-        const originalMessageText = chat.messages[messageIndex].parts[0].text;
+        const messageWrappers = Array.from(messageWrapper.parentElement.children);
+        const messageIndexInDOM = messageWrappers.indexOf(messageWrapper);
+        const originalMessageText = chat.messages[messageIndexInDOM].parts[0].text;
 
         let prompt = '';
         switch(action) {
@@ -2225,7 +2441,7 @@ document.addEventListener('DOMContentLoaded', () => {
             messageElement.classList.add('content-refreshed');
             setTimeout(() => messageElement.classList.remove('content-refreshed'), 500);
             addCopyButtonsToCodeBlocks(messageElement);
-            chat.messages[messageIndex].parts[0].text = rewrittenText;
+            chat.messages[messageIndexInDOM].parts[0].text = rewrittenText;
             saveChats(chats);
         } else {
             showCustomModal({type: 'alert', title: '改写失败，可能是达到后端最长反应时间限制！', message: rewrittenText});
@@ -2233,58 +2449,96 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Canvas Functions ---
-    const handleCanvasSend = async (prompt) => {
-        setLoading(true);
-        userInput.value = '';
-        userInput.style.height = 'auto';
-        sendButton.classList.remove('visible');
 
-        canvasContent.innerHTML = '<div class="message thinking-animation">正在生成 Canvas 内容...</div>';
-        const tempTitle = `Canvas: ${prompt.substring(0, 40)}${prompt.length > 40 ? '...' : ''}`;
-        canvasTitle.textContent = tempTitle;
+    const appendCanvasCard = (canvasId, container) => {
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        const canvasData = chat.canvases[canvasId];
+        if (!canvasData) return;
 
-        const canvasPrompt = `You are an expert assistant. A user has requested content on the following topic. Your primary goal is to determine if the request is for generating code or for generating a text document.
-- If the request is for code (e.g., 'create an HTML button', 'write a python function'), respond ONLY with the raw code itself, enclosed in appropriate Markdown code fences (e.g., \`\`\`html ... \`\`\`). Do not add any explanatory text before or after the code block.
-- If the request is for a text document (e.g., 'write an essay about space', 'explain black holes'), respond with a well-structured document in Markdown format, including headings, lists, and paragraphs.
-User's topic: "${prompt}"`;
-
-        const fullText = await getGeminiResponse(canvasPrompt);
-
-        if (!fullText.startsWith('Error:')) {
-            renderCanvasContent(fullText);
-            saveCanvasContent({ title: tempTitle, content: fullText });
-        } else {
-            canvasContent.innerHTML = `<p>抱歉，生成 Canvas 内容时出错。</p><p><em>${fullText}</em></p>`;
-        }
-        setLoading(false);
+        const card = document.createElement('div');
+        card.className = 'canvas-card';
+        card.dataset.canvasId = canvasId;
+        card.innerHTML = `
+            <svg class="canvas-card-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0z" fill="none"/><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 9h-2v2H9v-2H7V9h2V7h2v2h2v2zm4-6V3.5L18.5 9H13z"/></svg>
+            <span class="canvas-card-title">${canvasData.title}</span>
+        `;
+        (container || document.querySelector('.chat-content-container')).appendChild(card);
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+        return card;
     };
 
     const renderCanvasContent = (rawContent) => {
         const trimmedContent = rawContent.trim();
-        // Simple check: if the content is wrapped in ```, treat it as code.
-        if (trimmedContent.startsWith('```') && trimmedContent.endsWith('```')) {
-             canvasContent.innerHTML = marked.parse(rawContent);
-        } else {
-            // Otherwise, treat as a document
-            canvasContent.innerHTML = marked.parse(rawContent);
-        }
+        const isCode = trimmedContent.startsWith('```') && trimmedContent.endsWith('```');
+        
+        canvasToolbar.style.display = isCode ? 'none' : 'flex';
+        canvasContent.innerHTML = marked.parse(rawContent);
+        
         addCopyButtonsToCodeBlocks(canvasContent);
     };
 
     const toggleCanvas = (show) => {
         appContainer.classList.toggle('canvas-active', show);
         canvasToggle.checked = show;
-    };
-
-    const restoreCanvas = () => {
-        const savedCanvas = getCanvasContent();
-        if (savedCanvas) {
-            toggleCanvas(true);
-            canvasTitle.textContent = savedCanvas.title;
-            renderCanvasContent(savedCanvas.content);
+        if (!show) {
+            canvasContent.innerHTML = '';
+            canvasTitle.textContent = 'Canvas';
+            canvasToolbar.style.display = 'none';
         }
     };
 
+    const openCanvas = (canvasId) => {
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        const canvasData = chat?.canvases?.[canvasId];
+        if (canvasData) {
+            toggleCanvas(true);
+            canvasTitle.textContent = canvasData.title;
+            renderCanvasContent(canvasData.content);
+        }
+    };
+
+    // --- Toolbar Functions ---
+    const setupToolbar = () => {
+        boldButton.addEventListener('click', () => document.execCommand('bold'));
+        italicButton.addEventListener('click', () => document.execCommand('italic'));
+        
+        textStyleButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            textStyleMenu.style.display = textStyleMenu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        textStyleMenu.addEventListener('click', (e) => {
+            const target = e.target.closest('.text-style-option');
+            if (target) {
+                const format = target.dataset.format;
+                document.execCommand('formatBlock', false, `<${format}>`);
+                textStyleLabel.textContent = target.textContent;
+                textStyleMenu.style.display = 'none';
+                canvasContent.focus();
+            }
+        });
+
+        document.addEventListener('click', () => {
+             textStyleMenu.style.display = 'none';
+        });
+
+        canvasContent.addEventListener('keyup', updateToolbarState);
+        canvasContent.addEventListener('mouseup', updateToolbarState);
+    };
+
+    const updateToolbarState = () => {
+        boldButton.classList.toggle('active', document.queryCommandState('bold'));
+        italicButton.classList.toggle('active', document.queryCommandState('italic'));
+        
+        const block = document.queryCommandValue('formatBlock').toLowerCase();
+        let blockName = '普通文本';
+        if (block === 'h1') blockName = '标题 1';
+        else if (block === 'h2') blockName = '标题 2';
+        else if (block === 'h3') blockName = '标题 3';
+        textStyleLabel.textContent = blockName;
+    };
 
     // --- Setup and Init Functions ---
 
@@ -2543,23 +2797,41 @@ User's topic: "${prompt}"`;
 
     // --- Canvas Event Listeners ---
     canvasToggle.addEventListener('change', () => {
+        toggleCanvas(canvasToggle.checked);
         if (canvasToggle.checked) {
-            toggleCanvas(true);
-            currentChatId = null;
-            renderHistoryList();
-            restoreCanvas();
-        } else {
-            toggleCanvas(false);
+            if (currentChatId) {
+                // If in a chat, just open the canvas view
+                // but don't create a new one until user sends a message
+            } else {
+                // If not in a chat, create a new one for the canvas
+                const chats = getChats();
+                currentChatId = `chat_${Date.now()}`;
+                const newChat = { id: currentChatId, title: "New Canvas Session", messages: [], canvases: {} };
+                chats.push(newChat);
+                saveChats(chats);
+                renderHistoryList();
+            }
         }
     });
 
     canvasCloseBtn.addEventListener('click', () => toggleCanvas(false));
 
     canvasContent.addEventListener('input', () => {
-        const currentCanvas = getCanvasContent();
-        if (currentCanvas) {
-            const newContent = canvasContent.innerHTML;
-            saveCanvasContent({ title: currentCanvas.title, content: newContent });
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        const activeCanvasId = canvasView.dataset.activeCanvasId;
+        if (chat && activeCanvasId && chat.canvases[activeCanvasId]) {
+            // This is a simplified save. A real-world app might use innerHTML
+            // but would need heavy sanitization. innerText is safer for now.
+            chat.canvases[activeCanvasId].content = canvasContent.innerText;
+            saveChats(chats);
+        }
+    });
+
+    chatOutput.addEventListener('click', (e) => {
+        const card = e.target.closest('.canvas-card');
+        if (card && card.dataset.canvasId) {
+            openCanvas(card.dataset.canvasId);
         }
     });
 
@@ -2569,10 +2841,12 @@ User's topic: "${prompt}"`;
     setupPresetsModal();
     setupPreferencesModal();
     setupChangelog();
+    setupToolbar();
     createNewChat();
 
 });
 </script>
 </body>
 </html>
+
 
