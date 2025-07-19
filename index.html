@@ -986,6 +986,10 @@
         .canvas-toggle-label:hover {
             background-color: var(--bg-input-focus);
         }
+        #canvas-toggle:disabled + .canvas-toggle-icon {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
         .canvas-toggle-label input {
             display: none;
         }
@@ -1130,7 +1134,7 @@
                 <div class="chat-input-container">
                     <div class="chat-input">
                         <!-- Canvas Toggle Button -->
-                        <label class="canvas-toggle-label" title="Canvas 模式">
+                        <label class="canvas-toggle-label" id="canvas-toggle-label" title="Canvas 模式">
                             <input type="checkbox" id="canvas-toggle">
                             <svg class="canvas-toggle-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
                         </label>
@@ -1290,8 +1294,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const versionDetailsModalOverlay = document.getElementById('version-details-modal-overlay');
     const changelogButtonsContainer = document.getElementById('changelog-buttons-container');
     
-    // --- Canvas Elements (NEW & MODIFIED) ---
+    // --- Canvas Elements ---
     const canvasToggle = document.getElementById('canvas-toggle');
+    const canvasToggleLabel = document.getElementById('canvas-toggle-label');
     const canvasDisplayModalOverlay = document.getElementById('canvas-display-modal-overlay');
     const canvasDisplayTitle = document.getElementById('canvas-display-title');
     const canvasDisplayContent = document.getElementById('canvas-display-content');
@@ -1309,6 +1314,15 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'gemini-2.0-flash-lite', name: '2.0 Lite', description: '成本效益和低延迟', locked: false }
     ];
     const changelogData = {
+        "1.3.2": {
+            title: "v1.3.2 (Canvas Logic & API Fix)",
+            description: `<ul>
+                            <li><strong>修复: API 错误:</strong> 修复了在已有 Canvas 的对话中继续提问时，因发送了不兼容的数据结构而导致的 API 500 错误。</li>
+                            <li><strong>新功能: 永久 Canvas 模式:</strong> 一旦对话中生成了 Canvas，该对话的 Canvas 模式将被永久锁定开启，以保证后续对话的连贯性。</li>
+                            <li><strong>优化: 交互提示:</strong> 当用户试图关闭一个已锁定的 Canvas 对话模式时，会收到明确的提示信息。</li>
+                            <li><strong>优化: 新对话默认值:</strong> 确保所有新对话都默认关闭 Canvas 模式。</li>
+                        </ul>`
+        },
         "1.3.1": {
             title: "v1.3.1 (Bug Fixes & History Migration)",
             description: `<ul>
@@ -1320,23 +1334,8 @@ document.addEventListener('DOMContentLoaded', () => {
         "1.3.0": {
             title: "v1.3.0 (Canvas Integration)",
             description: `<ul>
-                            <li><strong>新功能: Canvas 集成:</strong> 将 Canvas 功能与聊天流程深度融合。现在，AI 的回复可以在聊天气泡下方生成一个可点击的 Canvas 卡片。</li>
-                            <li><strong>优化: 多 Canvas 支持:</strong> 一次对话中可以包含多个 Canvas 文档，每个文档都与一条特定的消息相关联。</li>
-                            <li><strong>优化: Canvas 编辑:</strong> 点击 Canvas 卡片会弹出一个独立的、可编辑的窗口，方便进行内容创作和修改。</li>
-                            <li><strong>优化: 数据结构:</strong> 重新设计了本地存储的数据结构，将 Canvas 内容直接保存在对应的消息对象中，确保了数据的一致性。</li>
-                            <li><strong>界面调整:</strong> 移除了旧的全屏 Canvas 视图，用更灵活的模态窗口代替。</li>
-                        </ul>`
-        },
-        "1.2.3": {
-            title: "v1.2.3",
-            description: `<ul>
-                            <li><strong>新增输出长度控制:</strong> 现在可以在“偏好设置”中设定 AI 的最大输出 Token 数，范围为 1024 到 65536。</li>
-                            <li><strong>结构优化:</strong> 重构了消息发送和保存逻辑，使其更加健壮。</li>
-                            <li><strong>修复消息重复问题:</strong> 修正了发送给 AI 的消息会被重复处理两次的逻辑错误。</li>
-                            <li><strong>性能提升:</strong> 优化了部分脚本的执行效率，使应用响应更快。</li>
-                            <li><strong>暗黑模式:</strong> 现已可以在偏好中启用适合夜晚的暗黑模式。</li>
-                            <li><strong>赋能选项:</strong> 新增智能改写和智能总结功能。</li>
-                            <li><strong>其他优化:</strong> 修改了部分其他代码，删除了SnowUltra功能。</li>
+                            <li><strong>新功能: Canvas 集成:</strong> 将 Canvas 功能与聊天流程深度融合。</li>
+                            <li><strong>优化: 多 Canvas 支持:</strong> 一次对话中可以包含多个 Canvas 文档。</li>
                         </ul>`
         },
     };
@@ -1523,6 +1522,16 @@ document.addEventListener('DOMContentLoaded', () => {
             renderHistoryList();
             setLoading(false);
             updateHeaderButtons();
+            
+            // ** NEW: Logic for persistent canvas mode **
+            if (chat.isCanvasChat) {
+                canvasToggle.checked = true;
+                canvasToggle.disabled = true;
+            } else {
+                canvasToggle.checked = false;
+                canvasToggle.disabled = false;
+            }
+
             if(window.innerWidth <= 768) {
                 appContainer.classList.add('sidebar-collapsed');
             }
@@ -1547,6 +1556,11 @@ document.addEventListener('DOMContentLoaded', () => {
         setLoading(false);
         updateActionButtons();
         updateHeaderButtons();
+        
+        // ** NEW: Reset canvas toggle for new chats **
+        canvasToggle.checked = false;
+        canvasToggle.disabled = false;
+
         setInitialSidebarState();
     };
 
@@ -1554,7 +1568,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const prompt = userInput.value.trim();
         if (!prompt || sendButton.classList.contains('is-loading')) return;
         
-        if (canvasToggle.checked) {
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+
+        // ** NEW: Check if chat is already a canvas chat OR if toggle is manually enabled **
+        if ((chat && chat.isCanvasChat) || canvasToggle.checked) {
             await handleChatAndCanvasSend(prompt);
         } else {
             await handleChatSend(prompt);
@@ -1580,7 +1598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentChatId) {
             isNewChat = true;
             currentChatId = `chat_${Date.now()}`;
-            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [] };
+            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [], isCanvasChat: false }; // Add isCanvasChat flag
             chats.push(chat);
         } else {
             chat = chats.find(c => c.id === currentChatId);
@@ -1672,8 +1690,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (errorMessage.includes('All API keys failed')) {
                     displayMessage += '<b>原因:</b> 所有可用API均尝试失败。请向开发者汇报错误信息。';
-                } else if (errorMessage.includes('Invalid API Key')) {
-                     displayMessage += '<b>原因:</b> 当前API查询失败。';
+                } else if (errorMessage.includes('Invalid JSON payload')) {
+                    displayMessage += '<b>原因:</b> 发送给API的数据格式错误，请联系开发者修复。';
                 } else {
                     const cleanMessage = errorMessage.replace(/服务器错误 \d+: /, '');
                     displayMessage += `<b>详情:</b> ${cleanMessage}`;
@@ -1719,7 +1737,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const setLoading = (isLoading) => {
         userInput.disabled = isLoading;
         newChatButton.disabled = isLoading;
-        canvasToggle.disabled = isLoading;
+        // Keep canvas toggle enabled unless it's a persistent canvas chat
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        if (!chat || !chat.isCanvasChat) {
+            canvasToggle.disabled = isLoading;
+        }
 
         if (isLoading) {
             sendButton.classList.add('is-loading');
@@ -1821,16 +1844,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
+    // ** FIXED: Filter out 'canvas' property before sending to API **
     const buildHistoryWithPresets = (history) => {
+        const cleanHistory = history.map(msg => ({
+            role: msg.role,
+            parts: msg.parts
+        }));
+
         const customPreset = getCustomPreset();
         if (customPreset.enabled && customPreset.prompt && customPreset.prompt.trim() !== '') {
             const presetMessages = [
                 { role: 'user', parts: [{ text: `System instruction: ${customPreset.prompt.trim()}` }] },
                 { role: 'model', parts: [{ text: 'OK, I will follow that instruction.' }] }
             ];
-            return [...presetMessages, ...history];
+            return [...presetMessages, ...cleanHistory];
         }
-        return history;
+        return cleanHistory;
     };
 
     const updateHeaderButtons = () => {
@@ -1857,7 +1886,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const lastUserMessageWrapper = userMessages[userMessages.length - 1];
             const lastUserMessageIndex = chat.messages.map(m => m.role).lastIndexOf('user');
             
-            // Only add edit button if it's the absolute last message in the chat
             if (lastUserMessageIndex === chat.messages.length - 1) {
                 const actionsDiv = document.createElement('div');
                 actionsDiv.className = 'message-actions';
@@ -1884,8 +1912,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const modelMessages = document.querySelectorAll('.message-wrapper.model');
         if (modelMessages.length > 0) {
-            const lastModelMessageWrapper = modelMessages[modelMessages.length - 1];
-            addActionsToModelMessage(lastModelMessageWrapper, true);
+            modelMessages.forEach((msgWrapper, index) => {
+                 addActionsToModelMessage(msgWrapper, index === modelMessages.length - 1);
+            });
         }
     };
     
@@ -2057,7 +2086,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const historyForAPI = buildHistoryWithPresets([...chat.messages]);
         const lastUserPrompt = chat.messages.at(-1).parts[0].text;
         
-        if (lastModelMessage && lastModelMessage.canvas) {
+        if ((chat && chat.isCanvasChat) || (lastModelMessage && lastModelMessage.canvas)) {
             await handleChatAndCanvasSend(lastUserPrompt, true);
         } else {
             const container = document.querySelector('.chat-content-container');
@@ -2174,7 +2203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Canvas Functions (REWRITTEN) ---
+    // --- Canvas Functions ---
     const handleChatAndCanvasSend = async (prompt, isRegeneration = false) => {
         setLoading(true);
         if (!isRegeneration) {
@@ -2197,10 +2226,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentChatId) {
             isNewChat = true;
             currentChatId = `chat_${Date.now()}`;
-            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [] };
+            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [], isCanvasChat: true }; // Set canvas mode on creation
             chats.push(chat);
+            canvasToggle.checked = true;
+            canvasToggle.disabled = true;
         } else {
             chat = chats.find(c => c.id === currentChatId);
+            if (!chat.isCanvasChat) {
+                chat.isCanvasChat = true; // Persist canvas mode
+                canvasToggle.checked = true;
+                canvasToggle.disabled = true;
+            }
         }
         
         if (!isRegeneration) {
@@ -2222,7 +2258,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const [chatResponseText, canvasContentMarkdown] = await Promise.all([
                 getGeminiResponse(prompt, historyForAPI),
-                getGeminiResponse(`请就以下主题生成一份详细的、结构化的文档。请使用 Markdown 格式，包含标题、列表、代码块等元素，使其内容丰富、易于阅读。主题：“${prompt}”`, [])
+                getGeminiResponse(`请就以下主题生成一份详细的、结构化的文档。请使用 Markdown 格式。主题：“${prompt}”`, [])
             ]);
 
             if (chatResponseText.startsWith('Error:')) throw new Error(chatResponseText);
@@ -2285,10 +2321,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Migrating chat history from v6 to v7...');
             try {
                 const chats_v6 = JSON.parse(oldData);
-                // The v6 structure is compatible. The new 'canvas' property is optional.
-                // We can directly save the old data under the new key.
                 localStorage.setItem(newDataKey, JSON.stringify(chats_v6));
-                console.log('Migration successful! Your old chats have been restored.');
+                console.log('Migration successful!');
             } catch (e) {
                 console.error('Failed to migrate chat history:', e);
             }
@@ -2366,7 +2400,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setupPreferencesModal = () => {
-        // Dark Mode
         const savedTheme = getThemeState();
         applyTheme(savedTheme);
         darkModeToggle.addEventListener('change', () => {
@@ -2375,11 +2408,9 @@ document.addEventListener('DOMContentLoaded', () => {
             saveThemeState(newTheme);
         });
 
-        // Streaming
         streamingToggle.checked = getStreamingState();
         streamingToggle.addEventListener('change', () => saveStreamingState(streamingToggle.checked));
 
-        // Temperature
         const currentTemp = getTemperature();
         temperatureSlider.value = currentTemp;
         temperatureValue.textContent = parseFloat(currentTemp).toFixed(1);
@@ -2391,7 +2422,6 @@ document.addEventListener('DOMContentLoaded', () => {
             saveTemperature(e.target.value);
         });
 
-        // Max Output Tokens with Validation
         const maxTokensInput = document.getElementById('max-output-tokens-input');
         const MIN_TOKENS = 1024;
         const MAX_TOKENS = 65536;
@@ -2416,7 +2446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setupChangelog = () => {
-        changelogButtonsContainer.innerHTML = ''; // Clear existing buttons
+        changelogButtonsContainer.innerHTML = '';
         Object.keys(changelogData).forEach(version => {
             const data = changelogData[version];
             const button = document.createElement('button');
@@ -2553,11 +2583,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const chats = getChats();
             const chat = chats.find(c => c.id === currentEditingCanvas.chatId);
             if (chat && chat.messages[currentEditingCanvas.messageIndex]) {
-                // To properly save edits, we should convert the HTML back to Markdown.
-                // For simplicity here, we save the raw innerText. A library like Turndown would be needed for a full conversion.
                 chat.messages[currentEditingCanvas.messageIndex].canvas.content = canvasDisplayContent.innerText;
                 saveChats(chats);
             }
+        }
+    });
+
+    // ** NEW: Listener for disabled canvas toggle **
+    canvasToggleLabel.addEventListener('click', (e) => {
+        if (canvasToggle.disabled) {
+            e.preventDefault();
+            showCustomModal({
+                type: 'alert',
+                title: '模式已锁定',
+                message: '该对话已是 Canvas 模式，无法关闭。',
+                confirmText: '好的'
+            });
         }
     });
 
@@ -2574,3 +2615,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
