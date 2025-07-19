@@ -28,6 +28,9 @@
             --bg-send-button: #297FE5; 
             --bg-send-button-hover: #1A73E8;
             --bg-modal-backdrop: rgba(0, 0, 0, 0.4);
+            --canvas-icon-color: #5f6368;
+            --canvas-icon-color-active: #1a73e8;
+            --canvas-bg: #ffffff;
 
             --text-primary: #1f1f1f;
             --text-secondary: #444746;
@@ -69,6 +72,10 @@
             --bg-send-button: #89b4e4; 
             --bg-send-button-hover: #93c5fd;
             --bg-modal-backdrop: rgba(0, 0, 0, 0.6);
+            --canvas-icon-color: #969ba1;
+            --canvas-icon-color-active: #89b4e4;
+            --canvas-bg: #1e1f20;
+
 
             --text-primary: #e3e3e3;
             --text-secondary: #969ba1;
@@ -194,6 +201,7 @@
             height: 100%;
             transition: margin-left var(--transition-speed-normal) var(--transition-easing);
             margin-left: var(--sidebar-width);
+            position: relative; /* Needed for canvas positioning */
         }
 
         .app-container.sidebar-collapsed .main-content-area {
@@ -782,7 +790,7 @@
             min-height: 56px;
             background-color: var(--bg-input);
             border-radius: 28px;
-            padding: 8px 12px 8px 24px;
+            padding: 8px 12px 8px 16px; /* Adjusted padding for canvas toggle */
             transition: background-color var(--transition-speed-normal) ease;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
@@ -858,7 +866,7 @@
             background: transparent;
         }
 
-        /* --- 7. Modals --- */
+        /* --- 7. Modals & Canvas --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-modal-backdrop);
@@ -967,6 +975,82 @@
             cursor: pointer;
         }
 
+        /* --- Canvas Styles --- */
+        .canvas-toggle-label {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color var(--transition-speed-fast) ease;
+        }
+        .canvas-toggle-label:hover {
+            background-color: var(--bg-input-focus);
+        }
+        .canvas-toggle-label input {
+            display: none;
+        }
+        .canvas-toggle-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--canvas-icon-color);
+            transition: color var(--transition-speed-normal) ease;
+        }
+        .canvas-toggle-label input:checked ~ .canvas-toggle-icon {
+            color: var(--canvas-icon-color-active);
+        }
+
+        .canvas-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--canvas-bg);
+            z-index: 150;
+            display: none; /* Initially hidden */
+            flex-direction: column;
+            animation: fadeIn 0.3s ease;
+        }
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 8px 0 24px;
+            height: var(--header-height);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        #canvas-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #canvas-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 24px;
+            max-width: 840px;
+            width: 100%;
+            margin: 0 auto;
+            outline: none;
+            line-height: 1.7;
+            color: var(--text-primary);
+        }
+        #canvas-content:empty::before {
+            content: 'Canvas content will appear here...';
+            color: var(--text-placeholder);
+            font-style: italic;
+        }
+        #canvas-content * {
+             max-width: 100%;
+        }
+
+
         /* --- 8. Responsiveness --- */
         @media (max-width: 768px) {
             .chat-header { padding: 0 16px; }
@@ -983,10 +1067,11 @@
             .delete-chat-btn {
                 opacity: 0.7;
             }
+            #canvas-content { padding: 16px; }
         }
         .edit-button {
-    margin-left: auto; /* 使按钮靠右 */
-}
+            margin-left: auto; /* 使按钮靠右 */
+        }
     </style>
 </head>
 <body>
@@ -1028,7 +1113,7 @@
     </aside>
 
     <div class="main-content-area">
-        <main class="chat-area">
+        <main class="chat-area" id="chat-area">
             <header class="chat-header">
                 <div class="header-left">
                     <button id="menu-toggle-btn" class="icon-button" title="菜单">
@@ -1069,6 +1154,11 @@
             <div class="chat-input-area">
                 <div class="chat-input-container">
                     <div class="chat-input">
+                        <!-- Canvas Toggle Button -->
+                        <label class="canvas-toggle-label" title="Canvas 模式">
+                            <input type="checkbox" id="canvas-toggle">
+                            <svg class="canvas-toggle-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                        </label>
                         <textarea id="userInput" placeholder="问一问Gemini" autocomplete="off" rows="1"></textarea>
                         <button id="sendButton" title="发送">
                             <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
@@ -1078,7 +1168,18 @@
                 </div>
                  <p class="disclaimer-text">Gemini 的回答未必正确无误，请仔细核查</p>
             </div>
-        </main> 
+        </main>
+        
+        <!-- Canvas View -->
+        <div id="canvas-view" class="canvas-view">
+            <header class="canvas-header">
+                <h2 id="canvas-title">Canvas</h2>
+                <button id="canvas-close-btn" class="icon-button" title="关闭 Canvas">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </header>
+            <div id="canvas-content" contenteditable="true"></div>
+        </div>
     </div>
 
     <!-- Modals -->
@@ -1214,6 +1315,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const versionDetailsModalOverlay = document.getElementById('version-details-modal-overlay');
     const changelogButtonsContainer = document.getElementById('changelog-buttons-container');
     
+    // --- Canvas Elements ---
+    const chatArea = document.getElementById('chat-area');
+    const canvasToggle = document.getElementById('canvas-toggle');
+    const canvasView = document.getElementById('canvas-view');
+    const canvasTitle = document.getElementById('canvas-title');
+    const canvasContent = document.getElementById('canvas-content');
+    const canvasCloseBtn = document.getElementById('canvas-close-btn');
+
     // --- State & Config ---
     const API_URL = '/api/askGemini';
     let abortController = null;
@@ -1361,6 +1470,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // --- Local Storage Functions ---
     const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats_v6') || '[]');
     const saveChats = (chats) => localStorage.setItem('geminiSnowChats_v6', JSON.stringify(chats));
     const getCustomPreset = () => JSON.parse(localStorage.getItem('geminiSnowCustomPreset_v6') || '{ "enabled": false, "prompt": "" }');
@@ -1373,6 +1483,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveThemeState = (theme) => localStorage.setItem('geminiSnowTheme_v1', theme);
     const getMaxOutputTokens = () => localStorage.getItem('geminiSnowMaxTokens_v1') || '65536';
     const saveMaxOutputTokens = (value) => localStorage.setItem('geminiSnowMaxTokens_v1', value);
+    const getCanvasContent = () => JSON.parse(localStorage.getItem('geminiSnowCanvas_v1') || 'null');
+    const saveCanvasContent = (content) => localStorage.setItem('geminiSnowCanvas_v1', JSON.stringify(content));
+    const clearCanvasContent = () => localStorage.removeItem('geminiSnowCanvas_v1');
 
 
     const deleteChat = async (chatIdToDelete) => {
@@ -1412,6 +1525,11 @@ document.addEventListener('DOMContentLoaded', () => {
             title.textContent = chat.title;
             item.addEventListener('click', () => {
                 if (sendButton.classList.contains('is-loading') || isEditing) return;
+                // When loading a chat, ensure canvas is off
+                if (canvasToggle.checked) {
+                    canvasToggle.checked = false;
+                    closeCanvas();
+                }
                 loadChat(chat.id);
             });
             
@@ -1464,6 +1582,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const createNewChat = () => {
+        // If canvas is open, close it first
+        if (canvasToggle.checked) {
+            canvasToggle.checked = false;
+            closeCanvas();
+        }
         currentChatId = null;
         chatOutput.innerHTML = `
             <div class="chat-content-container">
@@ -1486,8 +1609,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const handleSend = async () => {
         const prompt = userInput.value.trim();
-        if (!prompt) return;
+        if (!prompt || sendButton.classList.contains('is-loading')) return;
         
+        if (canvasToggle.checked) {
+            await handleCanvasSend(prompt);
+        } else {
+            await handleChatSend(prompt);
+        }
+    };
+
+    const handleChatSend = async (prompt) => {
         setLoading(true);
         userInput.value = '';
         userInput.style.height = 'auto';
@@ -1512,10 +1643,8 @@ document.addEventListener('DOMContentLoaded', () => {
             chat = chats.find(c => c.id === currentChatId);
         }
         
-        // Corrected Logic: Prepare history for API *before* adding the new message to the local state.
         const historyForAPI = buildHistoryWithPresets([...chat.messages]);
         
-        // Now, add the new message to the local state for UI and future history.
         chat.messages.push({ role: 'user', parts: [{ text: prompt }] });
         saveChats(chats);
         
@@ -1649,6 +1778,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const setLoading = (isLoading) => {
         userInput.disabled = isLoading;
         newChatButton.disabled = isLoading;
+        canvasToggle.disabled = isLoading;
 
         if (isLoading) {
             sendButton.classList.add('is-loading');
@@ -1677,9 +1807,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         container.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
-        
-        // Corrected Logic: The 'loading' state is NOT saved to localStorage here.
-        // It will be replaced by the actual response later.
         
         if (sender === 'model' && text !== 'loading') {
              addCopyButtonsToCodeBlocks(messageWrapper);
@@ -1738,48 +1865,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-const updateActionButtons = () => {
-    // 先移除所有现有按钮
-    document.querySelectorAll('.message-actions').forEach(el => el.remove());
+    const updateActionButtons = () => {
+        document.querySelectorAll('.message-actions').forEach(el => el.remove());
 
-    const chats = getChats();
-    const chat = chats.find(c => c.id === currentChatId);
-    if (!chat || chat.messages.length === 0 || isEditing || sendButton.classList.contains('is-loading')) {
-        return;
-    }
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        if (!chat || chat.messages.length === 0 || isEditing || sendButton.classList.contains('is-loading')) {
+            return;
+        }
 
-    // 为最后一个用户消息添加编辑按钮
-    const userMessages = document.querySelectorAll('.message-wrapper.user');
-    if (userMessages.length > 0) {
-        const lastUserMessage = userMessages[userMessages.length - 1];
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'message-actions';
-        
-        const editBtn = document.createElement('button');
-        editBtn.className = 'action-button edit-button';
-        editBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
-                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
-            </svg>
-            <span>编辑</span>
-        `;
-        
-        editBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleEdit(lastUserMessage);
+        const userMessages = document.querySelectorAll('.message-wrapper.user');
+        if (userMessages.length > 0) {
+            const lastUserMessage = userMessages[userMessages.length - 1];
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'message-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'action-button edit-button';
+            editBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
+                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
+                </svg>
+                <span>编辑</span>
+            `;
+            
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleEdit(lastUserMessage);
+            });
+            
+            actionsDiv.appendChild(editBtn);
+            lastUserMessage.appendChild(actionsDiv);
+        }
+
+        const modelMessages = document.querySelectorAll('.message-wrapper.model');
+        modelMessages.forEach((msg, index) => {
+            addActionsToModelMessage(msg, index === modelMessages.length - 1);
         });
-        
-        actionsDiv.appendChild(editBtn);
-        lastUserMessage.appendChild(actionsDiv);
-    }
-
-    // 为模型消息添加操作按钮
-    const modelMessages = document.querySelectorAll('.message-wrapper.model');
-    modelMessages.forEach((msg, index) => {
-        addActionsToModelMessage(msg, index === modelMessages.length - 1);
-    });
-};
+    };
     
     const addActionsToModelMessage = (messageWrapper, isLastMessage) => {
         if (messageWrapper.querySelector('.message-actions')) return;
@@ -1848,27 +1972,6 @@ const updateActionButtons = () => {
         setTimeout(() => {
             actionWrapper.style.opacity = 1;
             actionWrapper.style.transform = 'translateY(0)';
-        }, 10);
-    };
-
-    const addEditButtonToLastUserMessage = (lastUserMessageWrapper) => {
-        if (lastUserMessageWrapper.querySelector('.message-actions')) return;
-
-        const editButtonWrapper = document.createElement('div');
-        editButtonWrapper.className = 'message-actions edit-button-wrapper';
-        editButtonWrapper.innerHTML = `
-            <button class="action-button edit-button">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
-                <span>编辑</span>
-            </button>
-        `;
-        
-        lastUserMessageWrapper.appendChild(editButtonWrapper);
-
-        editButtonWrapper.querySelector('.edit-button').addEventListener('click', () => handleEdit(lastUserMessageWrapper));
-        setTimeout(() => {
-            editButtonWrapper.style.opacity = 1;
-            editButtonWrapper.style.transform = 'translateY(0)';
         }, 10);
     };
 
@@ -1975,10 +2078,9 @@ const updateActionButtons = () => {
         await streamResponse(lastUserPrompt, loadingMsgWrapper, historyForAPI);
     };
 
-    // --- ✨ Gemini API Helper Functions ---
+    // --- Gemini API Helper Functions ---
     const getGeminiResponse = async (prompt, history = []) => {
-        // This is a non-streaming helper for specific tasks like summarize/rewrite
-        const maxOutputTokens = getMaxOutputTokens(); // Get the value
+        const maxOutputTokens = getMaxOutputTokens(); 
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
@@ -1986,10 +2088,10 @@ const updateActionButtons = () => {
                 body: JSON.stringify({
                     prompt,
                     history,
-                    model: 'gemini-2.5-flash', // Use a fast model for these tasks
+                    model: 'gemini-2.5-flash', 
                     stream: false,
                     temperature: 0.7,
-                    maxOutputTokens: parseInt(maxOutputTokens, 10) // Add the missing value
+                    maxOutputTokens: parseInt(maxOutputTokens, 10) 
                 }),
             });
 
@@ -2081,6 +2183,56 @@ const updateActionButtons = () => {
             saveChats(chats);
         } else {
             showCustomModal({type: 'alert', title: '改写失败，可能是达到后端最长反应时间限制！', message: rewrittenText});
+        }
+    };
+
+    // --- Canvas Functions ---
+    const handleCanvasSend = async (prompt) => {
+        setLoading(true);
+        userInput.value = '';
+        userInput.style.height = 'auto';
+        sendButton.classList.remove('visible');
+
+        openCanvas();
+        canvasContent.innerHTML = '<div class="message thinking-animation">正在生成 Canvas 内容...</div>';
+        const tempTitle = `Canvas: ${prompt.substring(0, 40)}${prompt.length > 40 ? '...' : ''}`;
+        canvasTitle.textContent = tempTitle;
+
+        const canvasPrompt = `请就以下主题生成一份详细的、结构化的文档。请使用 Markdown 格式，包含标题、列表、代码块等元素，使其内容丰富、易于阅读。主题：“${prompt}”`;
+
+        const fullText = await getGeminiResponse(canvasPrompt);
+
+        if (!fullText.startsWith('Error:')) {
+            canvasContent.innerHTML = marked.parse(fullText);
+            addCopyButtonsToCodeBlocks(canvasContent);
+            saveCanvasContent({ title: tempTitle, content: fullText });
+        } else {
+            canvasContent.innerHTML = `<p>抱歉，生成 Canvas 内容时出错。</p><p><em>${fullText}</em></p>`;
+        }
+        setLoading(false);
+    };
+
+    const openCanvas = (contentData = null) => {
+        canvasView.style.display = 'flex';
+        chatArea.style.display = 'none';
+        if (contentData) {
+            canvasTitle.textContent = contentData.title;
+            canvasContent.innerHTML = marked.parse(contentData.content);
+            addCopyButtonsToCodeBlocks(canvasContent);
+        }
+    };
+
+    const closeCanvas = () => {
+        canvasView.style.display = 'none';
+        chatArea.style.display = 'grid'; // Use grid to restore layout
+        canvasToggle.checked = false;
+    };
+
+    const restoreCanvas = () => {
+        const savedCanvas = getCanvasContent();
+        if (savedCanvas) {
+            canvasToggle.checked = true;
+            openCanvas(savedCanvas);
         }
     };
 
@@ -2188,27 +2340,21 @@ const updateActionButtons = () => {
         const MIN_TOKENS = 1024;
         const MAX_TOKENS = 65536;
 
-        // Initialize the input with the saved or default value
         maxTokensInput.value = getMaxOutputTokens();
 
-        // Add the change event listener for validation
         maxTokensInput.addEventListener('change', (e) => {
             const value = parseInt(e.target.value, 10);
 
-            // Check if the value is within the valid range
             if (!isNaN(value) && value >= MIN_TOKENS && value <= MAX_TOKENS) {
-                // If valid, save the value and remove any red border
                 saveMaxOutputTokens(value);
-                e.target.style.borderColor = ''; // Revert to default border color
+                e.target.style.borderColor = ''; 
             } else {
-                // If invalid, show a red border to give feedback
                 e.target.style.borderColor = 'red';
 
-                // After a short delay, reset the input to the last valid value
                 setTimeout(() => {
-                    e.target.value = getMaxOutputTokens(); // Reset to the last saved valid value
-                    e.target.style.borderColor = ''; // Remove the red border
-                }, 1500); // 1.5 second delay to allow the user to see the feedback
+                    e.target.value = getMaxOutputTokens(); 
+                    e.target.style.borderColor = ''; 
+                }, 1500); 
             }
         });
     };
@@ -2347,6 +2493,33 @@ const updateActionButtons = () => {
         }
     });
 
+    // --- Canvas Event Listeners ---
+    canvasToggle.addEventListener('change', () => {
+        if (canvasToggle.checked) {
+            // When turning on, clear old chat history selection
+            currentChatId = null;
+            renderHistoryList();
+            restoreCanvas(); // See if there's old content to load
+        } else {
+            closeCanvas();
+        }
+    });
+
+    canvasCloseBtn.addEventListener('click', closeCanvas);
+
+    canvasContent.addEventListener('input', () => {
+        // Save on edit
+        const currentCanvas = getCanvasContent();
+        if (currentCanvas) {
+            // Note: Saving raw HTML from contentEditable is complex.
+            // For this implementation, we'll save the innerText for simplicity.
+            // A more robust solution would sanitize the HTML.
+            const newContent = canvasContent.innerText;
+            saveCanvasContent({ title: currentCanvas.title, content: newContent });
+        }
+    });
+
+
     // --- App Initialization ---
     setupModelSelector();
     setupPresetsModal();
@@ -2358,3 +2531,4 @@ const updateActionButtons = () => {
 </script>
 </body>
 </html>
+
