@@ -30,7 +30,6 @@
             --bg-modal-backdrop: rgba(0, 0, 0, 0.4);
             --canvas-icon-color: #5f6368;
             --canvas-icon-color-active: #1a73e8;
-            --canvas-bg: #ffffff;
 
             --text-primary: #1f1f1f;
             --text-secondary: #444746;
@@ -74,8 +73,6 @@
             --bg-modal-backdrop: rgba(0, 0, 0, 0.6);
             --canvas-icon-color: #969ba1;
             --canvas-icon-color-active: #89b4e4;
-            --canvas-bg: #1e1f20;
-
 
             --text-primary: #e3e3e3;
             --text-secondary: #969ba1;
@@ -975,7 +972,7 @@
             cursor: pointer;
         }
 
-        /* --- Canvas Styles --- */
+        /* --- Canvas Styles (NEW & MODIFIED) --- */
         .canvas-toggle-label {
             position: relative;
             display: flex;
@@ -1002,52 +999,31 @@
             color: var(--canvas-icon-color-active);
         }
 
-        .canvas-view {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--canvas-bg);
-            z-index: 150;
-            display: none; /* Initially hidden */
-            flex-direction: column;
-            animation: fadeIn 0.3s ease;
-        }
-        .canvas-header {
+        .canvas-card {
+            margin-top: 12px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color var(--transition-speed-fast) ease;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 0 8px 0 24px;
-            height: var(--header-height);
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
+            gap: 12px;
+            background-color: var(--bg-input);
         }
-        #canvas-title {
-            font-size: 1.25rem;
+        .canvas-card:hover {
+            background-color: var(--bg-input-focus);
+        }
+        .canvas-card-icon {
+            flex-shrink: 0;
+            color: var(--text-secondary);
+        }
+        .canvas-card-title {
             font-weight: 500;
+            color: var(--text-primary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-        }
-        #canvas-content {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 24px;
-            max-width: 840px;
-            width: 100%;
-            margin: 0 auto;
-            outline: none;
-            line-height: 1.7;
-            color: var(--text-primary);
-        }
-        #canvas-content:empty::before {
-            content: 'Canvas content will appear here...';
-            color: var(--text-placeholder);
-            font-style: italic;
-        }
-        #canvas-content * {
-             max-width: 100%;
         }
 
 
@@ -1067,7 +1043,6 @@
             .delete-chat-btn {
                 opacity: 0.7;
             }
-            #canvas-content { padding: 16px; }
         }
         .edit-button {
             margin-left: auto; /* 使按钮靠右 */
@@ -1169,17 +1144,6 @@
                  <p class="disclaimer-text">Gemini 的回答未必正确无误，请仔细核查</p>
             </div>
         </main>
-        
-        <!-- Canvas View -->
-        <div id="canvas-view" class="canvas-view">
-            <header class="canvas-header">
-                <h2 id="canvas-title">Canvas</h2>
-                <button id="canvas-close-btn" class="icon-button" title="关闭 Canvas">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-            </header>
-            <div id="canvas-content" contenteditable="true"></div>
-        </div>
     </div>
 
     <!-- Modals -->
@@ -1253,7 +1217,7 @@
         </div>
     </div>
 
-    <!-- 新增：更新日志版本列表弹窗 -->
+    <!-- 更新日志版本列表弹窗 -->
     <div id="changelog-modal-overlay" class="modal-overlay">
         <div id="changelog-modal" class="modal-content">
             <div class="modal-header">
@@ -1266,7 +1230,7 @@
         </div>
     </div>
 
-    <!-- 新增：单个版本更新详情弹窗 -->
+    <!-- 单个版本更新详情弹窗 -->
     <div id="version-details-modal-overlay" class="modal-overlay">
         <div id="version-details-modal" class="modal-content">
             <div class="modal-header">
@@ -1275,6 +1239,17 @@
             </div>
             <!-- 内容将动态填充 -->
             <div id="version-details-content" style="margin-top: 16px; line-height: 1.6; max-height: 60vh; overflow-y: auto;"></div>
+        </div>
+    </div>
+    
+    <!-- Canvas Display Modal (NEW) -->
+    <div id="canvas-display-modal-overlay" class="modal-overlay">
+        <div id="canvas-display-modal" class="modal-content" style="max-width: 90vw; width: 1000px; height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3 id="canvas-display-title" class="modal-title"></h3>
+                <button class="modal-close-btn" data-target="canvas-display-modal-overlay">&times;</button>
+            </div>
+            <div id="canvas-display-content" contenteditable="true" style="flex-grow: 1; overflow-y: auto; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-top: 16px; line-height: 1.7; outline: none;"></div>
         </div>
     </div>
 
@@ -1315,13 +1290,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const versionDetailsModalOverlay = document.getElementById('version-details-modal-overlay');
     const changelogButtonsContainer = document.getElementById('changelog-buttons-container');
     
-    // --- Canvas Elements ---
-    const chatArea = document.getElementById('chat-area');
+    // --- Canvas Elements (NEW & MODIFIED) ---
     const canvasToggle = document.getElementById('canvas-toggle');
-    const canvasView = document.getElementById('canvas-view');
-    const canvasTitle = document.getElementById('canvas-title');
-    const canvasContent = document.getElementById('canvas-content');
-    const canvasCloseBtn = document.getElementById('canvas-close-btn');
+    const canvasDisplayModalOverlay = document.getElementById('canvas-display-modal-overlay');
+    const canvasDisplayTitle = document.getElementById('canvas-display-title');
+    const canvasDisplayContent = document.getElementById('canvas-display-content');
+
 
     // --- State & Config ---
     const API_URL = '/api/askGemini';
@@ -1335,6 +1309,16 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'gemini-2.0-flash-lite', name: '2.0 Lite', description: '成本效益和低延迟', locked: false }
     ];
     const changelogData = {
+        "1.3.0": {
+            title: "v1.3.0 (Canvas Integration)",
+            description: `<ul>
+                            <li><strong>新功能: Canvas 集成:</strong> 将 Canvas 功能与聊天流程深度融合。现在，AI 的回复可以在聊天气泡下方生成一个可点击的 Canvas 卡片。</li>
+                            <li><strong>优化: 多 Canvas 支持:</strong> 一次对话中可以包含多个 Canvas 文档，每个文档都与一条特定的消息相关联。</li>
+                            <li><strong>优化: Canvas 编辑:</strong> 点击 Canvas 卡片会弹出一个独立的、可编辑的窗口，方便进行内容创作和修改。</li>
+                            <li><strong>优化: 数据结构:</strong> 重新设计了本地存储的数据结构，将 Canvas 内容直接保存在对应的消息对象中，确保了数据的一致性。</li>
+                            <li><strong>界面调整:</strong> 移除了旧的全屏 Canvas 视图，用更灵活的模态窗口代替。</li>
+                        </ul>`
+        },
         "1.2.3": {
             title: "v1.2.3",
             description: `<ul>
@@ -1388,6 +1372,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentChatId = null;
     let isEditing = false;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    let currentEditingCanvas = { chatId: null, messageIndex: -1 };
+
 
     marked.setOptions({ breaks: true, sanitize: true });
 
@@ -1471,8 +1457,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Local Storage Functions ---
-    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats_v6') || '[]');
-    const saveChats = (chats) => localStorage.setItem('geminiSnowChats_v6', JSON.stringify(chats));
+    const getChats = () => JSON.parse(localStorage.getItem('geminiSnowChats_v7') || '[]'); // Version bump for new data structure
+    const saveChats = (chats) => localStorage.setItem('geminiSnowChats_v7', JSON.stringify(chats));
     const getCustomPreset = () => JSON.parse(localStorage.getItem('geminiSnowCustomPreset_v6') || '{ "enabled": false, "prompt": "" }');
     const saveCustomPreset = (settings) => localStorage.setItem('geminiSnowCustomPreset_v6', JSON.stringify(settings));
     const getStreamingState = () => localStorage.getItem('geminiSnowStreaming_v6') === null ? true : JSON.parse(localStorage.getItem('geminiSnowStreaming_v6'));
@@ -1483,10 +1469,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveThemeState = (theme) => localStorage.setItem('geminiSnowTheme_v1', theme);
     const getMaxOutputTokens = () => localStorage.getItem('geminiSnowMaxTokens_v1') || '65536';
     const saveMaxOutputTokens = (value) => localStorage.setItem('geminiSnowMaxTokens_v1', value);
-    const getCanvasContent = () => JSON.parse(localStorage.getItem('geminiSnowCanvas_v1') || 'null');
-    const saveCanvasContent = (content) => localStorage.setItem('geminiSnowCanvas_v1', JSON.stringify(content));
-    const clearCanvasContent = () => localStorage.removeItem('geminiSnowCanvas_v1');
-
 
     const deleteChat = async (chatIdToDelete) => {
         let chats = getChats();
@@ -1525,11 +1507,6 @@ document.addEventListener('DOMContentLoaded', () => {
             title.textContent = chat.title;
             item.addEventListener('click', () => {
                 if (sendButton.classList.contains('is-loading') || isEditing) return;
-                // When loading a chat, ensure canvas is off
-                if (canvasToggle.checked) {
-                    canvasToggle.checked = false;
-                    closeCanvas();
-                }
                 loadChat(chat.id);
             });
             
@@ -1554,9 +1531,8 @@ document.addEventListener('DOMContentLoaded', () => {
         chatOutput.innerHTML = '';
         chatOutput.appendChild(container);
         messages.forEach((msg, index) => {
-            // Filter out any leftover 'loading' messages from storage
             if (msg.parts[0].text !== 'loading') {
-                const messageWrapper = appendMessage(msg.role, msg.parts[0].text, container);
+                const messageWrapper = appendMessage(msg.role, msg.parts[0].text, container, msg.canvas);
                 if (msg.role === 'model') {
                     addActionsToModelMessage(messageWrapper);
                 }
@@ -1582,11 +1558,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const createNewChat = () => {
-        // If canvas is open, close it first
-        if (canvasToggle.checked) {
-            canvasToggle.checked = false;
-            closeCanvas();
-        }
         currentChatId = null;
         chatOutput.innerHTML = `
             <div class="chat-content-container">
@@ -1612,7 +1583,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!prompt || sendButton.classList.contains('is-loading')) return;
         
         if (canvasToggle.checked) {
-            await handleCanvasSend(prompt);
+            await handleChatAndCanvasSend(prompt);
         } else {
             await handleChatSend(prompt);
         }
@@ -1795,7 +1766,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    const appendMessage = (sender, text, container) => {
+    const appendMessage = (sender, text, container, canvasData = null) => {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message-wrapper ${sender}`;
             
@@ -1804,6 +1775,26 @@ document.addEventListener('DOMContentLoaded', () => {
             : `<div class="message">${marked.parse(text)}</div>`;
             
         messageWrapper.innerHTML = messageContentHTML;
+        
+        // NEW: Render canvas card if data exists
+        if (canvasData) {
+            const canvasCard = document.createElement('div');
+            canvasCard.className = 'canvas-card';
+            canvasCard.innerHTML = `
+                <svg class="canvas-card-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                <span class="canvas-card-title">${canvasData.title}</span>
+            `;
+            canvasCard.addEventListener('click', () => {
+                const chats = getChats();
+                const chat = chats.find(c => c.id === currentChatId);
+                if (!chat) return;
+                const messageIndex = chat.messages.findIndex(m => m.canvas && m.canvas.id === canvasData.id);
+                if (messageIndex > -1) {
+                    displayCanvas(currentChatId, messageIndex, chat.messages[messageIndex].canvas);
+                }
+            });
+            messageWrapper.appendChild(canvasCard);
+        }
         
         container.appendChild(messageWrapper);
         chatOutput.scrollTop = chatOutput.scrollHeight;
@@ -2186,54 +2177,122 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Canvas Functions ---
-    const handleCanvasSend = async (prompt) => {
+    // --- Canvas Functions (NEW & REWRITTEN) ---
+    const handleChatAndCanvasSend = async (prompt) => {
         setLoading(true);
         userInput.value = '';
         userInput.style.height = 'auto';
         sendButton.classList.remove('visible');
 
-        openCanvas();
-        canvasContent.innerHTML = '<div class="message thinking-animation">正在生成 Canvas 内容...</div>';
-        const tempTitle = `Canvas: ${prompt.substring(0, 40)}${prompt.length > 40 ? '...' : ''}`;
-        canvasTitle.textContent = tempTitle;
+        let chatContentContainer = chatOutput.querySelector('.chat-content-container');
+        if (!chatContentContainer || chatContentContainer.querySelector('.welcome-container')) {
+            chatContentContainer = document.createElement('div');
+            chatContentContainer.className = 'chat-content-container';
+            chatOutput.innerHTML = '';
+            chatOutput.appendChild(chatContentContainer);
+        }
 
-        const canvasPrompt = `请就以下主题生成一份详细的、结构化的文档。请使用 Markdown 格式，包含标题、列表、代码块等元素，使其内容丰富、易于阅读。主题：“${prompt}”`;
-
-        const fullText = await getGeminiResponse(canvasPrompt);
-
-        if (!fullText.startsWith('Error:')) {
-            canvasContent.innerHTML = marked.parse(fullText);
-            addCopyButtonsToCodeBlocks(canvasContent);
-            saveCanvasContent({ title: tempTitle, content: fullText });
+        let chats = getChats();
+        let isNewChat = false;
+        let chat;
+        if (!currentChatId) {
+            isNewChat = true;
+            currentChatId = `chat_${Date.now()}`;
+            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [] };
+            chats.push(chat);
         } else {
-            canvasContent.innerHTML = `<p>抱歉，生成 Canvas 内容时出错。</p><p><em>${fullText}</em></p>`;
+            chat = chats.find(c => c.id === currentChatId);
         }
-        setLoading(false);
+        
+        const historyForAPI = buildHistoryWithPresets([...chat.messages]);
+        
+        chat.messages.push({ role: 'user', parts: [{ text: prompt }] });
+        saveChats(chats);
+        
+        appendMessage('user', prompt, chatContentContainer);
+        const loadingMsgWrapper = appendMessage('model', 'loading', chatContentContainer);
+        
+        if (isNewChat) {
+            renderHistoryList();
+            updateHeaderButtons();
+        }
+
+        abortController = new AbortController();
+        const messageElement = loadingMsgWrapper.querySelector('.message');
+
+        try {
+            // Step 1: Get the conversational response
+            const chatResponseText = await getGeminiResponse(prompt, historyForAPI);
+            if (chatResponseText.startsWith('Error:')) throw new Error(chatResponseText);
+            messageElement.innerHTML = marked.parse(chatResponseText);
+            messageElement.classList.remove('thinking-animation');
+            addCopyButtonsToCodeBlocks(messageElement);
+            chatOutput.scrollTop = chatOutput.scrollHeight;
+
+            // Step 2: Get the canvas content
+            const canvasPrompt = `请就以下主题生成一份详细的、结构化的文档。请使用 Markdown 格式，包含标题、列表、代码块等元素，使其内容丰富、易于阅读。主题：“${prompt}”`;
+            const canvasContentMarkdown = await getGeminiResponse(canvasPrompt, []);
+            if (canvasContentMarkdown.startsWith('Error:')) throw new Error(canvasContentMarkdown);
+
+            // Step 3: Create canvas object and card
+            const canvasData = {
+                id: `canvas_${Date.now()}`,
+                title: `Canvas: ${prompt.substring(0, 40)}...`,
+                content: canvasContentMarkdown // Store raw markdown
+            };
+
+            const canvasCard = document.createElement('div');
+            canvasCard.className = 'canvas-card';
+            canvasCard.innerHTML = `
+                <svg class="canvas-card-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                <span class="canvas-card-title">${canvasData.title}</span>
+            `;
+            
+            canvasCard.addEventListener('click', () => {
+                const currentChats = getChats();
+                const currentChat = currentChats.find(c => c.id === currentChatId);
+                const messageIndex = currentChat.messages.findIndex(m => m.canvas && m.canvas.id === canvasData.id);
+                if (messageIndex > -1) {
+                    displayCanvas(currentChatId, messageIndex, currentChat.messages[messageIndex].canvas);
+                }
+            });
+            loadingMsgWrapper.appendChild(canvasCard);
+
+            // Step 4: Save the complete message to storage
+            let currentChats = getChats();
+            let currentChat = currentChats.find(c => c.id === currentChatId);
+            const modelMessage = { 
+                role: 'model', 
+                parts: [{ text: chatResponseText }],
+                canvas: canvasData
+            };
+            currentChat.messages.push(modelMessage);
+            saveChats(currentChats);
+            
+            addActionsToModelMessage(loadingMsgWrapper, true);
+
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error("Canvas send error:", error);
+                updateMessage(loadingMsgWrapper, `<b>抱歉，生成内容时出错了。</b><br>${error.message}`);
+            } else {
+                 updateMessage(loadingMsgWrapper, '已停止生成。');
+            }
+            messageElement.classList.remove('thinking-animation');
+        } finally {
+            abortController = null;
+            setLoading(false);
+            updateActionButtons();
+            updateHeaderButtons();
+        }
     };
 
-    const openCanvas = (contentData = null) => {
-        canvasView.style.display = 'flex';
-        chatArea.style.display = 'none';
-        if (contentData) {
-            canvasTitle.textContent = contentData.title;
-            canvasContent.innerHTML = marked.parse(contentData.content);
-            addCopyButtonsToCodeBlocks(canvasContent);
-        }
-    };
-
-    const closeCanvas = () => {
-        canvasView.style.display = 'none';
-        chatArea.style.display = 'grid'; // Use grid to restore layout
-        canvasToggle.checked = false;
-    };
-
-    const restoreCanvas = () => {
-        const savedCanvas = getCanvasContent();
-        if (savedCanvas) {
-            canvasToggle.checked = true;
-            openCanvas(savedCanvas);
-        }
+    const displayCanvas = (chatId, messageIndex, canvasObject) => {
+        currentEditingCanvas = { chatId, messageIndex };
+        canvasDisplayTitle.textContent = canvasObject.title;
+        // Since we now store raw markdown, we parse it for display
+        canvasDisplayContent.innerHTML = marked.parse(canvasObject.content);
+        toggleModal(canvasDisplayModalOverlay, true);
     };
 
 
@@ -2493,29 +2552,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Canvas Event Listeners ---
-    canvasToggle.addEventListener('change', () => {
-        if (canvasToggle.checked) {
-            // When turning on, clear old chat history selection
-            currentChatId = null;
-            renderHistoryList();
-            restoreCanvas(); // See if there's old content to load
-        } else {
-            closeCanvas();
-        }
-    });
-
-    canvasCloseBtn.addEventListener('click', closeCanvas);
-
-    canvasContent.addEventListener('input', () => {
-        // Save on edit
-        const currentCanvas = getCanvasContent();
-        if (currentCanvas) {
-            // Note: Saving raw HTML from contentEditable is complex.
-            // For this implementation, we'll save the innerText for simplicity.
-            // A more robust solution would sanitize the HTML.
-            const newContent = canvasContent.innerText;
-            saveCanvasContent({ title: currentCanvas.title, content: newContent });
+    // Canvas edit saving listener
+    canvasDisplayContent.addEventListener('input', () => {
+        if (currentEditingCanvas.chatId && currentEditingCanvas.messageIndex > -1) {
+            const chats = getChats();
+            const chat = chats.find(c => c.id === currentEditingCanvas.chatId);
+            if (chat && chat.messages[currentEditingCanvas.messageIndex]) {
+                // IMPORTANT: For simplicity, we are saving the innerHTML.
+                // A more robust solution would convert the edited HTML back to Markdown.
+                // For now, this allows rich text editing but deviates from pure Markdown storage after the first edit.
+                chat.messages[currentEditingCanvas.messageIndex].canvas.content = canvasDisplayContent.innerHTML;
+                saveChats(chats);
+            }
         }
     });
 
@@ -2531,4 +2579,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
