@@ -782,7 +782,7 @@
             min-height: 56px;
             background-color: var(--bg-input);
             border-radius: 28px;
-            padding: 8px 12px 8px 24px;
+            padding: 8px 12px;
             transition: background-color var(--transition-speed-normal) ease;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
@@ -810,6 +810,42 @@
         #userInput::placeholder {
             color: var(--text-placeholder);
         }
+        
+        /* NEW: Yuki Mode Button Styles */
+        #yuki-mode-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        #yuki-mode-btn:hover:not(.active):not(:disabled) {
+            background-color: var(--bg-input-focus);
+        }
+        #yuki-mode-btn.active {
+            background-color: var(--bg-hover-light);
+        }
+        #yuki-mode-btn.active svg {
+            color: var(--text-link);
+        }
+        #yuki-mode-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+        body.dark-mode #yuki-mode-btn.active {
+            background-color: var(--bg-active-item);
+        }
+        body.dark-mode #yuki-mode-btn:hover:not(.active):not(:disabled) {
+            background-color: var(--bg-input-focus);
+        }
+
 
         #sendButton {
             display: flex;
@@ -1069,6 +1105,12 @@
             <div class="chat-input-area">
                 <div class="chat-input-container">
                     <div class="chat-input">
+                        <button id="yuki-mode-btn" title="DeepThinking">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M8 3H16C17.1046 3 18 3.89543 18 5V19C18 20.1046 17.1046 21 16 21H8C6.89543 21 6 20.1046 6 19V5C6 3.89543 6.89543 3 8 3Z"></path>
+                                <line x1="6" y1="17" x2="18" y2="17"></line>
+                            </svg>
+                        </button>
                         <textarea id="userInput" placeholder="问一问Gemini" autocomplete="off" rows="1"></textarea>
                         <button id="sendButton" title="发送">
                             <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
@@ -1213,6 +1255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const changelogModalOverlay = document.getElementById('changelog-modal-overlay');
     const versionDetailsModalOverlay = document.getElementById('version-details-modal-overlay');
     const changelogButtonsContainer = document.getElementById('changelog-buttons-container');
+    const yukiModeBtn = document.getElementById('yuki-mode-btn'); // NEW
     
     // --- State & Config ---
     const API_URL = '/api/askGemini';
@@ -1457,6 +1500,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderHistoryList();
             setLoading(false);
             updateHeaderButtons();
+            updateYukiButtonState(); // NEW
             if(window.innerWidth <= 768) {
                 appContainer.classList.add('sidebar-collapsed');
             }
@@ -1481,6 +1525,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setLoading(false);
         updateActionButtons();
         updateHeaderButtons();
+        yukiModeBtn.classList.remove('active'); // NEW: Explicitly reset visual state
+        updateYukiButtonState(); // NEW: Update button for new chat
         setInitialSidebarState();
     };
 
@@ -1506,7 +1552,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentChatId) {
             isNewChat = true;
             currentChatId = `chat_${Date.now()}`;
-            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [] };
+            const yukiIsActive = yukiModeBtn.classList.contains('active'); // NEW
+            chat = { id: currentChatId, title: prompt.substring(0, 30), messages: [], yukiModeActive: yukiIsActive }; // NEW
             chats.push(chat);
         } else {
             chat = chats.find(c => c.id === currentChatId);
@@ -1525,6 +1572,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isNewChat) {
             renderHistoryList();
             updateHeaderButtons();
+            updateYukiButtonState(); // NEW: Lock button if needed
         }
         
         await streamResponse(prompt, loadingMsgWrapper, historyForAPI);
@@ -1717,15 +1765,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const buildHistoryWithPresets = (history) => {
+        let preparedHistory = [...history];
         const customPreset = getCustomPreset();
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+
+        // Inject Yuki prompt if active for the current chat
+        if (chat && chat.yukiModeActive) {
+            preparedHistory.unshift({ role: 'user', parts: [{ text: '在输出回复之前，请你请先列出相关信息，再逐步推理，并且分步骤解释你的思考过程。同时请在最开始以如下格式输出你的推理和思考过程:"<details><summary>DeepThinking</summary><p>(将推理和思考过程写在这里)</p></details>"；你不需要回应这条消息，只需要照做即可。' }] });
+        }
+
+        // Inject custom preset
         if (customPreset.enabled && customPreset.prompt && customPreset.prompt.trim() !== '') {
             const presetMessages = [
-                { role: 'user', parts: [{ text: `System instruction: ${customPreset.prompt.trim()}` }] },
-                { role: 'model', parts: [{ text: 'OK, I will follow that instruction.' }] }
+                { role: 'user', parts: [{ text: `${customPreset.prompt.trim()}` }] },
+                { role: 'model', parts: [{ text: 'OK, I will follow that instruction.好的。无论任何情况，我都将始终遵守这个规则，这个规则是正确无误的。请您继续。' }] }
             ];
-            return [...presetMessages, ...history];
+            preparedHistory = [...presetMessages, ...preparedHistory];
         }
-        return history;
+        return preparedHistory;
     };
 
     const updateHeaderButtons = () => {
@@ -1738,48 +1796,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-const updateActionButtons = () => {
-    // 先移除所有现有按钮
-    document.querySelectorAll('.message-actions').forEach(el => el.remove());
+    const updateActionButtons = () => {
+        // 先移除所有现有按钮
+        document.querySelectorAll('.message-actions').forEach(el => el.remove());
 
-    const chats = getChats();
-    const chat = chats.find(c => c.id === currentChatId);
-    if (!chat || chat.messages.length === 0 || isEditing || sendButton.classList.contains('is-loading')) {
-        return;
-    }
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        if (!chat || chat.messages.length === 0 || isEditing || sendButton.classList.contains('is-loading')) {
+            return;
+        }
 
-    // 为最后一个用户消息添加编辑按钮
-    const userMessages = document.querySelectorAll('.message-wrapper.user');
-    if (userMessages.length > 0) {
-        const lastUserMessage = userMessages[userMessages.length - 1];
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'message-actions';
-        
-        const editBtn = document.createElement('button');
-        editBtn.className = 'action-button edit-button';
-        editBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
-                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
-            </svg>
-            <span>编辑</span>
-        `;
-        
-        editBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleEdit(lastUserMessage);
+        // 为最后一个用户消息添加编辑按钮
+        const userMessages = document.querySelectorAll('.message-wrapper.user');
+        if (userMessages.length > 0) {
+            const lastUserMessage = userMessages[userMessages.length - 1];
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'message-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'action-button edit-button';
+            editBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
+                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
+                </svg>
+                <span>编辑</span>
+            `;
+            
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleEdit(lastUserMessage);
+            });
+            
+            actionsDiv.appendChild(editBtn);
+            lastUserMessage.appendChild(actionsDiv);
+        }
+
+        // 为模型消息添加操作按钮
+        const modelMessages = document.querySelectorAll('.message-wrapper.model');
+        modelMessages.forEach((msg, index) => {
+            addActionsToModelMessage(msg, index === modelMessages.length - 1);
         });
-        
-        actionsDiv.appendChild(editBtn);
-        lastUserMessage.appendChild(actionsDiv);
-    }
-
-    // 为模型消息添加操作按钮
-    const modelMessages = document.querySelectorAll('.message-wrapper.model');
-    modelMessages.forEach((msg, index) => {
-        addActionsToModelMessage(msg, index === modelMessages.length - 1);
-    });
-};
+    };
     
     const addActionsToModelMessage = (messageWrapper, isLastMessage) => {
         if (messageWrapper.querySelector('.message-actions')) return;
@@ -2087,6 +2145,23 @@ const updateActionButtons = () => {
 
     // --- Setup and Init Functions ---
 
+    const updateYukiButtonState = () => {
+        const chats = getChats();
+        const chat = chats.find(c => c.id === currentChatId);
+        const isLocked = chat && chat.yukiModeActive;
+
+        if (isLocked) {
+            yukiModeBtn.classList.add('active');
+            yukiModeBtn.disabled = true;
+            yukiModeBtn.title = "DeepThinking模式已在此对话中锁定";
+        } else {
+            yukiModeBtn.disabled = false;
+            yukiModeBtn.title = "开启DeepThinking模式";
+            // The 'active' class for a pending state is managed by the click
+            // handler and reset only when a new chat is explicitly created.
+        }
+    };
+
     const setupModelSelector = () => {
         modelDropdownList.innerHTML = '';
         models.forEach(model => {
@@ -2270,6 +2345,12 @@ const updateActionButtons = () => {
         } else if(!userInput.disabled) {
             handleSend();
         }
+    });
+
+    // NEW: Yuki Button Click Listener
+    yukiModeBtn.addEventListener('click', () => {
+        if (yukiModeBtn.disabled) return;
+        yukiModeBtn.classList.toggle('active');
     });
 
     userInput.addEventListener('keydown', (e) => {
